@@ -38,6 +38,7 @@ func (d *foldersDataSource) Schema(ctx context.Context, _ datasource.SchemaReque
 	s.MarkdownDescription = "List Cloud Analytics folders."
 	s.Description = "List Cloud Analytics folders."
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountPage, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -76,8 +77,10 @@ func (d *foldersDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If any pagination input is unknown, return unknown for all computed attributes
-	if data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Folders = types.ListUnknown(datasource_folders.FoldersValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
 		data.PageToken = types.StringUnknown()
@@ -124,11 +127,7 @@ func (d *foldersDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 		// Preserve API's page_token for user to fetch next page
 		data.PageToken = types.StringPointerValue(result.PageToken)
-		if result.RowCount != nil {
-			data.RowCount = types.Int64Value(int64(*result.RowCount))
-		} else {
-			data.RowCount = types.Int64Value(int64(len(allFolders)))
-		}
+		data.RowCount = listRowCount(result.RowCount, len(allFolders))
 	} else {
 		// Auto mode: fetch all pages
 		if !data.PageToken.IsNull() {
@@ -163,8 +162,11 @@ func (d *foldersDataSource) Read(ctx context.Context, req datasource.ReadRequest
 			params.PageToken = result.PageToken
 		}
 
+		// rowCount counts the items of one page, so row_count counts every page fetched.
 		data.RowCount = types.Int64Value(int64(len(allFolders)))
 		data.PageToken = types.StringNull()
+		// max_results was not set by user; normalize to null
+		data.MaxResults = types.Int64Null()
 	}
 
 	// Map folders list

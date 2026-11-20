@@ -46,6 +46,7 @@ func (d *alertSlackChannelsDataSource) Schema(ctx context.Context, req datasourc
 		"`row_count` is then null as well, because the total is only known once every channel has been listed."
 	s.Description = description
 	s.MarkdownDescription = description
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotalUnlessPaged, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -110,8 +111,10 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If any filter/pagination input is unknown, return unknown list and computed attributes
-	if data.NameContains.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_alert_slack_channels.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
 		data.WorkspaceStatus = types.StringUnknown()

@@ -50,6 +50,7 @@ func (d *commitmentsDataSource) Configure(_ context.Context, req datasource.Conf
 func (d *commitmentsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_commitments.CommitmentsDataSourceSchema(ctx)
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountPage, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -72,9 +73,13 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If any filter/pagination input is unknown, return unknown list
-	if data.Filter.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Commitments = types.ListUnknown(datasource_commitments.CommitmentsValue{}.Type(ctx))
+		data.RowCount = types.Int64Unknown()
+		data.PageToken = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -127,13 +132,12 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 		// Set page_token from API response (null when no next page)
 		data.PageToken = types.StringPointerValue(apiResp.JSON200.PageToken)
-		if apiResp.JSON200.RowCount != nil {
-			data.RowCount = types.Int64Value(*apiResp.JSON200.RowCount)
-		} else {
-			data.RowCount = types.Int64Value(int64(len(allCommitments)))
-		}
+		data.RowCount = listRowCount(apiResp.JSON200.RowCount, len(allCommitments))
 	} else {
-		// Auto mode: fetch all pages
+		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
+		if !data.PageToken.IsNull() {
+			params.PageToken = new(data.PageToken.ValueString())
+		}
 		for {
 			apiResp, err := d.client.ListCommitmentsWithResponse(ctx, params)
 			if err != nil {
@@ -157,8 +161,10 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 			params.PageToken = apiResp.JSON200.PageToken
 		}
 
+		// rowCount counts the items of one page, so row_count counts every page fetched.
 		data.RowCount = types.Int64Value(int64(len(allCommitments)))
 		data.PageToken = types.StringNull()
+		// max_results was not set by user; normalize to null
 		data.MaxResults = types.Int64Null()
 	}
 

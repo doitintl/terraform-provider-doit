@@ -58,14 +58,14 @@ output "next_page_token" {
 
 ### Optional
 
-- `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-- `page_token` (String) Page token, returned by a previous call, to request the next page of results
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page.
+- `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `items` (Attributes List) Subscriptions ordered by `id` ascending. (see [below for nested schema](#nestedatt--items))
-- `row_count` (Number) Total number of subscriptions visible to the caller. The same value is returned on every page.
+- `row_count` (Number) The number of items across all pages, as reported by the API. It is the same whatever `max_results` and `page_token` are, so with either set it can be larger than the number of items returned. If the API reports no count, `row_count` is the number of items this read returned instead.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

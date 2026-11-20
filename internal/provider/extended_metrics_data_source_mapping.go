@@ -10,15 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// extendedMetricsRowCount returns the API's row count, or the number of items
-// read so far when the API omits it, so row_count is never null.
-func extendedMetricsRowCount(page *models.ExtendedMetricListResponse, fallback int) types.Int64 {
-	if rowCount := nullableToPointer(page.RowCount); rowCount != nil {
-		return types.Int64Value(*rowCount)
-	}
-	return types.Int64Value(int64(fallback))
-}
-
 // mapExtendedMetricsToDataSource maps the list response items to the items
 // attribute. items is [] rather than null when there are none.
 func mapExtendedMetricsToDataSource(ctx context.Context, items []models.ExtendedMetric, data *extendedMetricsDataSourceModel) diag.Diagnostics {

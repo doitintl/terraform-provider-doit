@@ -9,3 +9,8 @@ type StringAttribute struct {
 	Optional bool
 	Computed bool
 }
+type Int64Attribute struct {
+	Required bool
+	Optional bool
+	Computed bool
+}

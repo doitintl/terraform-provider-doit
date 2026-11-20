@@ -85,9 +85,9 @@ output "channel_details" {
 
 ### Optional
 
-- `max_results` (Number)
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page. Value must be between 1 and 500.
 - `name_contains` (String) Case-insensitive substring of the channel display name.
-- `page_token` (String) Page token, returned by a previous call, to request the next page of results
+- `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
@@ -96,7 +96,7 @@ output "channel_details" {
 - `has_shared_channel` (Boolean)
 - `is_workspace_connected` (Boolean)
 - `items` (Attributes List) (see [below for nested schema](#nestedatt--items))
-- `row_count` (Number) Total eligible channels after filtering. Present only when the whole list was returned by a single request without a pageToken; omitted otherwise, because the total is not known until every channel has been listed.
+- `row_count` (Number) The number of items across all pages. With `max_results` set, it is known only when the page holds every item, and null otherwise. Without `max_results`, it is the number of items fetched, which counts only the items from `page_token` on when a `page_token` is set.
 - `workspace_status` (String) Integration status. Reconnect for inactive; grant private-channel scopes for missing_private_scope. None means no usable workspace was found; a shared channel may still be available.
 
 <a id="nestedatt--timeouts"></a>

@@ -3,12 +3,12 @@
 page_title: "doit_extended_metrics Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Extended metrics available to the customer: the global extended metrics and the customer's DataHub metrics. The key of an item is the value of metric = { type = "extended", value = <key> } in doit_custom_metric variables, reports and alerts. Where a key is accepted depends on its data_source: a custom metric variable accepts only billing and billing-datahub keys (use filter = "dataSource:billing,billing-datahub" to list them), and a report or alert accepts the keys of its own data source. A key appears once per data source, so key alone is not unique across items. Items are sorted by label, then key, then data_source. Without max_results every page is fetched; with it, a single page is returned together with the page_token of the next one.
+  Extended metrics available to the customer: the global extended metrics and the customer's DataHub metrics. The key of an item is the value of metric = { type = "extended", value = <key> } in doit_custom_metric variables, reports and alerts. Where a key is accepted depends on its data_source: a custom metric variable accepts only billing and billing-datahub keys (use filter = "dataSource:billing,billing-datahub" to list them), and a report or alert accepts the keys of its own data source. A key appears once per data source, so key alone is not unique across items. Items are sorted by label, then key, then data_source. Without max_results every page is fetched; with it, a single page of at most 500 items is returned together with the page_token of the next one.
 ---
 
 # doit_extended_metrics (Data Source)
 
-Extended metrics available to the customer: the global extended metrics and the customer's DataHub metrics. The `key` of an item is the `value` of `metric = { type = "extended", value = <key> }` in `doit_custom_metric` variables, reports and alerts. Where a key is accepted depends on its `data_source`: a custom metric variable accepts only `billing` and `billing-datahub` keys (use `filter = "dataSource:billing,billing-datahub"` to list them), and a report or alert accepts the keys of its own data source. A key appears once per data source, so `key` alone is not unique across items. Items are sorted by `label`, then `key`, then `data_source`. Without `max_results` every page is fetched; with it, a single page is returned together with the `page_token` of the next one.
+Extended metrics available to the customer: the global extended metrics and the customer's DataHub metrics. The `key` of an item is the `value` of `metric = { type = "extended", value = <key> }` in `doit_custom_metric` variables, reports and alerts. Where a key is accepted depends on its `data_source`: a custom metric variable accepts only `billing` and `billing-datahub` keys (use `filter = "dataSource:billing,billing-datahub"` to list them), and a report or alert accepts the keys of its own data source. A key appears once per data source, so `key` alone is not unique across items. Items are sorted by `label`, then `key`, then `data_source`. Without `max_results` every page is fetched; with it, a single page of at most 500 items is returned together with the `page_token` of the next one.
 
 ## Example Usage
 
@@ -69,14 +69,14 @@ output "next_page_token" {
 ### Optional
 
 - `filter` (String) Restricts the result by data source, as `dataSource:<value>[,<value>...]`. The only supported key is `dataSource`; its values are `billing`, `billing-datahub`, `bqlens`, `genai-collection`, `kubernetes-utilization` and `tokenomics`. For example `dataSource:billing,billing-datahub` lists the keys a custom metric variable accepts. A `page_token` is bound to the `filter` it was returned for; reusing it with another `filter` fails.
-- `max_results` (Number) The maximum number of items to return, at most 500. Setting it returns a single page together with the `page_token` of the next page; omit it to fetch every page.
-- `page_token` (String) Token of the page to start at. With `max_results` set, the page is read once and `page_token` holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and the configured token is kept.
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page.
+- `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `items` (Attributes List) (see [below for nested schema](#nestedatt--items))
-- `row_count` (Number) The number of extended metrics that match `filter`, across all pages, as reported by the API. It is the same for every read, whatever `max_results` and `page_token` are, so with either set it is larger than the number of `items`. If the API reports no count, `row_count` is instead the number of items this read fetched, which is a partial count when `max_results` or `page_token` is set.
+- `row_count` (Number) The number of items across all pages, as reported by the API. It is the same whatever `max_results` and `page_token` are, so with either set it can be larger than the number of items returned. If the API reports no count, `row_count` is the number of items this read returned instead.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

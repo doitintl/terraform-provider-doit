@@ -52,6 +52,7 @@ func (d *ps4cAwsOrganizationsDataSource) Schema(ctx context.Context, _ datasourc
 	s.MarkdownDescription = "List AWS Organizations tracked by PerfectScale for Commitments (PS4C)."
 	s.Description = "List AWS Organizations tracked by PerfectScale for Commitments (PS4C)."
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -73,8 +74,10 @@ func (d *ps4cAwsOrganizationsDataSource) Read(ctx context.Context, req datasourc
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If any pagination input is unknown, return unknown for all computed attributes.
-	if data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_ps4c_aws_organizations.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
 		data.PageToken = types.StringUnknown()
@@ -110,18 +113,18 @@ func (d *ps4cAwsOrganizationsDataSource) Read(ctx context.Context, req datasourc
 
 		// Preserve the API's page_token for the user to fetch the next page.
 		data.PageToken = types.StringPointerValue(nullableToPointer(result.PageToken))
-		if rowCount := nullableToPointer(result.RowCount); rowCount != nil {
-			data.RowCount = types.Int64Value(*rowCount)
-		} else {
-			data.RowCount = types.Int64Value(int64(len(allOrgs)))
-		}
+		data.RowCount = listRowCount(nullableToPointer(result.RowCount), len(allOrgs))
 		// max_results is already set by the user, no change needed.
 	} else {
 		// Auto mode: fetch all pages, honoring a user-provided page_token as the starting point.
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
 		}
-		for {
+		// rowCount is the total across all pages, the same on every page, so it
+		// is taken from the first page even when a page_token starts the read
+		// after the first item.
+		var apiRowCount *int64
+		for first := true; ; first = false {
 			apiResp, err := d.client.ListAwsOrganizationsWithResponse(ctx, params)
 			if err != nil {
 				resp.Diagnostics.AddError("Error Reading PS4C AWS Organizations", fmt.Sprintf("Unable to read PS4C AWS organizations: %v", err))
@@ -133,6 +136,9 @@ func (d *ps4cAwsOrganizationsDataSource) Read(ctx context.Context, req datasourc
 			}
 
 			result := apiResp.JSON200
+			if first {
+				apiRowCount = nullableToPointer(result.RowCount)
+			}
 			allOrgs = append(allOrgs, result.Items...)
 
 			pageToken := nullableToPointer(result.PageToken)
@@ -142,8 +148,8 @@ func (d *ps4cAwsOrganizationsDataSource) Read(ctx context.Context, req datasourc
 			params.PageToken = pageToken
 		}
 
-		// Auto mode: set counts based on what was fetched.
-		data.RowCount = types.Int64Value(int64(len(allOrgs)))
+		// Without a count from the API, the items fetched over all pages stand in for it.
+		data.RowCount = listRowCount(apiRowCount, len(allOrgs))
 		data.PageToken = types.StringNull()
 		// max_results was not set by the user; preserve null.
 	}

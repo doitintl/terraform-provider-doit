@@ -52,6 +52,7 @@ func (d *ps4cGcpResourceCudsDataSource) Schema(ctx context.Context, _ datasource
 	s.MarkdownDescription = "List resource-based commitments (CUDs) for a GCP billing account tracked by PerfectScale for Commitments (PS4C)."
 	s.Description = "List resource-based commitments (CUDs) for a GCP billing account tracked by PerfectScale for Commitments (PS4C)."
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -73,7 +74,10 @@ func (d *ps4cGcpResourceCudsDataSource) Read(ctx context.Context, req datasource
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	if data.BillingAccountId.IsUnknown() || data.Status.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_ps4c_gcp_resource_cuds.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
 		data.PageToken = types.StringUnknown()
@@ -112,16 +116,16 @@ func (d *ps4cGcpResourceCudsDataSource) Read(ctx context.Context, req datasource
 		allCuds = result.Items
 
 		data.PageToken = types.StringPointerValue(nullableToPointer(result.PageToken))
-		if rowCount := nullableToPointer(result.RowCount); rowCount != nil {
-			data.RowCount = types.Int64Value(*rowCount)
-		} else {
-			data.RowCount = types.Int64Value(int64(len(allCuds)))
-		}
+		data.RowCount = listRowCount(nullableToPointer(result.RowCount), len(allCuds))
 	} else {
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
 		}
-		for {
+		// rowCount is the total across all pages, the same on every page, so it
+		// is taken from the first page even when a page_token starts the read
+		// after the first item.
+		var apiRowCount *int64
+		for first := true; ; first = false {
 			apiResp, err := d.client.ListGcpResourceCudsWithResponse(ctx, billingAccountId, params)
 			if err != nil {
 				resp.Diagnostics.AddError("Error Reading PS4C GCP Resource CUDs", fmt.Sprintf("Unable to read PS4C GCP resource CUDs: %v", err))
@@ -133,6 +137,9 @@ func (d *ps4cGcpResourceCudsDataSource) Read(ctx context.Context, req datasource
 			}
 
 			result := apiResp.JSON200
+			if first {
+				apiRowCount = nullableToPointer(result.RowCount)
+			}
 			allCuds = append(allCuds, result.Items...)
 
 			pageToken := nullableToPointer(result.PageToken)
@@ -142,8 +149,10 @@ func (d *ps4cGcpResourceCudsDataSource) Read(ctx context.Context, req datasource
 			params.PageToken = pageToken
 		}
 
-		data.RowCount = types.Int64Value(int64(len(allCuds)))
+		// Without a count from the API, the items fetched over all pages stand in for it.
+		data.RowCount = listRowCount(apiRowCount, len(allCuds))
 		data.PageToken = types.StringNull()
+		data.MaxResults = types.Int64Null()
 	}
 
 	itemsList, itemsDiags := mapGcpResourceCudsToItemsList(ctx, allCuds)

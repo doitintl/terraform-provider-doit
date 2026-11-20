@@ -48,6 +48,7 @@ func (d *customMetricsDataSource) Schema(ctx context.Context, _ datasource.Schem
 	s.Description = "Custom metrics of the customer. Preset metrics are not listed. Without `max_results` every page is fetched; with it, a single page is returned together with the `page_token` of the next one. A `page_token` is bound to `name_contains`, `filter`, `sort_by` and `sort_order`: reuse it only with the same values."
 	s.MarkdownDescription = s.Description
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s
 }
@@ -70,30 +71,9 @@ func (d *customMetricsDataSource) Read(ctx context.Context, req datasource.ReadR
 	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_custom_metrics.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
-		// The inputs are Optional+Computed: a configured value stays as
-		// configured, an omitted one is not yet determined.
-		if data.Filter.IsNull() {
-			data.Filter = types.StringUnknown()
-		}
-		if data.NameContains.IsNull() {
-			data.NameContains = types.StringUnknown()
-		}
-		if data.SortBy.IsNull() {
-			data.SortBy = types.StringUnknown()
-		}
-		if data.SortOrder.IsNull() {
-			data.SortOrder = types.StringUnknown()
-		}
-		// With max_results set, or not yet known, page_token is the next page's
-		// token. Only in auto-pagination mode (max_results omitted) is a
-		// configured one just the starting point, which stays as configured.
-		autoPagination := data.MaxResults.IsNull()
-		if data.MaxResults.IsNull() {
-			data.MaxResults = types.Int64Unknown()
-		}
-		if !autoPagination || data.PageToken.IsNull() {
-			data.PageToken = types.StringUnknown()
-		}
+		// page_token is a result in every mode: a read replaces it with the
+		// next page's token, or null. The inputs stay as configured.
+		data.PageToken = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -129,10 +109,7 @@ func (d *customMetricsDataSource) Read(ctx context.Context, req datasource.ReadR
 		items = page.Items
 		// Keep the next page's token for the user.
 		data.PageToken = types.StringPointerValue(page.PageToken)
-		data.RowCount = types.Int64Value(int64(len(items)))
-		if rowCount := nullableToPointer(page.RowCount); rowCount != nil {
-			data.RowCount = types.Int64Value(*rowCount)
-		}
+		data.RowCount = listRowCount(nullableToPointer(page.RowCount), len(items))
 	} else {
 		// row_count is the API's total across all pages, so it is taken from the
 		// first page even when a page_token starts the read after the first item.
@@ -155,11 +132,8 @@ func (d *customMetricsDataSource) Read(ctx context.Context, req datasource.ReadR
 			}
 			params.PageToken = page.PageToken
 		}
-		data.RowCount = types.Int64Value(int64(len(items)))
-		if apiRowCount != nil {
-			data.RowCount = types.Int64Value(*apiRowCount)
-		}
-		// A configured page_token stays as configured.
+		data.RowCount = listRowCount(apiRowCount, len(items))
+		data.PageToken = types.StringNull()
 		data.MaxResults = types.Int64Null()
 	}
 

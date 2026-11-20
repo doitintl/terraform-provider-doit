@@ -147,6 +147,16 @@ func (r *myResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 
 > **Linter:** `crudnaming` — flags mismatches between variable names and data sources.
 
+## Adopting a Spec Change in Existing Code
+
+When `make sync-spec` or `make apply-pr` changes the types of an endpoint that a resource or data source already uses, `make generate` rewrites the models and schemas. The existing code is not rewritten. Check:
+
+1. `go build ./...` finds the production breaks, for example `int` to `*int` when a field becomes optional.
+2. `go vet ./internal/provider/` finds the test breaks, which `go build` skips: struct literals of the changed model types in `_test.go` files.
+3. Grep the changed field names (`RowCount`, …) across `internal/provider/` and update every use, including the branches a type change makes possible. A field that becomes optional needs a fallback or a null, and its tests need a row without it.
+4. Update the hand-written descriptions, the data source's documentation template, and the Pagination Guide when paging changed. Then run `make docs`.
+5. Add a CHANGELOG entry for anything user-visible.
+
 ## Error Messages
 
 Always include **both** status code and response body in HTTP error messages:

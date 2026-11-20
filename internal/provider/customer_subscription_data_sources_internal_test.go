@@ -403,8 +403,9 @@ func TestCustomerSubscriptionsDataSourcePageTokenStartsAutoPagination(t *testing
 	if got := strings.Join(itemIDs(t, data), ","); got != "a2,a3" {
 		t.Errorf("items = %s", got)
 	}
-	if data.PageToken.ValueString() != "p2" {
-		t.Errorf("configured page_token must be kept, got %v", data.PageToken)
+	// Auto mode reads to the last page, so no next page token remains.
+	if !data.PageToken.IsNull() {
+		t.Errorf("page_token = %v, want null after the last page", data.PageToken)
 	}
 	// row_count is the API's total across all pages, not the size of the suffix
 	// that was fetched.
@@ -487,8 +488,12 @@ func TestCustomerSubscriptionsDataSourceUnknownConfig(t *testing.T) {
 	if diags := resp.State.Get(t.Context(), &data); diags.HasError() {
 		t.Fatal(diags)
 	}
-	if !data.Items.IsUnknown() || !data.RowCount.IsUnknown() {
+	if !data.Items.IsUnknown() || !data.RowCount.IsUnknown() || !data.PageToken.IsUnknown() {
 		t.Fatalf("outputs must remain unknown: %+v", data)
+	}
+	// max_results is an input: omitted, it stays null.
+	if !data.MaxResults.IsNull() {
+		t.Errorf("max_results = %v, want null as configured", data.MaxResults)
 	}
 }
 

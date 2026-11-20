@@ -35,10 +35,13 @@ output "risk_summary" {
   value = data.doit_budgets.all.risk_aggregations
 }
 
-# Output budget names and risk status
+# Output each budget's name and risk status, keyed by ID (names need not be unique)
 output "budget_risks" {
   value = {
-    for b in data.doit_budgets.all.budgets : b.budget_name => b.risk_status
+    for b in data.doit_budgets.all.budgets : b.id => {
+      name        = b.budget_name
+      risk_status = b.risk_status
+    }
   }
 }
 
@@ -73,17 +76,17 @@ Available keys: owner, budgetName, lastModified in ms (>lasModified), riskStatus
 A budget is "atRisk" when it has already exceeded its configured amount, or its forecast projects it will exceed the configured amount before the current period ends. Budgets with no forecast data yet, a fixed budget whose period has already expired, or that are invalid/draft are classified "unknown". Filtering to riskStatus:atRisk sorts results by earliest projected breach date (day granularity) ascending instead of the default order; budgets that tie on breach day, including every already-breached budget, resolve to a fixed, repeatable order across requests rather than an arbitrary one.
 Because riskStatus is computed from live, periodically-refreshed budget data, paginated results filtered by riskStatus may shift between page requests if budget data refreshes mid-pagination.
 - `max_creation_time` (String) Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.
-- `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page.
 - `min_creation_time` (String) Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
 - `name_contains` (String) Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
-- `page_token` (String) Page token, returned by a previous call, to request the next page of results
+- `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `budgets` (Attributes List) Array of Budgets (see [below for nested schema](#nestedatt--budgets))
 - `risk_aggregations` (Attributes) Aggregate counts of risk statuses across the full filtered result set (all pages), not just the current page. (see [below for nested schema](#nestedatt--risk_aggregations))
-- `row_count` (Number) Budgets rows count
+- `row_count` (Number) The number of items this read returned: with `max_results` set, the items of that page; without it, the items of every page fetched.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

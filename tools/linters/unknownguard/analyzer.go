@@ -17,10 +17,23 @@
 //  3. If the schema has any Required or Optional input attributes, verify the
 //     Read() body contains IsUnknown() or IsFullyKnown() checks
 //  4. Data sources with only Computed attributes are excluded (no user inputs to check)
+//
+// List data sources (max_results, page_token and row_count in the schema) get
+// one stricter check, because their fallback is fully determined: a read
+// replaces page_token with the next page's token or null in every mode, and
+// row_count is a result. Their Read() must guard, in a statement of the Read()
+// body itself rather than inside another branch, with a condition that holds
+// for every configuration that is not fully known (!x.IsFullyKnown(), alone or
+// ORed with other conditions; an inverted or ANDed check lets unknown
+// configuration reach the API), and the guard's body must assign
+// PageToken = types.StringUnknown() and
+// RowCount = types.Int64Unknown() as top-level statements, not under a
+// condition such as "only when page_token is null", and end with return.
 package unknownguard
 
 import (
 	"go/ast"
+	"go/token"
 	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/tools/linters/schemaparser"
@@ -49,12 +62,18 @@ func run(pass *analysis.Pass) (any, error) {
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Build a map of data source schema names → whether they have user inputs.
+	// Build a map of data source schema names → whether they have user inputs,
+	// and which of them are paged list data sources.
 	dsHasInputs := map[string]bool{}
+	dsIsList := map[string]bool{}
 	for name, info := range schemaFacts.Schemas {
 		if !strings.HasSuffix(name, "DataSourceSchema") {
 			continue
 		}
+		_, hasMaxResults := info.Attrs["max_results"]
+		_, hasPageToken := info.Attrs["page_token"]
+		_, hasRowCount := info.Attrs["row_count"]
+		dsIsList[name] = hasMaxResults && hasPageToken && hasRowCount
 		for _, attr := range info.Attrs {
 			if attr.Class == schemaparser.Required ||
 				attr.Class == schemaparser.Optional ||
@@ -121,6 +140,11 @@ func run(pass *analysis.Pass) (any, error) {
 
 		// Skip data sources with no user inputs.
 		if !dsHasInputs[schemaName] {
+			return
+		}
+
+		if dsIsList[schemaName] {
+			checkListGuard(pass, fn)
 			return
 		}
 
@@ -224,4 +248,81 @@ func hasUnknownGuard(body *ast.BlockStmt) bool {
 		return true
 	})
 	return found
+}
+
+// checkListGuard reports a list data source Read() whose guard is not an
+// IsFullyKnown() check, directly in the Read() body, that sets PageToken and
+// RowCount unknown unconditionally and returns.
+func checkListGuard(pass *analysis.Pass, fn *ast.FuncDecl) {
+	// Only a statement of the Read() body itself runs for every configuration;
+	// a guard nested in another branch is skipped whenever that branch is.
+	var guard *ast.IfStmt
+	for _, stmt := range fn.Body.List {
+		if ifStmt, ok := stmt.(*ast.IfStmt); ok && coversNotFullyKnown(ifStmt.Cond) {
+			guard = ifStmt
+			break
+		}
+	}
+	if guard == nil {
+		pass.Reportf(fn.Name.Pos(),
+			"list data source Read() must guard unknown protocol configuration with req.Config.Raw.IsFullyKnown()")
+		return
+	}
+
+	var setsPageToken, setsRowCount bool
+	for _, stmt := range guard.Body.List {
+		assign, ok := stmt.(*ast.AssignStmt)
+		if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			continue
+		}
+		field, ok := assign.Lhs[0].(*ast.SelectorExpr)
+		if !ok {
+			continue
+		}
+		switch {
+		case field.Sel.Name == "PageToken" && isCallTo(assign.Rhs[0], "StringUnknown"):
+			setsPageToken = true
+		case field.Sel.Name == "RowCount" && isCallTo(assign.Rhs[0], "Int64Unknown"):
+			setsRowCount = true
+		}
+	}
+	if !setsPageToken || !setsRowCount {
+		pass.Reportf(guard.Pos(),
+			"list data source unknown guard must set PageToken = types.StringUnknown() and RowCount = types.Int64Unknown() "+
+				"unconditionally: a read replaces page_token in every mode")
+	}
+
+	// Without the return, the read goes on to the API with unknown configuration.
+	if n := len(guard.Body.List); n == 0 {
+		pass.Reportf(guard.Pos(), "list data source unknown guard must end with return")
+	} else if _, ok := guard.Body.List[n-1].(*ast.ReturnStmt); !ok {
+		pass.Reportf(guard.Pos(), "list data source unknown guard must end with return")
+	}
+}
+
+// coversNotFullyKnown reports whether cond holds whenever the configuration is
+// not fully known: it is !x.IsFullyKnown(), possibly ORed with other conditions.
+func coversNotFullyKnown(cond ast.Expr) bool {
+	switch e := ast.Unparen(cond).(type) {
+	case *ast.UnaryExpr:
+		return e.Op == token.NOT && isCallTo(ast.Unparen(e.X), "IsFullyKnown")
+	case *ast.BinaryExpr:
+		return e.Op == token.LOR && (coversNotFullyKnown(e.X) || coversNotFullyKnown(e.Y))
+	}
+	return false
+}
+
+// isCallTo reports whether expr is a call of a function or method named name.
+func isCallTo(expr ast.Expr, name string) bool {
+	call, ok := expr.(*ast.CallExpr)
+	if !ok {
+		return false
+	}
+	switch f := call.Fun.(type) {
+	case *ast.SelectorExpr:
+		return f.Sel.Name == name
+	case *ast.Ident:
+		return f.Name == name
+	}
+	return false
 }

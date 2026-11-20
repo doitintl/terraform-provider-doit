@@ -247,47 +247,36 @@ func TestDimensionsDataSource_UnknownGuards(t *testing.T) {
 }
 
 func TestDimensionsDataSource_UnknownGuards_PageTokenSemantics(t *testing.T) {
+	// page_token is a result in every mode: a real read replaces it with the
+	// next page's token, or null. The guard therefore plans it unknown, even
+	// when it was configured, and leaves max_results as configured.
 	for _, tc := range []struct {
 		name           string
 		overrides      map[string]tftypes.Value
-		checkPageToken func(t *testing.T, pt types.String)
+		wantMaxResults types.Int64
 	}{
 		{
-			name: "configured page_token preserved when filter is unknown",
+			name: "configured page_token with unknown filter",
 			overrides: map[string]tftypes.Value{
 				"filter":     tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
 				"page_token": tftypes.NewValue(tftypes.String, "preset-token"),
 			},
-			checkPageToken: func(t *testing.T, pt types.String) {
-				if pt.IsNull() || pt.IsUnknown() || pt.ValueString() != "preset-token" {
-					t.Errorf("expected PageToken to preserve configured value 'preset-token', got %v", pt)
-				}
-			},
+			wantMaxResults: types.Int64Null(),
 		},
 		{
-			name: "omitted page_token with max_results and unknown filter preserves config null in protocol fallback",
+			name: "omitted page_token with max_results and unknown filter",
 			overrides: map[string]tftypes.Value{
 				"filter":      tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
 				"max_results": tftypes.NewValue(tftypes.Number, int64(2)),
 			},
-			checkPageToken: func(t *testing.T, pt types.String) {
-				// In the direct Read() protocol fallback, PageToken is not overwritten;
-				// Terraform Core defers ReadDataSource during plan (verified in TestAccDimensionsDataSource_UnknownConfigDeferredByCore).
-				if !pt.IsNull() {
-					t.Errorf("expected PageToken to remain null from config in direct fallback, got %v", pt)
-				}
-			},
+			wantMaxResults: types.Int64Value(2),
 		},
 		{
-			name: "auto-pagination with unknown filter preserves config null in protocol fallback",
+			name: "auto-pagination with unknown filter",
 			overrides: map[string]tftypes.Value{
 				"filter": tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
 			},
-			checkPageToken: func(t *testing.T, pt types.String) {
-				if !pt.IsNull() {
-					t.Errorf("expected PageToken to remain null for auto-pagination, got %v", pt)
-				}
-			},
+			wantMaxResults: types.Int64Null(),
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -312,7 +301,12 @@ func TestDimensionsDataSource_UnknownGuards_PageTokenSemantics(t *testing.T) {
 			if !model.RowCount.IsUnknown() {
 				t.Errorf("expected RowCount to be unknown, got %v", model.RowCount)
 			}
-			tc.checkPageToken(t, model.PageToken)
+			if !model.PageToken.IsUnknown() {
+				t.Errorf("expected PageToken to be unknown, got %v", model.PageToken)
+			}
+			if !model.MaxResults.Equal(tc.wantMaxResults) {
+				t.Errorf("expected MaxResults to stay %v, got %v", tc.wantMaxResults, model.MaxResults)
+			}
 		})
 	}
 }

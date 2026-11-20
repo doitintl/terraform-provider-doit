@@ -21,10 +21,13 @@ output "risk_summary" {
   value = data.doit_budgets.all.risk_aggregations
 }
 
-# Output budget names and risk status
+# Output each budget's name and risk status, keyed by ID (names need not be unique)
 output "budget_risks" {
   value = {
-    for b in data.doit_budgets.all.budgets : b.budget_name => b.risk_status
+    for b in data.doit_budgets.all.budgets : b.id => {
+      name        = b.budget_name
+      risk_status = b.risk_status
+    }
   }
 }
 

@@ -263,8 +263,8 @@ data "doit_composer_recipes" "from_token" {
 					resource.TestCheckResourceAttr("data.doit_composer_recipes.first_page", "items.#", "1"),
 					resource.TestCheckResourceAttr("data.doit_composer_recipes.first_page", "row_count", strconv.Itoa(composerRecipeTotalCount)),
 					resource.TestCheckResourceAttrSet("data.doit_composer_recipes.first_page", "page_token"),
-					testCheckResourceAttrLessThan("data.doit_composer_recipes.from_token", "row_count", composerRecipeTotalCount),
-					resource.TestCheckResourceAttr("data.doit_composer_recipes.from_token", "row_count", strconv.Itoa(composerRecipeTotalCount-1)),
+					// row_count is the API's total, the same for a read that starts after the first item.
+					resource.TestCheckResourceAttr("data.doit_composer_recipes.from_token", "row_count", strconv.Itoa(composerRecipeTotalCount)),
 					resource.TestCheckResourceAttr("data.doit_composer_recipes.from_token", "items.#", strconv.Itoa(composerRecipeTotalCount-1)),
 					resource.TestCheckNoResourceAttr("data.doit_composer_recipes.from_token", "page_token"),
 					testCheckResourceAttrNotEqualAttr(

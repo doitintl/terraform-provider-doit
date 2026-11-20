@@ -46,8 +46,8 @@ output "cuds" {
 
 - `gcp_service` (String) Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
 Possible values: `compute`, `cloud_sql`
-- `max_results` (Number) Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
-- `page_token` (String) Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page. Value must be between 1 and 500.
+- `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read. A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.
 - `region` (String) Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
 literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
 returns `400` with code `gcp_service_required`. When both are omitted, all available
@@ -65,7 +65,7 @@ Possible values: `active`, `expired`, `creating`, `pending`, `cancelled`, `not_y
 ### Read-Only
 
 - `items` (Attributes List) (see [below for nested schema](#nestedatt--items))
-- `row_count` (Number) Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+- `row_count` (Number) The number of items across all pages, as reported by the API. It is the same whatever `max_results` and `page_token` are, so with either set it can be larger than the number of items returned. If the API reports no count, `row_count` is the number of items this read returned instead.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

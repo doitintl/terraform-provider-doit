@@ -53,6 +53,7 @@ func (d *ps4cGcpPlannedPurchasesDataSource) Schema(ctx context.Context, _ dataso
 	s.MarkdownDescription = "Retrieve planned commitment purchase projections for a GCP billing account tracked by PerfectScale for Commitments (PS4C)."
 	s.Description = "Retrieve planned commitment purchase projections for a GCP billing account tracked by PerfectScale for Commitments (PS4C)."
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountPage, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -80,7 +81,10 @@ func (d *ps4cGcpPlannedPurchasesDataSource) Read(ctx context.Context, req dataso
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	if data.BillingAccountId.IsUnknown() || data.GcpService.IsUnknown() || data.Region.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_ps4c_gcp_planned_purchases.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
 		data.PageToken = types.StringUnknown()
@@ -123,7 +127,7 @@ func (d *ps4cGcpPlannedPurchasesDataSource) Read(ctx context.Context, req dataso
 		allPurchases = result.Items
 
 		data.PageToken = types.StringPointerValue(nullableToPointer(result.PageToken))
-		data.RowCount = types.Int64Value(result.RowCount)
+		data.RowCount = listRowCount(&result.RowCount, len(allPurchases))
 	} else {
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
@@ -149,8 +153,11 @@ func (d *ps4cGcpPlannedPurchasesDataSource) Read(ctx context.Context, req dataso
 			params.PageToken = pageToken
 		}
 
+		// rowCount counts the items of one page, so row_count counts every page fetched.
 		data.RowCount = types.Int64Value(int64(len(allPurchases)))
 		data.PageToken = types.StringNull()
+		// max_results was not set by user; normalize to null
+		data.MaxResults = types.Int64Null()
 	}
 
 	itemsList, itemsDiags := mapGcpPlannedPurchasesToItemsList(ctx, allPurchases)

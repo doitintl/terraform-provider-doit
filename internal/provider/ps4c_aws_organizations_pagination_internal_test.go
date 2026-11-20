@@ -80,14 +80,15 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 				_, _ = fmt.Fprint(w, `{
 					"items": [{"managementAccountId": "333333333333"}],
 					"pageToken": "second-page-token",
-					"rowCount": 1
+					"rowCount": 3
 				}`)
 				return
 			}
-			// Second call in the loop: no further pages.
+			// Second call in the loop: no further pages. rowCount is the total
+			// across all pages, including the page before start-token.
 			_, _ = fmt.Fprint(w, `{
 				"items": [{"managementAccountId": "444444444444"}],
-				"rowCount": 1
+				"rowCount": 3
 			}`)
 		}))
 
@@ -106,8 +107,9 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 		if got := len(data.Items.Elements()); got != 2 {
 			t.Errorf("items count = %d, want 2 (accumulated across both pages)", got)
 		}
-		if got := data.RowCount.ValueInt64(); got != 2 {
-			t.Errorf("row_count = %d, want 2", got)
+		// row_count is the API's total, not the number of items read from the token on.
+		if got := data.RowCount.ValueInt64(); got != 3 {
+			t.Errorf("row_count = %d, want 3", got)
 		}
 		// Auto mode always nulls page_token once pagination completes.
 		if !data.PageToken.IsNull() {

@@ -37,6 +37,9 @@ func (d *composerRecipesDataSource) Metadata(_ context.Context, req datasource.M
 
 func (d *composerRecipesDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_composer_recipes.ComposerRecipesDataSourceSchema(ctx)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal,
+		"A `page_token` works only with the `sort_by`, `sort_order`, `filter` and `max_results` it was returned for, and expires 5 minutes after it was issued. "+
+			"An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s
 }
@@ -74,10 +77,13 @@ func (d *composerRecipesDataSource) Read(ctx context.Context, req datasource.Rea
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If any filter/pagination input is unknown, return unknown list
-	if data.Filter.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() {
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_composer_recipes.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
+		data.PageToken = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -121,12 +127,16 @@ func (d *composerRecipesDataSource) Read(ctx context.Context, req datasource.Rea
 		result := apiResp.JSON200
 		allItems = result.Items
 		data.PageToken = types.StringPointerValue(result.PageToken)
-		data.RowCount = types.Int64Value(result.RowCount)
+		data.RowCount = listRowCount(&result.RowCount, len(allItems))
 	} else {
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
 		}
-		for {
+		// rowCount is the total across all pages, the same on every page, so it
+		// is taken from the first page even when a page_token starts the read
+		// after the first item.
+		var apiRowCount *int64
+		for first := true; ; first = false {
 			apiResp, err := d.client.ListComposerRecipesWithResponse(ctx, params)
 			if err != nil {
 				resp.Diagnostics.AddError(
@@ -144,6 +154,9 @@ func (d *composerRecipesDataSource) Read(ctx context.Context, req datasource.Rea
 			}
 
 			result := apiResp.JSON200
+			if first {
+				apiRowCount = &result.RowCount
+			}
 			allItems = append(allItems, result.Items...)
 
 			if result.PageToken == nil || *result.PageToken == "" {
@@ -152,8 +165,9 @@ func (d *composerRecipesDataSource) Read(ctx context.Context, req datasource.Rea
 			params.PageToken = result.PageToken
 		}
 
-		data.RowCount = types.Int64Value(int64(len(allItems)))
+		data.RowCount = listRowCount(apiRowCount, len(allItems))
 		data.PageToken = types.StringNull()
+		data.MaxResults = types.Int64Null()
 	}
 
 	itemsList, mapDiags := mapComposerRecipesItemsList(ctx, allItems)

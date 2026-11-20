@@ -223,8 +223,9 @@ func TestExtendedMetricsDataSourcePageTokenStartsAutoPagination(t *testing.T) {
 	if got, want := extendedMetricsKeys(t, data), "b_rides@billing-datahub,c_gpu@tokenomics"; got != want {
 		t.Errorf("items = %s, want %s", got, want)
 	}
-	if data.PageToken.ValueString() != "p2" {
-		t.Errorf("configured page_token must be kept, got %v", data.PageToken)
+	// page_token is the next page's token, and there is none after the last page.
+	if !data.PageToken.IsNull() {
+		t.Errorf("page_token = %v, want null after reading every page", data.PageToken)
 	}
 	// row_count is the API's total across all pages, not the size of the suffix
 	// that was fetched.
@@ -298,11 +299,9 @@ func TestExtendedMetricsDataSourceEmpty(t *testing.T) {
 }
 
 // With unknown configuration the read makes no request and writes a state in
-// which every output is unknown. Each input keeps its configured value; an
-// omitted or unknown one is not yet determined. page_token is the exception: it
-// is the next page's token whenever max_results is set or not yet known, and
-// only in auto-pagination mode (max_results omitted) is a configured one a
-// starting point that stays as configured.
+// which every result is unknown. page_token is a result in every mode, because
+// a read replaces it with the next page's token or null. Every other input
+// stays as configured, so an omitted one stays null.
 func TestExtendedMetricsDataSourceUnknownConfig(t *testing.T) {
 	unknownString := tftypes.NewValue(tftypes.String, tftypes.UnknownValue)
 	unknownNumber := tftypes.NewValue(tftypes.Number, tftypes.UnknownValue)
@@ -311,6 +310,7 @@ func TestExtendedMetricsDataSourceUnknownConfig(t *testing.T) {
 
 	const (
 		unknown = "<unknown>"
+		null    = "<null>"
 	)
 
 	for _, tc := range []struct {
@@ -322,17 +322,17 @@ func TestExtendedMetricsDataSourceUnknownConfig(t *testing.T) {
 		{
 			name:       "unknown filter",
 			config:     map[string]tftypes.Value{"filter": unknownString},
-			wantFilter: unknown, wantMaxResults: unknown, wantPageToken: unknown,
+			wantFilter: unknown, wantMaxResults: null, wantPageToken: unknown,
 		},
 		{
 			name:       "unknown max_results",
 			config:     map[string]tftypes.Value{"max_results": unknownNumber},
-			wantFilter: unknown, wantMaxResults: unknown, wantPageToken: unknown,
+			wantFilter: null, wantMaxResults: unknown, wantPageToken: unknown,
 		},
 		{
 			name:       "unknown page_token",
 			config:     map[string]tftypes.Value{"page_token": unknownString},
-			wantFilter: unknown, wantMaxResults: unknown, wantPageToken: unknown,
+			wantFilter: null, wantMaxResults: null, wantPageToken: unknown,
 		},
 		{
 			name: "max_results and a starting page_token next to an unknown filter",
@@ -346,14 +346,14 @@ func TestExtendedMetricsDataSourceUnknownConfig(t *testing.T) {
 			config: map[string]tftypes.Value{
 				"max_results": unknownNumber, "page_token": str("p2"),
 			},
-			wantFilter: unknown, wantMaxResults: unknown, wantPageToken: unknown,
+			wantFilter: null, wantMaxResults: unknown, wantPageToken: unknown,
 		},
 		{
 			name: "a starting page_token in auto-pagination mode next to an unknown filter",
 			config: map[string]tftypes.Value{
 				"page_token": str("p2"), "filter": unknownString,
 			},
-			wantFilter: unknown, wantMaxResults: unknown, wantPageToken: `"p2"`,
+			wantFilter: unknown, wantMaxResults: null, wantPageToken: unknown,
 		},
 		{
 			name: "max_results without a page_token next to an unknown filter",
@@ -367,7 +367,7 @@ func TestExtendedMetricsDataSourceUnknownConfig(t *testing.T) {
 			config: map[string]tftypes.Value{
 				"filter": str("dataSource:billing"), "page_token": unknownString,
 			},
-			wantFilter: `"dataSource:billing"`, wantMaxResults: unknown, wantPageToken: unknown,
+			wantFilter: `"dataSource:billing"`, wantMaxResults: null, wantPageToken: unknown,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

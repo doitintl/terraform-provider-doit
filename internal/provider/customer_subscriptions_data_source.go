@@ -48,6 +48,7 @@ func (d *customerSubscriptionsDataSource) Schema(ctx context.Context, _ datasour
 	s.Description = "Organization-wide subscriptions visible to the caller. Alerts and budgets are listed too; their entries have type `alert` or `budget` and no schedule. Without `max_results` every page is fetched; with it, a single page is returned together with the `page_token` of the next one."
 	s.MarkdownDescription = s.Description
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s
 }
@@ -67,16 +68,13 @@ func (d *customerSubscriptionsDataSource) Read(ctx context.Context, req datasour
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
 	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_customer_subscriptions.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
-		// max_results and page_token are inputs: a known one stays as configured.
-		if data.MaxResults.IsNull() {
-			data.MaxResults = types.Int64Unknown()
-		}
-		if data.PageToken.IsNull() {
-			data.PageToken = types.StringUnknown()
-		}
+		data.PageToken = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -100,19 +98,19 @@ func (d *customerSubscriptionsDataSource) Read(ctx context.Context, req datasour
 		items = page.Items
 		// Keep the next page's token for the user.
 		data.PageToken = types.StringPointerValue(page.PageToken)
-		data.RowCount = types.Int64Value(page.RowCount)
+		data.RowCount = listRowCount(&page.RowCount, len(items))
 	} else {
-		// row_count is the API's total across all pages, even when a page_token
-		// starts the read after the first item, so it is taken from the first page.
-		first := true
-		for {
+		// rowCount is the total across all pages, the same on every page, so it
+		// is taken from the first page even when a page_token starts the read
+		// after the first item.
+		var apiRowCount *int64
+		for first := true; ; first = false {
 			page, ok := d.listPage(ctx, params, &resp.Diagnostics)
 			if !ok {
 				return
 			}
 			if first {
-				data.RowCount = types.Int64Value(page.RowCount)
-				first = false
+				apiRowCount = &page.RowCount
 			}
 			items = append(items, page.Items...)
 			if page.PageToken == nil || *page.PageToken == "" {
@@ -120,7 +118,8 @@ func (d *customerSubscriptionsDataSource) Read(ctx context.Context, req datasour
 			}
 			params.PageToken = page.PageToken
 		}
-		// A configured page_token stays as configured.
+		data.RowCount = listRowCount(apiRowCount, len(items))
+		data.PageToken = types.StringNull()
 		data.MaxResults = types.Int64Null()
 	}
 

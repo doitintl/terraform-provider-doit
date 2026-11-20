@@ -391,13 +391,15 @@ func TestPs4cGcpSpendCudsDataSource_Read_Pagination(t *testing.T) {
 				_, _ = fmt.Fprint(w, `{
 					"items": [{"cudId": "CUD-3", "cudProductName": "Compute Flexible", "state": "ACTIVE"}],
 					"pageToken": "second-page-token",
-					"rowCount": 1
+					"rowCount": 3
 				}`)
 				return
 			}
+			// Second call in the loop: no further pages. rowCount is the total
+			// across all pages, including the page before start-token.
 			_, _ = fmt.Fprint(w, `{
 				"items": [{"cudId": "CUD-4", "cudProductName": "Cloud SQL", "state": "ACTIVE"}],
-				"rowCount": 1
+				"rowCount": 3
 			}`)
 		}))
 
@@ -425,8 +427,9 @@ func TestPs4cGcpSpendCudsDataSource_Read_Pagination(t *testing.T) {
 		if got := len(data.Items.Elements()); got != 2 {
 			t.Errorf("items count = %d, want 2 (accumulated across both pages)", got)
 		}
-		if got := data.RowCount.ValueInt64(); got != 2 {
-			t.Errorf("row_count = %d, want 2", got)
+		// row_count is the API's total, not the number of items read from the token on.
+		if got := data.RowCount.ValueInt64(); got != 3 {
+			t.Errorf("row_count = %d, want 3", got)
 		}
 		if !data.PageToken.IsNull() {
 			t.Errorf("page_token = %q, want null after auto-pagination completes", data.PageToken.ValueString())

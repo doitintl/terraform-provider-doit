@@ -25,7 +25,8 @@ With auto-pagination:
 
 - All pages are fetched transparently
 - `page_token` is set to `null` in the result (there's no "next page")
-- `row_count` reflects the total number of items
+- If you set `page_token`, it is where the read starts: every page from that token on is fetched, and `page_token` is still `null` in the result
+- `row_count` reflects the total number of items (see [Row Count](#row-count))
 
 ~> **Note:** For data sources with potentially large result sets, auto-pagination may take longer. Consider using manual pagination or filters to limit results.
 
@@ -39,10 +40,16 @@ data "doit_invoices" "page1" {
   max_results = 5
 }
 
-# Use the page_token to fetch the next page
+# Fetch the next page, but only if there is one
 data "doit_invoices" "page2" {
+  count = data.doit_invoices.page1.page_token != null ? 1 : 0
+
   max_results = 5
   page_token  = data.doit_invoices.page1.page_token
+}
+
+output "second_page_token" {
+  value = one(data.doit_invoices.page2[*].page_token)
 }
 ```
 
@@ -51,6 +58,19 @@ With manual pagination:
 - Only the requested number of results are fetched per call
 - `page_token` contains the token for the next page (or `null` if no more pages)
 - You can chain multiple data source declarations to iterate through pages
+
+~> **Note:** Guard each chained read with `count` as shown above. A `null` `page_token` together with `max_results` reads the **first** page, so an unguarded `page2` would start over at the beginning of the list once `page1` is the last page.
+
+A page can hold fewer items than `max_results`, or even none, while `page_token` is set, for example when a filter removes most of the items the API scanned for that page. Only a `null` `page_token` marks the end of the list, so keep following it until it is `null`.
+
+## Row Count
+
+`row_count` has one meaning per data source, whatever `max_results` and `page_token` are:
+
+- **Total across all pages**: the number of items as reported by the API. With `max_results` or `page_token` set it can be larger than the number of items returned. If the API reports no count, `row_count` is the number of items the read returned instead.
+- **Items returned**: the number of items in the result. With `max_results` set that is one page; without it, every page fetched.
+
+The table below lists which one each data source reports. A data source's `row_count` documentation says the same.
 
 ## Cloud Incidents
 
@@ -68,30 +88,39 @@ data "doit_cloud_incidents" "recent" {
 
 The following table shows which data sources support pagination:
 
-| Data Source                 | Auto-Pagination | Manual Pagination |
-| --------------------------- | --------------- | ----------------- |
-| `doit_alert_slack_channels` | ✓               | ✓                 |
-| `doit_alerts`               | ✓               | ✓                 |
-| `doit_allocations`          | ✓               | ✓                 |
-| `doit_annotations`          | ✓               | ✓                 |
-| `doit_anomalies`            | ✓               | ✓                 |
-| `doit_assets`               | ✓               | ✓                 |
-| `doit_budgets`              | ✓               | ✓                 |
-| `doit_cloud_diagrams_search` | ✓               | ✓                 |
-| `doit_cloud_incidents`      | ✗               | ✓                 |
-| `doit_commitments`          | ✓               | ✓                 |
-| `doit_dimensions`           | ✓               | ✓                 |
-| `doit_invoices`                 | ✓               | ✓                 |
-| `doit_labels`                   | ✓               | ✓                 |
-| `doit_ps4c_aws_organizations`   | ✓               | ✓                 |
-| `doit_ps4c_commitment_policies` | ✓               | ✓                 |
-| `doit_ps4c_gcp_billing_accounts`| ✓               | ✓                 |
-| `doit_ps4c_gcp_resource_cuds`   | ✓               | ✓                 |
-| `doit_ps4c_gcp_spend_cuds`      | ✓               | ✓                 |
-| `doit_ps4c_gcp_settings`        | ✓               | ✓                 |
-| `doit_reports`                  | ✓               | ✓                 |
-| `doit_service_quotas`           | ✓               | ✓                 |
-| `doit_support_requests`         | ✓               | ✓                 |
+| Data Source                       | Auto-Pagination | Manual Pagination | `row_count`         |
+| --------------------------------- | --------------- | ----------------- | ------------------- |
+| `doit_alert_slack_channels`       | ✓               | ✓                 | Total, when known   |
+| `doit_alerts`                     | ✓               | ✓                 | Items returned      |
+| `doit_allocations`                | ✓               | ✓                 | Items returned      |
+| `doit_annotations`                | ✓               | ✓                 | Items returned      |
+| `doit_anomalies`                  | ✓               | ✓                 | Items returned      |
+| `doit_assets`                     | ✓               | ✓                 | Items returned      |
+| `doit_budgets`                    | ✓               | ✓                 | Items returned      |
+| `doit_cloud_diagrams_search`      | ✓               | ✓                 | —                   |
+| `doit_cloud_incidents`            | ✗               | ✓                 | Items returned      |
+| `doit_commitments`                | ✓               | ✓                 | Items returned      |
+| `doit_composer_recipe_results`    | ✓               | ✓                 | Total               |
+| `doit_composer_recipes`           | ✓               | ✓                 | Total               |
+| `doit_custom_metrics`             | ✓               | ✓                 | Total               |
+| `doit_customer_subscriptions`     | ✓               | ✓                 | Total               |
+| `doit_dimensions`                 | ✓               | ✓                 | Items returned      |
+| `doit_extended_metrics`           | ✓               | ✓                 | Total               |
+| `doit_folders`                    | ✓               | ✓                 | Items returned      |
+| `doit_invoices`                   | ✓               | ✓                 | Items returned      |
+| `doit_labels`                     | ✓               | ✓                 | Items returned      |
+| `doit_ps4c_aws_organizations`     | ✓               | ✓                 | Total               |
+| `doit_ps4c_commitment_policies`   | ✓               | ✓                 | Total               |
+| `doit_ps4c_gcp_billing_accounts`  | ✓               | ✓                 | Total               |
+| `doit_ps4c_gcp_planned_purchases` | ✓               | ✓                 | Items returned      |
+| `doit_ps4c_gcp_resource_cuds`     | ✓               | ✓                 | Total               |
+| `doit_ps4c_gcp_settings`          | ✓               | ✓                 | Items returned      |
+| `doit_ps4c_gcp_spend_cuds`        | ✓               | ✓                 | Total               |
+| `doit_reports`                    | ✓               | ✓                 | Items returned      |
+| `doit_service_quotas`             | ✓               | ✓                 | Total               |
+| `doit_support_requests`           | ✓               | ✓                 | Items returned      |
+
+`doit_cloud_diagrams_search` pages with `from` and `size` instead of `page_token` and `max_results`: setting `size` reads a single page starting at `from`.
 
 ## Filtering vs Pagination
 

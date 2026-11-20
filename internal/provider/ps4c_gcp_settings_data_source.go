@@ -52,6 +52,7 @@ func (d *ps4cGcpSettingsDataSource) Schema(ctx context.Context, _ datasource.Sch
 	s.MarkdownDescription = "List PS4C commitment settings across all GCP billing accounts."
 	s.Description = "List PS4C commitment settings across all GCP billing accounts."
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountPage, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -73,7 +74,10 @@ func (d *ps4cGcpSettingsDataSource) Read(ctx context.Context, req datasource.Rea
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	if data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_ps4c_gcp_settings.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
 		data.PageToken = types.StringUnknown()
@@ -107,11 +111,7 @@ func (d *ps4cGcpSettingsDataSource) Read(ctx context.Context, req datasource.Rea
 		allItems = result.Items
 
 		data.PageToken = types.StringPointerValue(nullableToPointer(result.PageToken))
-		if rowCount := result.RowCount; rowCount != nil {
-			data.RowCount = types.Int64Value(*rowCount)
-		} else {
-			data.RowCount = types.Int64Value(int64(len(allItems)))
-		}
+		data.RowCount = listRowCount(result.RowCount, len(allItems))
 	} else {
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
@@ -137,8 +137,11 @@ func (d *ps4cGcpSettingsDataSource) Read(ctx context.Context, req datasource.Rea
 			params.PageToken = pageToken
 		}
 
+		// rowCount counts the items of one page, so row_count counts every page fetched.
 		data.RowCount = types.Int64Value(int64(len(allItems)))
 		data.PageToken = types.StringNull()
+		// max_results was not set by user; normalize to null
+		data.MaxResults = types.Int64Null()
 	}
 
 	itemsList, itemsDiags := mapGcpBillingAccountsSettingsToItemsList(ctx, allItems)

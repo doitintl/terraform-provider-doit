@@ -52,6 +52,7 @@ func (d *ps4cGcpBillingAccountsDataSource) Schema(ctx context.Context, _ datasou
 	s.MarkdownDescription = "List GCP Billing Accounts tracked by PerfectScale for Commitments (PS4C)."
 	s.Description = "List GCP Billing Accounts tracked by PerfectScale for Commitments (PS4C)."
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -73,7 +74,10 @@ func (d *ps4cGcpBillingAccountsDataSource) Read(ctx context.Context, req datasou
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	if data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_ps4c_gcp_billing_accounts.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
 		data.PageToken = types.StringUnknown()
@@ -107,16 +111,16 @@ func (d *ps4cGcpBillingAccountsDataSource) Read(ctx context.Context, req datasou
 		allAccounts = result.Items
 
 		data.PageToken = types.StringPointerValue(nullableToPointer(result.PageToken))
-		if rowCount := nullableToPointer(result.RowCount); rowCount != nil {
-			data.RowCount = types.Int64Value(*rowCount)
-		} else {
-			data.RowCount = types.Int64Value(int64(len(allAccounts)))
-		}
+		data.RowCount = listRowCount(nullableToPointer(result.RowCount), len(allAccounts))
 	} else {
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
 		}
-		for {
+		// rowCount is the total across all pages, the same on every page, so it
+		// is taken from the first page even when a page_token starts the read
+		// after the first item.
+		var apiRowCount *int64
+		for first := true; ; first = false {
 			apiResp, err := d.client.ListGcpBillingAccountsWithResponse(ctx, params)
 			if err != nil {
 				resp.Diagnostics.AddError("Error Reading PS4C GCP Billing Accounts", fmt.Sprintf("Unable to read PS4C GCP billing accounts: %v", err))
@@ -128,6 +132,9 @@ func (d *ps4cGcpBillingAccountsDataSource) Read(ctx context.Context, req datasou
 			}
 
 			result := apiResp.JSON200
+			if first {
+				apiRowCount = nullableToPointer(result.RowCount)
+			}
 			allAccounts = append(allAccounts, result.Items...)
 
 			pageToken := nullableToPointer(result.PageToken)
@@ -137,8 +144,10 @@ func (d *ps4cGcpBillingAccountsDataSource) Read(ctx context.Context, req datasou
 			params.PageToken = pageToken
 		}
 
-		data.RowCount = types.Int64Value(int64(len(allAccounts)))
+		// Without a count from the API, the items fetched over all pages stand in for it.
+		data.RowCount = listRowCount(apiRowCount, len(allAccounts))
 		data.PageToken = types.StringNull()
+		data.MaxResults = types.Int64Null()
 	}
 
 	itemsList, itemsDiags := mapGcpBillingAccountsToItemsList(ctx, allAccounts)

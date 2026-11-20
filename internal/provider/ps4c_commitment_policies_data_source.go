@@ -52,6 +52,7 @@ func (d *ps4cCommitmentPoliciesDataSource) Schema(ctx context.Context, _ datasou
 	s.MarkdownDescription = "List all PerfectScale for Commitments (PS4C) commitment policies available to the tenant."
 	s.Description = "List all PerfectScale for Commitments (PS4C) commitment policies available to the tenant."
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -73,7 +74,10 @@ func (d *ps4cCommitmentPoliciesDataSource) Read(ctx context.Context, req datasou
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	if data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_ps4c_commitment_policies.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
 		data.PageToken = types.StringUnknown()
@@ -106,17 +110,16 @@ func (d *ps4cCommitmentPoliciesDataSource) Read(ctx context.Context, req datasou
 		allItems = result.Items
 
 		data.PageToken = types.StringPointerValue(nullableToPointer(result.PageToken))
-		if result.RowCount > 0 {
-			data.RowCount = types.Int64Value(result.RowCount)
-		} else {
-			data.RowCount = types.Int64Value(int64(len(allItems)))
-		}
+		data.RowCount = listRowCount(&result.RowCount, len(allItems))
 	} else {
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
 		}
-		var lastRowCount int64
-		for {
+		// rowCount is the total across all pages, the same on every page, so it
+		// is taken from the first page even when a page_token starts the read
+		// after the first item.
+		var apiRowCount *int64
+		for first := true; ; first = false {
 			apiResp, err := d.client.ListCommitmentPoliciesWithResponse(ctx, params)
 			if err != nil {
 				resp.Diagnostics.AddError("Error Reading PS4C Commitment Policies", fmt.Sprintf("Unable to read PS4C commitment policies: %v", err))
@@ -128,8 +131,10 @@ func (d *ps4cCommitmentPoliciesDataSource) Read(ctx context.Context, req datasou
 			}
 
 			result := apiResp.JSON200
+			if first {
+				apiRowCount = &result.RowCount
+			}
 			allItems = append(allItems, result.Items...)
-			lastRowCount = result.RowCount
 
 			pageToken := nullableToPointer(result.PageToken)
 			if pageToken == nil || *pageToken == "" {
@@ -138,12 +143,9 @@ func (d *ps4cCommitmentPoliciesDataSource) Read(ctx context.Context, req datasou
 			params.PageToken = pageToken
 		}
 
-		if lastRowCount > 0 {
-			data.RowCount = types.Int64Value(lastRowCount)
-		} else {
-			data.RowCount = types.Int64Value(int64(len(allItems)))
-		}
+		data.RowCount = listRowCount(apiRowCount, len(allItems))
 		data.PageToken = types.StringNull()
+		data.MaxResults = types.Int64Null()
 	}
 
 	itemsList, itemsDiags := mapCommitmentPoliciesToItemsList(ctx, allItems)

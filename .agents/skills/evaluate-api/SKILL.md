@@ -338,10 +338,19 @@ So `format: set` is an implementation decision for the provider team, not a free
 
 - [ ] Does the endpoint support pagination (`pageToken`, `maxResults`)?
 - [ ] Is the list under `items`? New contracts use `{items, pageToken, rowCount}`; legacy endpoints use resource-named arrays.
-- [ ] Is `rowCount` returned in the response? (The provider falls back to `len(items)`.)
+- [ ] What does `rowCount` count: the total across pages, the items of this page, or a total sent only when one request saw every item? When is it omitted? Measure it rather than trusting the description (some specs say "total" and return the page size). The answer is the data source's [row-count kind](../implement-datasource/SKILL.md#row-count).
 - [ ] Does an empty `pageToken` in the response indicate the last page?
-- [ ] What is the default page size?
-- [ ] Is the order stable (for example by `createTime`, then `id`), so `items[0]` means the same thing between runs?
+- [ ] Can a page be empty, or shorter than `maxResults`, while `pageToken` is set (filters, scan budgets)? The provider only stops when the token is absent.
+- [ ] What is the default page size, and what is the maximum `maxResults`?
+- [ ] Is the order stable and documented (for example by `createTime`, then `id`), so `items[0]` means the same thing between runs? Don't assume it is sorted because one crawl looked sorted.
+
+**Crawl check.** Run one full crawl against the CI tenant with a script that records, for every page, the number of items, `rowCount` and whether `pageToken` is set, plus every item id. Also send one request with `maxResults=2`. From that:
+
+- `rowCount` of the `maxResults=2` request against the crawl total tells the kind;
+- ids should be unique across pages; report any duplicates. (One Slack channel crawl listed the shared channel twice, and dimension ids are only unique per type.)
+- empty pages with a token, and the order the crawl returned.
+
+For a cached endpoint, run the crawl cold, after the cache TTL (see the testing skill, [Measuring a cached endpoint](../testing/SKILL.md#measuring-a-cached-endpoint)). Python's default `urllib` user agent gets a 403 from `api.doit.com`; set a `User-Agent` header in probe scripts.
 
 ## Step 9: Errors, Concurrency and Idempotency
 
