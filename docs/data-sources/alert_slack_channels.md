@@ -28,14 +28,18 @@ data "doit_alert_slack_channels" "limited" {
   max_results = 10
 }
 
-# Continue with the next page; stop when page_token is null.
+# Continue with the next page, but only while there is one: with a null page_token
+# this read would start over at the first page.
 data "doit_alert_slack_channels" "limited_next" {
+  count = data.doit_alert_slack_channels.limited.page_token != null ? 1 : 0
+
   max_results = 10
   page_token  = data.doit_alert_slack_channels.limited.page_token
 }
 
+# Null when the first page was the last one, or when the second page is.
 output "next_page_token" {
-  value = data.doit_alert_slack_channels.limited_next.page_token
+  value = one(data.doit_alert_slack_channels.limited_next[*].page_token)
 }
 
 # Output Slack channel summary
