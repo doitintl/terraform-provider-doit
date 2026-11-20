@@ -3529,7 +3529,8 @@ paths:
       tags:
         - DataHub
       summary: Create dataset
-      description: Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+      description: >-
+        Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events. A `name` that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400`, because reports would merge the dataset with that provider. Matching ignores case, so `Google-cloud` is rejected, while `Google Cloud` is accepted. `displayName` can use any value, including a reserved name.
       operationId: createDatahubDataset
       requestBody:
         required: true
@@ -5710,7 +5711,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          $ref: "#/components/responses/Forbidden"
+          $ref: "#/components/responses/UserNotificationForbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -5755,7 +5756,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          $ref: "#/components/responses/UserNotificationForbidden"
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -9367,6 +9368,44 @@ components:
             Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete filtered result set across all pages, not the returned page. Anomalies whose severity cannot be determined (legacy documents) are counted in `totalCount` and `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so the three values can sum to less than `totalCount`. Computed as of this request; under concurrent writes, values may differ between pages fetched during the same pagination sequence.
           allOf:
             - $ref: '#/components/schemas/AnomaliesResponseAnomalySummary'
+      example:
+        anomalies:
+          - id: aBcD1234eFgH5678iJkL
+            attribution: Production
+            allocations:
+              - id: mN0pQ1rS2tU3vW4xY5zA
+                name: Production
+            billingAccount: 012345-ABCDEF-678901
+            costOfAnomaly: 412.37
+            actualCost: 1312.37
+            expectedMaxCost: 900
+            platform: google-cloud
+            scope: example-project
+            serviceName: Compute Engine
+            severityLevel: warning
+            startTime: 1792454400000
+            endTime: null
+            deactivationReason: null
+            timeFrame: daily
+            top3SKUs:
+              - name: N2 Instance Core running in Americas
+                cost: 301.12
+            monitorLevel: service
+            status: active
+            acknowledged: false
+            notifications: []
+            initialNotifications: []
+            linkedAnomalies: []
+        rowCount: 1
+        truncated: false
+        totalCount: 1
+        totalCountExact: true
+        anomalySummary:
+          countBySeverity:
+            information: 0
+            warning: 1
+            critical: 0
+          totalCostOfAnomaly: 412.37
     AnomaliesResponseAnomalySummary:
       type: object
       description: >-
@@ -15132,6 +15171,8 @@ components:
         error:
           type: string
           description: Detailed error message.
+      example:
+        error: The request could not be completed.
     ExtendedMetric:
       type: object
       additionalProperties: false
@@ -17335,6 +17376,34 @@ components:
             $ref: "#/components/schemas/NotificationEvent"
         linkedAnomalies:
           $ref: "#/components/schemas/LinkedAnomalies"
+      example:
+        attribution: Production
+        allocations:
+          - id: mN0pQ1rS2tU3vW4xY5zA
+            name: Production
+        billingAccount: 012345-ABCDEF-678901
+        costOfAnomaly: 412.37
+        actualCost: 1312.37
+        expectedMaxCost: 900
+        platform: google-cloud
+        scope: example-project
+        serviceName: Compute Engine
+        severityLevel: warning
+        startTime: 1792454400000
+        endTime: null
+        deactivationReason: null
+        timeFrame: daily
+        top3SKUs:
+          - name: N2 Instance Core running in Americas
+            cost: 301.12
+        monitorLevel: service
+        status: active
+        acknowledged: false
+        customerFeedback:
+          reviewStatus: NEEDS_REVIEW
+        notifications: []
+        initialNotifications: []
+        linkedAnomalies: []
     GetAnomaly200ResponseAllocationsItem:
       type: object
       required:
@@ -17367,6 +17436,28 @@ components:
           description: The AI-generated portion of the response.
           allOf:
             - $ref: '#/components/schemas/GetAnomalyExplanation200ResponseExplanation'
+      example:
+        facts:
+          serviceName: Compute Engine
+          platform: google-cloud
+          scope: example-project
+          severityLevel: warning
+          costOfAnomaly: 412.37
+          actualCost: 1312.37
+          expectedMaxCost: 900
+          top3SKUs:
+            - name: N2 Instance Core running in Americas
+              cost: 301.12
+        evidence:
+          - type: anomaly
+            id: aBcD1234eFgH5678iJkL
+          - type: billingAnomalyDocument
+            id: qR7sT8uV9wX0yZ1aB2cD
+        explanation:
+          text: >-
+            Compute Engine spend in example-project rose above the expected range after additional N2 instances ran in the Americas.
+          generatedBy: ava
+          aiGenerated: true
     GetAnomalyExplanation200ResponseEvidenceItem:
       type: object
       required:
