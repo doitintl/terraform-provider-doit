@@ -22,7 +22,11 @@
 //
 //   - a StatusCode() call compared against such a constant, in a comparison or
 //     a switch case. Range checks such as "StatusCode() >= 400" are not flagged;
-//     they are the generic way to detect an error and are valid;
+//     they are the generic way to detect an error and are valid. The status is
+//     followed through local variables and into the parameters of functions of
+//     the same package, so "hint(resp.StatusCode())" with
+//     "if status == 400" inside hint is flagged too. Flows through other
+//     packages, struct fields and closures are not followed;
 //   - a read of a generated response's JSON<status> or
 //     ApplicationproblemJSON<status> field, or of its GetJSON<status> getter,
 //     for such a status. The 4xx and 5xx
@@ -44,6 +48,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+	"golang.org/x/tools/go/types/typeutil"
 )
 
 const (
@@ -80,6 +85,8 @@ func run(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
+	statuses := statusVars(pass, insp)
+
 	insp.Preorder([]ast.Node{
 		(*ast.BinaryExpr)(nil),
 		(*ast.SwitchStmt)(nil),
@@ -87,9 +94,9 @@ func run(pass *analysis.Pass) (any, error) {
 	}, func(n ast.Node) {
 		switch n := n.(type) {
 		case *ast.BinaryExpr:
-			checkComparison(pass, passed, n)
+			checkComparison(pass, passed, statuses, n)
 		case *ast.SwitchStmt:
-			checkSwitch(pass, passed, n)
+			checkSwitch(pass, passed, statuses, n)
 		case *ast.SelectorExpr:
 			checkBodyField(pass, passed, n)
 		}
@@ -222,6 +229,88 @@ func isGeneratedResponse(t types.Type) bool {
 	return hasBody && hasHTTP
 }
 
+// statusVars returns the variables and parameters that hold a StatusCode()
+// result: locals assigned from one, and parameters of same-package functions
+// that are called with one. It iterates until nothing new is found, so a status
+// forwarded through several calls is followed to the end.
+func statusVars(pass *analysis.Pass, insp *inspector.Inspector) map[types.Object]bool {
+	vars := map[types.Object]bool{}
+
+	add := func(obj types.Object) bool {
+		if obj == nil || vars[obj] {
+			return false
+		}
+		vars[obj] = true
+		return true
+	}
+
+	for changed := true; changed; {
+		changed = false
+
+		insp.Preorder([]ast.Node{
+			(*ast.AssignStmt)(nil),
+			(*ast.ValueSpec)(nil),
+			(*ast.CallExpr)(nil),
+		}, func(n ast.Node) {
+			switch n := n.(type) {
+			case *ast.AssignStmt:
+				if len(n.Lhs) != len(n.Rhs) {
+					return
+				}
+				for i, lhs := range n.Lhs {
+					if ident, ok := lhs.(*ast.Ident); ok && isStatusExpr(pass, vars, n.Rhs[i]) {
+						changed = add(identObject(pass, ident)) || changed
+					}
+				}
+			case *ast.ValueSpec:
+				if len(n.Names) != len(n.Values) {
+					return
+				}
+				for i, ident := range n.Names {
+					if isStatusExpr(pass, vars, n.Values[i]) {
+						changed = add(identObject(pass, ident)) || changed
+					}
+				}
+			case *ast.CallExpr:
+				fn, ok := typeutil.Callee(pass.TypesInfo, n).(*types.Func)
+				if !ok || fn.Pkg() != pass.Pkg {
+					return
+				}
+				sig := fn.Type().(*types.Signature)
+				for i, arg := range n.Args {
+					// A variadic tail is not a single int parameter.
+					if i >= sig.Params().Len() || (sig.Variadic() && i == sig.Params().Len()-1) {
+						break
+					}
+					if isStatusExpr(pass, vars, arg) {
+						changed = add(sig.Params().At(i)) || changed
+					}
+				}
+			}
+		})
+	}
+
+	return vars
+}
+
+func identObject(pass *analysis.Pass, ident *ast.Ident) types.Object {
+	if obj := pass.TypesInfo.Defs[ident]; obj != nil {
+		return obj
+	}
+	return pass.TypesInfo.Uses[ident]
+}
+
+// isStatusExpr reports whether expr is a StatusCode() call or a variable known
+// to hold one.
+func isStatusExpr(pass *analysis.Pass, vars map[types.Object]bool, expr ast.Expr) bool {
+	expr = ast.Unparen(expr)
+	if isStatusCodeCall(pass, expr) {
+		return true
+	}
+	ident, ok := expr.(*ast.Ident)
+	return ok && vars[pass.TypesInfo.Uses[ident]]
+}
+
 func unreachable(passed map[int]bool, status int) bool {
 	return status >= minErrorStatus && !passed[status]
 }
@@ -233,12 +322,12 @@ func report(pass *analysis.Pass, pos token.Pos, what string) {
 			"status through in DCIRetryClient.Do if the caller needs it", what)
 }
 
-func checkComparison(pass *analysis.Pass, passed map[int]bool, expr *ast.BinaryExpr) {
+func checkComparison(pass *analysis.Pass, passed map[int]bool, vars map[types.Object]bool, expr *ast.BinaryExpr) {
 	if expr.Op != token.EQL && expr.Op != token.NEQ {
 		return
 	}
 	for _, pair := range [][2]ast.Expr{{expr.X, expr.Y}, {expr.Y, expr.X}} {
-		if !isStatusCodeCall(pass, pair[0]) {
+		if !isStatusExpr(pass, vars, pair[0]) {
 			continue
 		}
 		if status, ok := statusConstant(pass, pair[1]); ok && unreachable(passed, status) {
@@ -247,8 +336,8 @@ func checkComparison(pass *analysis.Pass, passed map[int]bool, expr *ast.BinaryE
 	}
 }
 
-func checkSwitch(pass *analysis.Pass, passed map[int]bool, stmt *ast.SwitchStmt) {
-	if stmt.Tag == nil || !isStatusCodeCall(pass, stmt.Tag) {
+func checkSwitch(pass *analysis.Pass, passed map[int]bool, vars map[types.Object]bool, stmt *ast.SwitchStmt) {
+	if stmt.Tag == nil || !isStatusExpr(pass, vars, stmt.Tag) {
 		return
 	}
 	for _, stmt := range stmt.Body.List {
