@@ -235,9 +235,10 @@ func isGeneratedResponse(t types.Type) bool {
 // forwarded through several calls is followed to the end.
 func statusVars(pass *analysis.Pass, insp *inspector.Inspector) map[types.Object]bool {
 	vars := map[types.Object]bool{}
+	written := writtenVars(pass, insp)
 
 	add := func(obj types.Object) bool {
-		if obj == nil || vars[obj] {
+		if obj == nil || vars[obj] || written[obj] {
 			return false
 		}
 		vars[obj] = true
@@ -277,7 +278,15 @@ func statusVars(pass *analysis.Pass, insp *inspector.Inspector) map[types.Object
 					return
 				}
 				sig := fn.Type().(*types.Signature)
-				for i, arg := range n.Args {
+				args := n.Args
+				// A method expression, (*T).m(recv, args...), passes the receiver as
+				// the first argument; the signature's parameters exclude it.
+				if sel, ok := ast.Unparen(n.Fun).(*ast.SelectorExpr); ok {
+					if selection := pass.TypesInfo.Selections[sel]; selection != nil && selection.Kind() == types.MethodExpr && len(args) > 0 {
+						args = args[1:]
+					}
+				}
+				for i, arg := range args {
 					// A variadic tail is not a single int parameter.
 					if i >= sig.Params().Len() || (sig.Variadic() && i == sig.Params().Len()-1) {
 						break
@@ -291,6 +300,46 @@ func statusVars(pass *analysis.Pass, insp *inspector.Inspector) map[types.Object
 	}
 
 	return vars
+}
+
+// writtenVars returns the variables that are modified after they are declared:
+// assigned with "=" or an operator, redeclared by a multi-value ":=", incremented
+// or address-taken. Such a variable may no longer hold the status it was first
+// given, so it is not tracked. A variable initialised once, and a parameter that
+// is never assigned, are not in the set.
+func writtenVars(pass *analysis.Pass, insp *inspector.Inspector) map[types.Object]bool {
+	written := map[types.Object]bool{}
+
+	mark := func(expr ast.Expr) {
+		if ident, ok := ast.Unparen(expr).(*ast.Ident); ok {
+			if obj := pass.TypesInfo.Uses[ident]; obj != nil {
+				written[obj] = true
+			}
+		}
+	}
+
+	insp.Preorder([]ast.Node{
+		(*ast.AssignStmt)(nil),
+		(*ast.IncDecStmt)(nil),
+		(*ast.UnaryExpr)(nil),
+	}, func(n ast.Node) {
+		switch n := n.(type) {
+		case *ast.AssignStmt:
+			// Defs holds only the names ":=" declares; a name it merely reuses is in
+			// Uses and counts as a write.
+			for _, lhs := range n.Lhs {
+				mark(lhs)
+			}
+		case *ast.IncDecStmt:
+			mark(n.X)
+		case *ast.UnaryExpr:
+			if n.Op == token.AND {
+				mark(n.X)
+			}
+		}
+	})
+
+	return written
 }
 
 func identObject(pass *analysis.Pass, ident *ast.Ident) types.Object {

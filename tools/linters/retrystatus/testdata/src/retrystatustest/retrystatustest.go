@@ -123,3 +123,27 @@ func useParams(r *response) {
 
 	_ = unfed(200)
 }
+
+// Overwritten variables no longer hold the response status.
+func useOverwritten(r *response) {
+	status := r.StatusCode()
+	status = 400
+	_ = status == http.StatusBadRequest // reassigned: not a response status
+
+	_ = overwrittenParam(r.StatusCode())
+}
+
+func overwrittenParam(status int) bool {
+	status = 400
+	return status == http.StatusBadRequest // reassigned: not a response status
+}
+
+type helper struct{}
+
+func (h *helper) methodHint(status int) bool {
+	return status == http.StatusTeapot // want `status 418 is never seen by resource code`
+}
+
+func useMethodExpr(r *response, h *helper) {
+	_ = (*helper).methodHint(h, r.StatusCode())
+}
