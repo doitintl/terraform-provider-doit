@@ -18,41 +18,49 @@ import (
 
 const testAccExtendedMetricsDataSourceAddr = "data.doit_extended_metrics.test"
 
+// extendedMetricsProbe is what a short read of the collection says about it.
+type extendedMetricsProbe struct {
+	// count is the API's row count, or the items read when the API omits it.
+	count int
+	// apiTotal reports whether count is a total the API supplied.
+	apiTotal bool
+}
+
 var (
-	extendedMetricsRowCount     int
-	extendedMetricsRowCountOnce sync.Once
+	extendedMetricsProbeResult extendedMetricsProbe
+	extendedMetricsProbeOnce   sync.Once
 )
 
-// getExtendedMetricsRowCount returns the number of extended metrics the tenant
-// has, so the pagination tests skip when there is nothing to page through.
-func getExtendedMetricsRowCount(t *testing.T) int {
+// getExtendedMetricsProbe probes the tenant once, so the pagination tests skip
+// when there is nothing to page through and know whether row_count is a total.
+func getExtendedMetricsProbe(t *testing.T) extendedMetricsProbe {
 	t.Helper()
 	skipIfNoAcc(t)
-	extendedMetricsRowCountOnce.Do(func() {
-		n, err := probeExtendedMetricsRowCount(t.Context(), getAPIClient(t))
+	extendedMetricsProbeOnce.Do(func() {
+		probe, err := probeExtendedMetrics(t.Context(), getAPIClient(t))
 		if err != nil {
 			t.Fatalf("Failed to list extended metrics: %v", err)
 		}
-		extendedMetricsRowCount = n
+		extendedMetricsProbeResult = probe
 	})
-	return extendedMetricsRowCount
+	return extendedMetricsProbeResult
 }
 
-// probeExtendedMetricsRowCount reads two items and returns the API's row count.
-// When the API omits it, the items read stand in for it: two is enough for the
+// probeExtendedMetrics reads two items and returns the API's row count. When
+// the API omits it, the items read stand in for it: two is enough for the
 // pagination tests, which only need to know that there are at least two.
-func probeExtendedMetricsRowCount(ctx context.Context, client *models.ClientWithResponses) (int, error) {
+func probeExtendedMetrics(ctx context.Context, client *models.ClientWithResponses) (extendedMetricsProbe, error) {
 	resp, err := client.ListExtendedMetricsWithResponse(ctx, &models.ListExtendedMetricsParams{MaxResults: new(int64(2))})
 	if err != nil {
-		return 0, err
+		return extendedMetricsProbe{}, err
 	}
 	if resp.JSON200 == nil {
-		return 0, fmt.Errorf("status %d, body: %s", resp.StatusCode(), string(resp.Body))
+		return extendedMetricsProbe{}, fmt.Errorf("status %d, body: %s", resp.StatusCode(), string(resp.Body))
 	}
 	if rowCount := resp.JSON200.RowCount; rowCount.IsSpecified() && !rowCount.IsNull() {
-		return int(rowCount.MustGet()), nil
+		return extendedMetricsProbe{count: int(rowCount.MustGet()), apiTotal: true}, nil
 	}
-	return len(resp.JSON200.Items), nil
+	return extendedMetricsProbe{count: len(resp.JSON200.Items)}, nil
 }
 
 // testCheckExtendedMetricsDataSources verifies that row_count equals the number
@@ -158,7 +166,7 @@ data "doit_extended_metrics" "test" {
 }
 
 func TestAccExtendedMetricsDataSource_Pagination(t *testing.T) {
-	if n := getExtendedMetricsRowCount(t); n < 2 {
+	if n := getExtendedMetricsProbe(t).count; n < 2 {
 		t.Skipf("Need at least 2 extended metrics to test pagination, got %d", n)
 	}
 
@@ -188,10 +196,7 @@ data "doit_extended_metrics" "from_token" {
 					// ordered by label, then key, then data source, so the first
 					// item of the second read cannot repeat the first page's.
 					testCheckExtendedMetricsPageAdvanced(),
-					// row_count is the total across pages for both reads.
-					testCheckResourceAttrEqualAttr(
-						"data.doit_extended_metrics.first_page", "row_count",
-						"data.doit_extended_metrics.from_token", "row_count"),
+					testCheckExtendedMetricsPaginationRowCounts(getExtendedMetricsProbe(t).apiTotal),
 				),
 			},
 		},
@@ -224,27 +229,45 @@ func testCheckExtendedMetricsPageAdvanced() resource.TestCheckFunc {
 	}
 }
 
-func testCheckResourceAttrEqualAttr(name1, key1, name2, key2 string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs1, ok := s.RootModule().Resources[name1]
-		if !ok {
-			return fmt.Errorf("resource %s not found", name1)
-		}
-		rs2, ok := s.RootModule().Resources[name2]
-		if !ok {
-			return fmt.Errorf("resource %s not found", name2)
-		}
-		if v1, v2 := rs1.Primary.Attributes[key1], rs2.Primary.Attributes[key2]; v1 != v2 {
-			return fmt.Errorf("%s.%s = %q, %s.%s = %q, want equal", name1, key1, v1, name2, key2, v2)
+// checkExtendedMetricsPaginationRowCounts compares the row_count and the number
+// of items of the first page and of the read from its page token. A total from
+// the API is the same for both reads; without one, row_count is the number of
+// items each read fetched.
+func checkExtendedMetricsPaginationRowCounts(firstRowCount, firstItems, tokenRowCount, tokenItems string, apiTotal bool) error {
+	if apiTotal {
+		if firstRowCount != tokenRowCount {
+			return fmt.Errorf("row_count of the first page = %q, of the read from the token = %q, want the same total", firstRowCount, tokenRowCount)
 		}
 		return nil
+	}
+	if firstRowCount != firstItems {
+		return fmt.Errorf("row_count of the first page = %q, want its %s items", firstRowCount, firstItems)
+	}
+	if tokenRowCount != tokenItems {
+		return fmt.Errorf("row_count of the read from the token = %q, want its %s items", tokenRowCount, tokenItems)
+	}
+	return nil
+}
+
+func testCheckExtendedMetricsPaginationRowCounts(apiTotal bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		first, ok := s.RootModule().Resources["data.doit_extended_metrics.first_page"]
+		if !ok {
+			return fmt.Errorf("resource data.doit_extended_metrics.first_page not found")
+		}
+		token, ok := s.RootModule().Resources["data.doit_extended_metrics.from_token"]
+		if !ok {
+			return fmt.Errorf("resource data.doit_extended_metrics.from_token not found")
+		}
+		f, t := first.Primary.Attributes, token.Primary.Attributes
+		return checkExtendedMetricsPaginationRowCounts(f["row_count"], f["items.#"], t["row_count"], t["items.#"], apiTotal)
 	}
 }
 
 // A page token is bound to the filter it was returned for: reusing it with
 // another filter is rejected by the API.
 func TestAccExtendedMetricsDataSource_PageTokenFilterMismatch(t *testing.T) {
-	if n := getExtendedMetricsRowCount(t); n < 2 {
+	if n := getExtendedMetricsProbe(t).count; n < 2 {
 		t.Skipf("Need at least 2 extended metrics to get a page token, got %d", n)
 	}
 

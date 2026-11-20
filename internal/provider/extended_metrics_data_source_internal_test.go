@@ -374,3 +374,30 @@ func TestExtendedMetricsDataSourceErrors(t *testing.T) {
 		}
 	})
 }
+
+// Without a rowCount from the API, row_count is the number of items a read
+// fetched, so two reads of the same collection report different values: a
+// single page of one item reads 1, and a read from a page token reads what is
+// left. Only an API-supplied total is the same for both.
+func TestExtendedMetricsDataSourceRowCountFallbackDiffersBetweenReads(t *testing.T) {
+	server := newRecordingServer(t, func(w http.ResponseWriter, q url.Values) {
+		page := extendedMetricsPages[q.Get("pageToken")]
+		writeJSON(w, 200, extendedMetricsPageJSON(page.body, page.next, ""))
+	})
+
+	firstPage, resp := readExtendedMetricsForTest(t, server, map[string]tftypes.Value{"max_results": tftypes.NewValue(tftypes.Number, 1)})
+	if resp.Diagnostics.HasError() {
+		t.Fatal(resp.Diagnostics)
+	}
+	fromToken, resp := readExtendedMetricsForTest(t, server, map[string]tftypes.Value{"page_token": tftypes.NewValue(tftypes.String, "p2")})
+	if resp.Diagnostics.HasError() {
+		t.Fatal(resp.Diagnostics)
+	}
+
+	if got := firstPage.RowCount.ValueInt64(); got != 1 {
+		t.Errorf("first page row_count = %d, want the 1 item read", got)
+	}
+	if got := fromToken.RowCount.ValueInt64(); got != 2 {
+		t.Errorf("from-token row_count = %d, want the 2 items read", got)
+	}
+}

@@ -55,12 +55,15 @@ func TestProbeExtendedMetricsRowCount_WithoutRowCount(t *testing.T) {
 	const total = 5
 	client := newExtendedMetricsProbeClient(t, total, false)
 
-	got, err := probeExtendedMetricsRowCount(t.Context(), client)
+	got, err := probeExtendedMetrics(t.Context(), client)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got < 2 {
-		t.Errorf("probe = %d for a tenant with %d metrics and no rowCount; the pagination tests (need at least 2) would skip", got, total)
+	if got.count < 2 {
+		t.Errorf("probe = %d for a tenant with %d metrics and no rowCount; the pagination tests (need at least 2) would skip", got.count, total)
+	}
+	if got.apiTotal {
+		t.Error("the probe reports an API total although the API sent no rowCount")
 	}
 }
 
@@ -68,11 +71,33 @@ func TestProbeExtendedMetricsRowCount_WithRowCount(t *testing.T) {
 	const total = 5
 	client := newExtendedMetricsProbeClient(t, total, true)
 
-	got, err := probeExtendedMetricsRowCount(t.Context(), client)
+	got, err := probeExtendedMetrics(t.Context(), client)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != total {
-		t.Errorf("probe = %d, want the API's row count %d", got, total)
+	if got.count != total || !got.apiTotal {
+		t.Errorf("probe = %+v, want the API's row count %d as an API total", got, total)
+	}
+}
+
+func TestCheckExtendedMetricsPaginationRowCounts(t *testing.T) {
+	for _, tc := range []struct {
+		name                                                 string
+		firstRowCount, firstItems, tokenRowCount, tokenItems string
+		apiTotal                                             bool
+		wantErr                                              bool
+	}{
+		{"API total, same for both reads", "3", "1", "3", "2", true, false},
+		{"API total, reads disagree", "3", "1", "2", "2", true, true},
+		{"no API total, each read reports its items", "1", "1", "2", "2", false, false},
+		{"no API total, the read from the token misreports", "1", "1", "1", "2", false, true},
+		{"no API total, the first page misreports", "3", "1", "2", "2", false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := checkExtendedMetricsPaginationRowCounts(tc.firstRowCount, tc.firstItems, tc.tokenRowCount, tc.tokenItems, tc.apiTotal)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("err = %v, wantErr %v", err, tc.wantErr)
+			}
+		})
 	}
 }
