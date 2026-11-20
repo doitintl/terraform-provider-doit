@@ -20258,6 +20258,48 @@
 							"computed_optional_required": "computed",
 							"attributes": [
 								{
+									"name": "billing_transfer_agreement_revoked",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"description": "Billing transfer, distributor and reseller tenants: a billing transfer agreement was revoked."
+									}
+								},
+								{
+									"name": "billing_transfer_cur_export_missing",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"description": "Billing transfer, distributor tenants: an end customer's Cost and Usage Report export was not found one day after the transfer started."
+									}
+								},
+								{
+									"name": "billing_transfer_new_end_customer",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"description": "Billing transfer, reseller tenants: a new end customer was onboarded."
+									}
+								},
+								{
+									"name": "billing_transfer_new_rpma",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"description": "Billing transfer, distributor tenants: a new reseller payer account was onboarded."
+									}
+								},
+								{
+									"name": "billing_transfer_unassigned_end_customers",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"description": "Billing transfer, reseller tenants: a daily digest listing every end customer not yet assigned to a customer."
+									}
+								},
+								{
+									"name": "billing_transfer_unassigned_rpmas",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"description": "Billing transfer, distributor tenants: a daily digest listing every reseller payer account not yet assigned to a customer."
+									}
+								},
+								{
 									"name": "cloud_incidents",
 									"single_nested": {
 										"computed_optional_required": "computed",
@@ -20705,6 +20747,48 @@
 										"single_nested": {
 											"computed_optional_required": "computed",
 											"attributes": [
+												{
+													"name": "billing_transfer_agreement_revoked",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"description": "Billing transfer, distributor and reseller tenants: a billing transfer agreement was revoked."
+													}
+												},
+												{
+													"name": "billing_transfer_cur_export_missing",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"description": "Billing transfer, distributor tenants: an end customer's Cost and Usage Report export was not found one day after the transfer started."
+													}
+												},
+												{
+													"name": "billing_transfer_new_end_customer",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"description": "Billing transfer, reseller tenants: a new end customer was onboarded."
+													}
+												},
+												{
+													"name": "billing_transfer_new_rpma",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"description": "Billing transfer, distributor tenants: a new reseller payer account was onboarded."
+													}
+												},
+												{
+													"name": "billing_transfer_unassigned_end_customers",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"description": "Billing transfer, reseller tenants: a daily digest listing every end customer not yet assigned to a customer."
+													}
+												},
+												{
+													"name": "billing_transfer_unassigned_rpmas",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"description": "Billing transfer, distributor tenants: a daily digest listing every reseller payer account not yet assigned to a customer."
+													}
+												},
 												{
 													"name": "cloud_incidents",
 													"single_nested": {

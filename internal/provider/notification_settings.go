@@ -28,6 +28,7 @@ type notificationType struct {
 	description string
 	noTeams     bool // the type cannot be delivered to Microsoft Teams
 	orgOnly     bool // the type exists only on organization notifications
+	userOnly    bool // the type exists only on user notifications
 }
 
 const (
@@ -36,6 +37,7 @@ const (
 	userNotificationIssuesViewer       = "Issues Viewer"
 	userNotificationInsightsManager    = "Insights Manager"
 	userNotificationAssetsManager      = "Assets Manager"
+	userNotificationBillingTransfer    = "Billing Transfer Admin"
 )
 
 const notificationEmptyTypeHint = " Set it to `{}` to subscribe."
@@ -61,6 +63,12 @@ var notificationTypes = []notificationType{
 	{attr: "cud_approval", permission: userNotificationCloudAnalyticsUser, description: "PerfectScale for Commitments: a Google Cloud committed use discount purchase requires approval." + notificationEmptyTypeHint},
 	{attr: "cud_purchased", permission: userNotificationCloudAnalyticsUser, description: "PerfectScale for Commitments: a Google Cloud committed use discount was purchased." + notificationEmptyTypeHint},
 	{attr: "data_integration_sync_failure", permission: userNotificationAssetsManager, description: "Data integration sync failures." + notificationEmptyTypeHint, noTeams: true},
+	{attr: "billing_transfer_new_rpma", permission: userNotificationBillingTransfer, description: "Billing transfer, distributor tenants: a new reseller payer account was onboarded." + notificationEmptyTypeHint, userOnly: true},
+	{attr: "billing_transfer_new_end_customer", permission: userNotificationBillingTransfer, description: "Billing transfer, reseller tenants: a new end customer was onboarded." + notificationEmptyTypeHint, userOnly: true},
+	{attr: "billing_transfer_unassigned_rpmas", permission: userNotificationBillingTransfer, description: "Billing transfer, distributor tenants: a daily digest of every reseller payer account not yet assigned to a customer." + notificationEmptyTypeHint, userOnly: true},
+	{attr: "billing_transfer_unassigned_end_customers", permission: userNotificationBillingTransfer, description: "Billing transfer, reseller tenants: a daily digest of every end customer not yet assigned to a customer." + notificationEmptyTypeHint, userOnly: true},
+	{attr: "billing_transfer_agreement_revoked", permission: userNotificationBillingTransfer, description: "Billing transfer, distributor and reseller tenants: a billing transfer agreement was revoked." + notificationEmptyTypeHint, userOnly: true},
+	{attr: "billing_transfer_cur_export_missing", permission: userNotificationBillingTransfer, description: "Billing transfer, distributor tenants: an end customer's Cost and Usage Report export was not found one day after the transfer started." + notificationEmptyTypeHint, userOnly: true},
 	{attr: "aws_billing_data_import", description: "Problems importing AWS billing data." + notificationBillingProfileHint, orgOnly: true},
 }
 
@@ -75,11 +83,22 @@ func userNotificationTypes() []notificationType {
 	return out
 }
 
+// customerNotificationTypes returns the types of an organization notification.
+func customerNotificationTypes() []notificationType {
+	var out []notificationType
+	for _, t := range notificationTypes {
+		if !t.userOnly {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
 // customerNotificationNoTeamsTypes returns the attribute names of the types
 // that cannot be delivered to Microsoft Teams.
 func customerNotificationNoTeamsTypes() []string {
 	var out []string
-	for _, t := range notificationTypes {
+	for _, t := range customerNotificationTypes() {
 		if t.noTeams {
 			out = append(out, t.attr)
 		}
@@ -154,17 +173,23 @@ type notificationSettingsSource struct {
 func userNotificationSettingsSource(s *models.UserNotificationSettings) notificationSettingsSource {
 	return notificationSettingsSource{
 		empty: map[string]*models.NotificationEmptySettings{
-			"credit_utilization":            s.CreditUtilization,
-			"quota_utilization":             s.QuotaUtilization,
-			"cloud_incidents":               s.CloudIncidents,
-			"new_sku_usage":                 s.NewSkuUsage,
-			"monthly_digest":                s.MonthlyDigest,
-			"expert_insights":               s.ExpertInsights,
-			"savings_plan_approval":         s.SavingsPlanApproval,
-			"savings_plan_purchased":        s.SavingsPlanPurchased,
-			"cud_approval":                  s.CudApproval,
-			"cud_purchased":                 s.CudPurchased,
-			"data_integration_sync_failure": s.DataIntegrationSyncFailure,
+			"credit_utilization":                        s.CreditUtilization,
+			"quota_utilization":                         s.QuotaUtilization,
+			"cloud_incidents":                           s.CloudIncidents,
+			"new_sku_usage":                             s.NewSkuUsage,
+			"monthly_digest":                            s.MonthlyDigest,
+			"expert_insights":                           s.ExpertInsights,
+			"savings_plan_approval":                     s.SavingsPlanApproval,
+			"savings_plan_purchased":                    s.SavingsPlanPurchased,
+			"cud_approval":                              s.CudApproval,
+			"cud_purchased":                             s.CudPurchased,
+			"data_integration_sync_failure":             s.DataIntegrationSyncFailure,
+			"billing_transfer_new_rpma":                 s.BillingTransferNewRpma,
+			"billing_transfer_new_end_customer":         s.BillingTransferNewEndCustomer,
+			"billing_transfer_unassigned_rpmas":         s.BillingTransferUnassignedRpmas,
+			"billing_transfer_unassigned_end_customers": s.BillingTransferUnassignedEndCustomers,
+			"billing_transfer_agreement_revoked":        s.BillingTransferAgreementRevoked,
+			"billing_transfer_cur_export_missing":       s.BillingTransferCurExportMissing,
 		},
 		billingProfiles: map[string]*models.BillingProfileNotificationSettings{
 			"new_invoices":          s.NewInvoices,

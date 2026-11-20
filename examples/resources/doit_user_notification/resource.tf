@@ -98,3 +98,16 @@ resource "doit_user_notification" "billing_and_digests" {
     }
   }
 }
+
+# Billing transfer alerts for a distributor or reseller tenant. Every
+# billing_transfer_* type requires the Billing Transfer Admin permission.
+resource "doit_user_notification" "billing_transfer" {
+  user_id = data.doit_users.jane.users[0].id
+  name    = "Billing transfer"
+
+  settings = {
+    billing_transfer_new_end_customer         = {}
+    billing_transfer_unassigned_end_customers = {}
+    billing_transfer_agreement_revoked        = {}
+  }
+}

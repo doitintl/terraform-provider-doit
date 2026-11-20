@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
@@ -199,12 +200,12 @@ func testAccCheckUserNotificationsItem(name string, want map[string]string) reso
 // testAccUserNotificationCopyConfig reads the notification named rName from
 // TEST_USER with the list data source and creates a copy of it on TEST_USER_2.
 func testAccUserNotificationCopyConfig(rName, costAnomalies string) string {
-	return testAccUserNotificationConfig(rName, rName, costAnomalies) + testAccUserNotificationCopySection(rName)
+	return testAccUserNotificationConfig(rName, rName, costAnomalies) + testAccUserNotificationCopySection(rName, rName+"-copy")
 }
 
-// testAccUserNotificationCopySection is the list data source and the copy on
-// TEST_USER_2 of the notification named rName.
-func testAccUserNotificationCopySection(rName string) string {
+// testAccUserNotificationCopySection is the list data source and the copy,
+// named copyName, on TEST_USER_2 of the notification named rName.
+func testAccUserNotificationCopySection(rName, copyName string) string {
 	return fmt.Sprintf(`
 data "doit_user_notifications" "source" {
   user_id    = doit_user_notification.this.user_id
@@ -221,10 +222,10 @@ locals {
 
 resource "doit_user_notification" "copy" {
   user_id  = data.doit_users.target.users[0].id
-  name     = "%[2]s-copy"
+  name     = %[3]q
   settings = local.source.settings
 }
-`, testUser2(), rName)
+`, testUser2(), rName, copyName)
 }
 
 func TestAccUserNotificationDataSource_CopyToAnotherUser(t *testing.T) {
@@ -299,18 +300,23 @@ func TestAccUserNotificationDataSource_CopyToAnotherUserWithRepeat(t *testing.T)
 }
 
 // The {} types and the [] filter lists the data source reports survive the
-// data source → resource round trip.
+// data source → resource round trip. The copy can then be updated although
+// TEST_USER_2's role lacks Billing Transfer Admin: an update sends the whole
+// settings object, with null for every type it does not subscribe, the
+// billing_transfer_* types included.
 func TestAccUserNotificationDataSource_CopySettingsTypesToAnotherUser(t *testing.T) {
 	if testUser2() == "" {
 		t.Skip("TEST_USER_2 must be set")
 	}
 	rName := acctest.RandomWithPrefix("tf-acc-un-copy-types")
-	config := testAccUserNotificationSettingsConfig(rName, rName, `
+	settings := testAccUserNotificationSettingsConfig(rName, rName, `
     credit_utilization = {}
     new_invoices       = {}
     daily_digest       = { allocation_ids = [doit_allocation.a.id] }
     insights           = { severities = ["critical"] }
-`) + testAccUserNotificationCopySection(rName)
+`)
+	config := settings + testAccUserNotificationCopySection(rName, rName+"-copy")
+	renamed := settings + testAccUserNotificationCopySection(rName, rName+"-copy-renamed")
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -332,6 +338,20 @@ func TestAccUserNotificationDataSource_CopySettingsTypesToAnotherUser(t *testing
 				),
 			},
 			testAccUserNotificationDriftCheck(config),
+			{
+				Config: renamed,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(testAccUserNotificationCopyAddr, plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(testAccUserNotificationCopyAddr, tfjsonpath.New("name"), knownvalue.StringExact(rName+"-copy-renamed")),
+					statecheck.ExpectKnownValue(testAccUserNotificationCopyAddr, testAccUserNotificationSettingsPath("credit_utilization"), knownvalue.ObjectExact(map[string]knownvalue.Check{})),
+					statecheck.ExpectKnownValue(testAccUserNotificationCopyAddr, testAccUserNotificationSettingsPath("billing_transfer_new_rpma"), knownvalue.Null()),
+				},
+			},
+			testAccUserNotificationDriftCheck(renamed),
 		},
 	})
 }

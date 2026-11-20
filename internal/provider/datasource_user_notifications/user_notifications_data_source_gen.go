@@ -69,6 +69,72 @@ func UserNotificationsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"settings": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
+								"billing_transfer_agreement_revoked": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{},
+									CustomType: BillingTransferAgreementRevokedType{
+										ObjectType: types.ObjectType{
+											AttrTypes: BillingTransferAgreementRevokedValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "Billing transfer, distributor and reseller tenants: a billing transfer agreement was revoked.",
+									MarkdownDescription: "Billing transfer, distributor and reseller tenants: a billing transfer agreement was revoked.",
+								},
+								"billing_transfer_cur_export_missing": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{},
+									CustomType: BillingTransferCurExportMissingType{
+										ObjectType: types.ObjectType{
+											AttrTypes: BillingTransferCurExportMissingValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "Billing transfer, distributor tenants: an end customer's Cost and Usage Report export was not found one day after the transfer started.",
+									MarkdownDescription: "Billing transfer, distributor tenants: an end customer's Cost and Usage Report export was not found one day after the transfer started.",
+								},
+								"billing_transfer_new_end_customer": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{},
+									CustomType: BillingTransferNewEndCustomerType{
+										ObjectType: types.ObjectType{
+											AttrTypes: BillingTransferNewEndCustomerValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "Billing transfer, reseller tenants: a new end customer was onboarded.",
+									MarkdownDescription: "Billing transfer, reseller tenants: a new end customer was onboarded.",
+								},
+								"billing_transfer_new_rpma": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{},
+									CustomType: BillingTransferNewRpmaType{
+										ObjectType: types.ObjectType{
+											AttrTypes: BillingTransferNewRpmaValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "Billing transfer, distributor tenants: a new reseller payer account was onboarded.",
+									MarkdownDescription: "Billing transfer, distributor tenants: a new reseller payer account was onboarded.",
+								},
+								"billing_transfer_unassigned_end_customers": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{},
+									CustomType: BillingTransferUnassignedEndCustomersType{
+										ObjectType: types.ObjectType{
+											AttrTypes: BillingTransferUnassignedEndCustomersValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "Billing transfer, reseller tenants: a daily digest listing every end customer not yet assigned to a customer.",
+									MarkdownDescription: "Billing transfer, reseller tenants: a daily digest listing every end customer not yet assigned to a customer.",
+								},
+								"billing_transfer_unassigned_rpmas": schema.SingleNestedAttribute{
+									Attributes: map[string]schema.Attribute{},
+									CustomType: BillingTransferUnassignedRpmasType{
+										ObjectType: types.ObjectType{
+											AttrTypes: BillingTransferUnassignedRpmasValue{}.AttributeTypes(ctx),
+										},
+									},
+									Computed:            true,
+									Description:         "Billing transfer, distributor tenants: a daily digest listing every reseller payer account not yet assigned to a customer.",
+									MarkdownDescription: "Billing transfer, distributor tenants: a daily digest listing every reseller payer account not yet assigned to a customer.",
+								},
 								"cloud_incidents": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{},
 									CustomType: CloudIncidentsType{
@@ -1621,6 +1687,270 @@ func (t SettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 
 	attributes := in.Attributes()
 
+	billingTransferAgreementRevokedAttribute, ok := attributes["billing_transfer_agreement_revoked"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_agreement_revoked is missing from object`)
+
+		return nil, diags
+	}
+
+	billingTransferAgreementRevokedValuable, ok := billingTransferAgreementRevokedAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_agreement_revoked expected to be basetypes.ObjectValuable, was: %T`, billingTransferAgreementRevokedAttribute))
+
+		return nil, diags
+	}
+
+	billingTransferAgreementRevokedObjVal, billingTransferAgreementRevokedObjValDiags := billingTransferAgreementRevokedValuable.ToObjectValue(ctx)
+	diags.Append(billingTransferAgreementRevokedObjValDiags...)
+
+	billingTransferAgreementRevokedTypable, ok := t.AttrTypes["billing_transfer_agreement_revoked"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_agreement_revoked expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["billing_transfer_agreement_revoked"]))
+
+		return nil, diags
+	}
+
+	billingTransferAgreementRevokedConverted, billingTransferAgreementRevokedConvertedDiags := billingTransferAgreementRevokedTypable.ValueFromObject(ctx, billingTransferAgreementRevokedObjVal)
+	diags.Append(billingTransferAgreementRevokedConvertedDiags...)
+
+	billingTransferAgreementRevokedVal, ok := billingTransferAgreementRevokedConverted.(BillingTransferAgreementRevokedValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_agreement_revoked expected to be BillingTransferAgreementRevokedValue, was: %T`, billingTransferAgreementRevokedConverted))
+	}
+
+	billingTransferCurExportMissingAttribute, ok := attributes["billing_transfer_cur_export_missing"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_cur_export_missing is missing from object`)
+
+		return nil, diags
+	}
+
+	billingTransferCurExportMissingValuable, ok := billingTransferCurExportMissingAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_cur_export_missing expected to be basetypes.ObjectValuable, was: %T`, billingTransferCurExportMissingAttribute))
+
+		return nil, diags
+	}
+
+	billingTransferCurExportMissingObjVal, billingTransferCurExportMissingObjValDiags := billingTransferCurExportMissingValuable.ToObjectValue(ctx)
+	diags.Append(billingTransferCurExportMissingObjValDiags...)
+
+	billingTransferCurExportMissingTypable, ok := t.AttrTypes["billing_transfer_cur_export_missing"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_cur_export_missing expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["billing_transfer_cur_export_missing"]))
+
+		return nil, diags
+	}
+
+	billingTransferCurExportMissingConverted, billingTransferCurExportMissingConvertedDiags := billingTransferCurExportMissingTypable.ValueFromObject(ctx, billingTransferCurExportMissingObjVal)
+	diags.Append(billingTransferCurExportMissingConvertedDiags...)
+
+	billingTransferCurExportMissingVal, ok := billingTransferCurExportMissingConverted.(BillingTransferCurExportMissingValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_cur_export_missing expected to be BillingTransferCurExportMissingValue, was: %T`, billingTransferCurExportMissingConverted))
+	}
+
+	billingTransferNewEndCustomerAttribute, ok := attributes["billing_transfer_new_end_customer"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_new_end_customer is missing from object`)
+
+		return nil, diags
+	}
+
+	billingTransferNewEndCustomerValuable, ok := billingTransferNewEndCustomerAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_new_end_customer expected to be basetypes.ObjectValuable, was: %T`, billingTransferNewEndCustomerAttribute))
+
+		return nil, diags
+	}
+
+	billingTransferNewEndCustomerObjVal, billingTransferNewEndCustomerObjValDiags := billingTransferNewEndCustomerValuable.ToObjectValue(ctx)
+	diags.Append(billingTransferNewEndCustomerObjValDiags...)
+
+	billingTransferNewEndCustomerTypable, ok := t.AttrTypes["billing_transfer_new_end_customer"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_new_end_customer expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["billing_transfer_new_end_customer"]))
+
+		return nil, diags
+	}
+
+	billingTransferNewEndCustomerConverted, billingTransferNewEndCustomerConvertedDiags := billingTransferNewEndCustomerTypable.ValueFromObject(ctx, billingTransferNewEndCustomerObjVal)
+	diags.Append(billingTransferNewEndCustomerConvertedDiags...)
+
+	billingTransferNewEndCustomerVal, ok := billingTransferNewEndCustomerConverted.(BillingTransferNewEndCustomerValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_new_end_customer expected to be BillingTransferNewEndCustomerValue, was: %T`, billingTransferNewEndCustomerConverted))
+	}
+
+	billingTransferNewRpmaAttribute, ok := attributes["billing_transfer_new_rpma"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_new_rpma is missing from object`)
+
+		return nil, diags
+	}
+
+	billingTransferNewRpmaValuable, ok := billingTransferNewRpmaAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_new_rpma expected to be basetypes.ObjectValuable, was: %T`, billingTransferNewRpmaAttribute))
+
+		return nil, diags
+	}
+
+	billingTransferNewRpmaObjVal, billingTransferNewRpmaObjValDiags := billingTransferNewRpmaValuable.ToObjectValue(ctx)
+	diags.Append(billingTransferNewRpmaObjValDiags...)
+
+	billingTransferNewRpmaTypable, ok := t.AttrTypes["billing_transfer_new_rpma"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_new_rpma expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["billing_transfer_new_rpma"]))
+
+		return nil, diags
+	}
+
+	billingTransferNewRpmaConverted, billingTransferNewRpmaConvertedDiags := billingTransferNewRpmaTypable.ValueFromObject(ctx, billingTransferNewRpmaObjVal)
+	diags.Append(billingTransferNewRpmaConvertedDiags...)
+
+	billingTransferNewRpmaVal, ok := billingTransferNewRpmaConverted.(BillingTransferNewRpmaValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_new_rpma expected to be BillingTransferNewRpmaValue, was: %T`, billingTransferNewRpmaConverted))
+	}
+
+	billingTransferUnassignedEndCustomersAttribute, ok := attributes["billing_transfer_unassigned_end_customers"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_unassigned_end_customers is missing from object`)
+
+		return nil, diags
+	}
+
+	billingTransferUnassignedEndCustomersValuable, ok := billingTransferUnassignedEndCustomersAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_unassigned_end_customers expected to be basetypes.ObjectValuable, was: %T`, billingTransferUnassignedEndCustomersAttribute))
+
+		return nil, diags
+	}
+
+	billingTransferUnassignedEndCustomersObjVal, billingTransferUnassignedEndCustomersObjValDiags := billingTransferUnassignedEndCustomersValuable.ToObjectValue(ctx)
+	diags.Append(billingTransferUnassignedEndCustomersObjValDiags...)
+
+	billingTransferUnassignedEndCustomersTypable, ok := t.AttrTypes["billing_transfer_unassigned_end_customers"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_unassigned_end_customers expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["billing_transfer_unassigned_end_customers"]))
+
+		return nil, diags
+	}
+
+	billingTransferUnassignedEndCustomersConverted, billingTransferUnassignedEndCustomersConvertedDiags := billingTransferUnassignedEndCustomersTypable.ValueFromObject(ctx, billingTransferUnassignedEndCustomersObjVal)
+	diags.Append(billingTransferUnassignedEndCustomersConvertedDiags...)
+
+	billingTransferUnassignedEndCustomersVal, ok := billingTransferUnassignedEndCustomersConverted.(BillingTransferUnassignedEndCustomersValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_unassigned_end_customers expected to be BillingTransferUnassignedEndCustomersValue, was: %T`, billingTransferUnassignedEndCustomersConverted))
+	}
+
+	billingTransferUnassignedRpmasAttribute, ok := attributes["billing_transfer_unassigned_rpmas"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_unassigned_rpmas is missing from object`)
+
+		return nil, diags
+	}
+
+	billingTransferUnassignedRpmasValuable, ok := billingTransferUnassignedRpmasAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_unassigned_rpmas expected to be basetypes.ObjectValuable, was: %T`, billingTransferUnassignedRpmasAttribute))
+
+		return nil, diags
+	}
+
+	billingTransferUnassignedRpmasObjVal, billingTransferUnassignedRpmasObjValDiags := billingTransferUnassignedRpmasValuable.ToObjectValue(ctx)
+	diags.Append(billingTransferUnassignedRpmasObjValDiags...)
+
+	billingTransferUnassignedRpmasTypable, ok := t.AttrTypes["billing_transfer_unassigned_rpmas"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_unassigned_rpmas expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["billing_transfer_unassigned_rpmas"]))
+
+		return nil, diags
+	}
+
+	billingTransferUnassignedRpmasConverted, billingTransferUnassignedRpmasConvertedDiags := billingTransferUnassignedRpmasTypable.ValueFromObject(ctx, billingTransferUnassignedRpmasObjVal)
+	diags.Append(billingTransferUnassignedRpmasConvertedDiags...)
+
+	billingTransferUnassignedRpmasVal, ok := billingTransferUnassignedRpmasConverted.(BillingTransferUnassignedRpmasValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_unassigned_rpmas expected to be BillingTransferUnassignedRpmasValue, was: %T`, billingTransferUnassignedRpmasConverted))
+	}
+
 	cloudIncidentsAttribute, ok := attributes["cloud_incidents"]
 
 	if !ok {
@@ -2418,25 +2748,31 @@ func (t SettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 	}
 
 	return SettingsValue{
-		CloudIncidents:             cloudIncidentsVal,
-		CostAnomalies:              costAnomaliesVal,
-		CreditUtilization:          creditUtilizationVal,
-		CudApproval:                cudApprovalVal,
-		CudPurchased:               cudPurchasedVal,
-		DailyDigest:                dailyDigestVal,
-		DataIntegrationSyncFailure: dataIntegrationSyncFailureVal,
-		ExpertInsights:             expertInsightsVal,
-		Insights:                   insightsVal,
-		MonthlyDigest:              monthlyDigestVal,
-		NewInvoices:                newInvoicesVal,
-		NewProformaInvoices:        newProformaInvoicesVal,
-		NewSkuUsage:                newSkuUsageVal,
-		PaymentReminders:           paymentRemindersVal,
-		QuotaUtilization:           quotaUtilizationVal,
-		SavingsPlanApproval:        savingsPlanApprovalVal,
-		SavingsPlanPurchased:       savingsPlanPurchasedVal,
-		WeeklyDigest:               weeklyDigestVal,
-		state:                      attr.ValueStateKnown,
+		BillingTransferAgreementRevoked:       billingTransferAgreementRevokedVal,
+		BillingTransferCurExportMissing:       billingTransferCurExportMissingVal,
+		BillingTransferNewEndCustomer:         billingTransferNewEndCustomerVal,
+		BillingTransferNewRpma:                billingTransferNewRpmaVal,
+		BillingTransferUnassignedEndCustomers: billingTransferUnassignedEndCustomersVal,
+		BillingTransferUnassignedRpmas:        billingTransferUnassignedRpmasVal,
+		CloudIncidents:                        cloudIncidentsVal,
+		CostAnomalies:                         costAnomaliesVal,
+		CreditUtilization:                     creditUtilizationVal,
+		CudApproval:                           cudApprovalVal,
+		CudPurchased:                          cudPurchasedVal,
+		DailyDigest:                           dailyDigestVal,
+		DataIntegrationSyncFailure:            dataIntegrationSyncFailureVal,
+		ExpertInsights:                        expertInsightsVal,
+		Insights:                              insightsVal,
+		MonthlyDigest:                         monthlyDigestVal,
+		NewInvoices:                           newInvoicesVal,
+		NewProformaInvoices:                   newProformaInvoicesVal,
+		NewSkuUsage:                           newSkuUsageVal,
+		PaymentReminders:                      paymentRemindersVal,
+		QuotaUtilization:                      quotaUtilizationVal,
+		SavingsPlanApproval:                   savingsPlanApprovalVal,
+		SavingsPlanPurchased:                  savingsPlanPurchasedVal,
+		WeeklyDigest:                          weeklyDigestVal,
+		state:                                 attr.ValueStateKnown,
 	}, diags
 }
 
@@ -2501,6 +2837,114 @@ func NewSettingsValue(attributeTypes map[string]attr.Type, attributes map[string
 
 	if diags.HasError() {
 		return NewSettingsValueUnknown(), diags
+	}
+
+	billingTransferAgreementRevokedAttribute, ok := attributes["billing_transfer_agreement_revoked"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_agreement_revoked is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	billingTransferAgreementRevokedVal, ok := billingTransferAgreementRevokedAttribute.(BillingTransferAgreementRevokedValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_agreement_revoked expected to be BillingTransferAgreementRevokedValue, was: %T`, billingTransferAgreementRevokedAttribute))
+	}
+
+	billingTransferCurExportMissingAttribute, ok := attributes["billing_transfer_cur_export_missing"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_cur_export_missing is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	billingTransferCurExportMissingVal, ok := billingTransferCurExportMissingAttribute.(BillingTransferCurExportMissingValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_cur_export_missing expected to be BillingTransferCurExportMissingValue, was: %T`, billingTransferCurExportMissingAttribute))
+	}
+
+	billingTransferNewEndCustomerAttribute, ok := attributes["billing_transfer_new_end_customer"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_new_end_customer is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	billingTransferNewEndCustomerVal, ok := billingTransferNewEndCustomerAttribute.(BillingTransferNewEndCustomerValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_new_end_customer expected to be BillingTransferNewEndCustomerValue, was: %T`, billingTransferNewEndCustomerAttribute))
+	}
+
+	billingTransferNewRpmaAttribute, ok := attributes["billing_transfer_new_rpma"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_new_rpma is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	billingTransferNewRpmaVal, ok := billingTransferNewRpmaAttribute.(BillingTransferNewRpmaValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_new_rpma expected to be BillingTransferNewRpmaValue, was: %T`, billingTransferNewRpmaAttribute))
+	}
+
+	billingTransferUnassignedEndCustomersAttribute, ok := attributes["billing_transfer_unassigned_end_customers"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_unassigned_end_customers is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	billingTransferUnassignedEndCustomersVal, ok := billingTransferUnassignedEndCustomersAttribute.(BillingTransferUnassignedEndCustomersValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_unassigned_end_customers expected to be BillingTransferUnassignedEndCustomersValue, was: %T`, billingTransferUnassignedEndCustomersAttribute))
+	}
+
+	billingTransferUnassignedRpmasAttribute, ok := attributes["billing_transfer_unassigned_rpmas"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_transfer_unassigned_rpmas is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	billingTransferUnassignedRpmasVal, ok := billingTransferUnassignedRpmasAttribute.(BillingTransferUnassignedRpmasValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_transfer_unassigned_rpmas expected to be BillingTransferUnassignedRpmasValue, was: %T`, billingTransferUnassignedRpmasAttribute))
 	}
 
 	cloudIncidentsAttribute, ok := attributes["cloud_incidents"]
@@ -2832,25 +3276,31 @@ func NewSettingsValue(attributeTypes map[string]attr.Type, attributes map[string
 	}
 
 	return SettingsValue{
-		CloudIncidents:             cloudIncidentsVal,
-		CostAnomalies:              costAnomaliesVal,
-		CreditUtilization:          creditUtilizationVal,
-		CudApproval:                cudApprovalVal,
-		CudPurchased:               cudPurchasedVal,
-		DailyDigest:                dailyDigestVal,
-		DataIntegrationSyncFailure: dataIntegrationSyncFailureVal,
-		ExpertInsights:             expertInsightsVal,
-		Insights:                   insightsVal,
-		MonthlyDigest:              monthlyDigestVal,
-		NewInvoices:                newInvoicesVal,
-		NewProformaInvoices:        newProformaInvoicesVal,
-		NewSkuUsage:                newSkuUsageVal,
-		PaymentReminders:           paymentRemindersVal,
-		QuotaUtilization:           quotaUtilizationVal,
-		SavingsPlanApproval:        savingsPlanApprovalVal,
-		SavingsPlanPurchased:       savingsPlanPurchasedVal,
-		WeeklyDigest:               weeklyDigestVal,
-		state:                      attr.ValueStateKnown,
+		BillingTransferAgreementRevoked:       billingTransferAgreementRevokedVal,
+		BillingTransferCurExportMissing:       billingTransferCurExportMissingVal,
+		BillingTransferNewEndCustomer:         billingTransferNewEndCustomerVal,
+		BillingTransferNewRpma:                billingTransferNewRpmaVal,
+		BillingTransferUnassignedEndCustomers: billingTransferUnassignedEndCustomersVal,
+		BillingTransferUnassignedRpmas:        billingTransferUnassignedRpmasVal,
+		CloudIncidents:                        cloudIncidentsVal,
+		CostAnomalies:                         costAnomaliesVal,
+		CreditUtilization:                     creditUtilizationVal,
+		CudApproval:                           cudApprovalVal,
+		CudPurchased:                          cudPurchasedVal,
+		DailyDigest:                           dailyDigestVal,
+		DataIntegrationSyncFailure:            dataIntegrationSyncFailureVal,
+		ExpertInsights:                        expertInsightsVal,
+		Insights:                              insightsVal,
+		MonthlyDigest:                         monthlyDigestVal,
+		NewInvoices:                           newInvoicesVal,
+		NewProformaInvoices:                   newProformaInvoicesVal,
+		NewSkuUsage:                           newSkuUsageVal,
+		PaymentReminders:                      paymentRemindersVal,
+		QuotaUtilization:                      quotaUtilizationVal,
+		SavingsPlanApproval:                   savingsPlanApprovalVal,
+		SavingsPlanPurchased:                  savingsPlanPurchasedVal,
+		WeeklyDigest:                          weeklyDigestVal,
+		state:                                 attr.ValueStateKnown,
 	}, diags
 }
 
@@ -2922,33 +3372,69 @@ func (t SettingsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = SettingsValue{}
 
 type SettingsValue struct {
-	CloudIncidents             CloudIncidentsValue             `tfsdk:"cloud_incidents"`
-	CostAnomalies              CostAnomaliesValue              `tfsdk:"cost_anomalies"`
-	CreditUtilization          CreditUtilizationValue          `tfsdk:"credit_utilization"`
-	CudApproval                CudApprovalValue                `tfsdk:"cud_approval"`
-	CudPurchased               CudPurchasedValue               `tfsdk:"cud_purchased"`
-	DailyDigest                DailyDigestValue                `tfsdk:"daily_digest"`
-	DataIntegrationSyncFailure DataIntegrationSyncFailureValue `tfsdk:"data_integration_sync_failure"`
-	ExpertInsights             ExpertInsightsValue             `tfsdk:"expert_insights"`
-	Insights                   InsightsValue                   `tfsdk:"insights"`
-	MonthlyDigest              MonthlyDigestValue              `tfsdk:"monthly_digest"`
-	NewInvoices                NewInvoicesValue                `tfsdk:"new_invoices"`
-	NewProformaInvoices        NewProformaInvoicesValue        `tfsdk:"new_proforma_invoices"`
-	NewSkuUsage                NewSkuUsageValue                `tfsdk:"new_sku_usage"`
-	PaymentReminders           PaymentRemindersValue           `tfsdk:"payment_reminders"`
-	QuotaUtilization           QuotaUtilizationValue           `tfsdk:"quota_utilization"`
-	SavingsPlanApproval        SavingsPlanApprovalValue        `tfsdk:"savings_plan_approval"`
-	SavingsPlanPurchased       SavingsPlanPurchasedValue       `tfsdk:"savings_plan_purchased"`
-	WeeklyDigest               WeeklyDigestValue               `tfsdk:"weekly_digest"`
-	state                      attr.ValueState
+	BillingTransferAgreementRevoked       BillingTransferAgreementRevokedValue       `tfsdk:"billing_transfer_agreement_revoked"`
+	BillingTransferCurExportMissing       BillingTransferCurExportMissingValue       `tfsdk:"billing_transfer_cur_export_missing"`
+	BillingTransferNewEndCustomer         BillingTransferNewEndCustomerValue         `tfsdk:"billing_transfer_new_end_customer"`
+	BillingTransferNewRpma                BillingTransferNewRpmaValue                `tfsdk:"billing_transfer_new_rpma"`
+	BillingTransferUnassignedEndCustomers BillingTransferUnassignedEndCustomersValue `tfsdk:"billing_transfer_unassigned_end_customers"`
+	BillingTransferUnassignedRpmas        BillingTransferUnassignedRpmasValue        `tfsdk:"billing_transfer_unassigned_rpmas"`
+	CloudIncidents                        CloudIncidentsValue                        `tfsdk:"cloud_incidents"`
+	CostAnomalies                         CostAnomaliesValue                         `tfsdk:"cost_anomalies"`
+	CreditUtilization                     CreditUtilizationValue                     `tfsdk:"credit_utilization"`
+	CudApproval                           CudApprovalValue                           `tfsdk:"cud_approval"`
+	CudPurchased                          CudPurchasedValue                          `tfsdk:"cud_purchased"`
+	DailyDigest                           DailyDigestValue                           `tfsdk:"daily_digest"`
+	DataIntegrationSyncFailure            DataIntegrationSyncFailureValue            `tfsdk:"data_integration_sync_failure"`
+	ExpertInsights                        ExpertInsightsValue                        `tfsdk:"expert_insights"`
+	Insights                              InsightsValue                              `tfsdk:"insights"`
+	MonthlyDigest                         MonthlyDigestValue                         `tfsdk:"monthly_digest"`
+	NewInvoices                           NewInvoicesValue                           `tfsdk:"new_invoices"`
+	NewProformaInvoices                   NewProformaInvoicesValue                   `tfsdk:"new_proforma_invoices"`
+	NewSkuUsage                           NewSkuUsageValue                           `tfsdk:"new_sku_usage"`
+	PaymentReminders                      PaymentRemindersValue                      `tfsdk:"payment_reminders"`
+	QuotaUtilization                      QuotaUtilizationValue                      `tfsdk:"quota_utilization"`
+	SavingsPlanApproval                   SavingsPlanApprovalValue                   `tfsdk:"savings_plan_approval"`
+	SavingsPlanPurchased                  SavingsPlanPurchasedValue                  `tfsdk:"savings_plan_purchased"`
+	WeeklyDigest                          WeeklyDigestValue                          `tfsdk:"weekly_digest"`
+	state                                 attr.ValueState
 }
 
 func (v SettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 18)
+	attrTypes := make(map[string]tftypes.Type, 24)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["billing_transfer_agreement_revoked"] = BillingTransferAgreementRevokedType{
+		basetypes.ObjectType{
+			AttrTypes: BillingTransferAgreementRevokedValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["billing_transfer_cur_export_missing"] = BillingTransferCurExportMissingType{
+		basetypes.ObjectType{
+			AttrTypes: BillingTransferCurExportMissingValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["billing_transfer_new_end_customer"] = BillingTransferNewEndCustomerType{
+		basetypes.ObjectType{
+			AttrTypes: BillingTransferNewEndCustomerValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["billing_transfer_new_rpma"] = BillingTransferNewRpmaType{
+		basetypes.ObjectType{
+			AttrTypes: BillingTransferNewRpmaValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["billing_transfer_unassigned_end_customers"] = BillingTransferUnassignedEndCustomersType{
+		basetypes.ObjectType{
+			AttrTypes: BillingTransferUnassignedEndCustomersValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["billing_transfer_unassigned_rpmas"] = BillingTransferUnassignedRpmasType{
+		basetypes.ObjectType{
+			AttrTypes: BillingTransferUnassignedRpmasValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
 	attrTypes["cloud_incidents"] = CloudIncidentsType{
 		basetypes.ObjectType{
 			AttrTypes: CloudIncidentsValue{}.AttributeTypes(ctx),
@@ -3044,7 +3530,55 @@ func (v SettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, err
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 18)
+		vals := make(map[string]tftypes.Value, 24)
+
+		val, err = v.BillingTransferAgreementRevoked.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["billing_transfer_agreement_revoked"] = val
+
+		val, err = v.BillingTransferCurExportMissing.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["billing_transfer_cur_export_missing"] = val
+
+		val, err = v.BillingTransferNewEndCustomer.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["billing_transfer_new_end_customer"] = val
+
+		val, err = v.BillingTransferNewRpma.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["billing_transfer_new_rpma"] = val
+
+		val, err = v.BillingTransferUnassignedEndCustomers.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["billing_transfer_unassigned_end_customers"] = val
+
+		val, err = v.BillingTransferUnassignedRpmas.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["billing_transfer_unassigned_rpmas"] = val
 
 		val, err = v.CloudIncidents.ToTerraformValue(ctx)
 
@@ -3219,6 +3753,42 @@ func (v SettingsValue) String() string {
 func (v SettingsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var billingTransferAgreementRevoked attr.Value
+
+	{
+		billingTransferAgreementRevoked = v.BillingTransferAgreementRevoked
+	}
+
+	var billingTransferCurExportMissing attr.Value
+
+	{
+		billingTransferCurExportMissing = v.BillingTransferCurExportMissing
+	}
+
+	var billingTransferNewEndCustomer attr.Value
+
+	{
+		billingTransferNewEndCustomer = v.BillingTransferNewEndCustomer
+	}
+
+	var billingTransferNewRpma attr.Value
+
+	{
+		billingTransferNewRpma = v.BillingTransferNewRpma
+	}
+
+	var billingTransferUnassignedEndCustomers attr.Value
+
+	{
+		billingTransferUnassignedEndCustomers = v.BillingTransferUnassignedEndCustomers
+	}
+
+	var billingTransferUnassignedRpmas attr.Value
+
+	{
+		billingTransferUnassignedRpmas = v.BillingTransferUnassignedRpmas
+	}
+
 	var cloudIncidents attr.Value
 
 	{
@@ -3328,6 +3898,36 @@ func (v SettingsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 	}
 
 	attributeTypes := map[string]attr.Type{
+		"billing_transfer_agreement_revoked": BillingTransferAgreementRevokedType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferAgreementRevokedValue{}.AttributeTypes(ctx),
+			},
+		},
+		"billing_transfer_cur_export_missing": BillingTransferCurExportMissingType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferCurExportMissingValue{}.AttributeTypes(ctx),
+			},
+		},
+		"billing_transfer_new_end_customer": BillingTransferNewEndCustomerType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferNewEndCustomerValue{}.AttributeTypes(ctx),
+			},
+		},
+		"billing_transfer_new_rpma": BillingTransferNewRpmaType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferNewRpmaValue{}.AttributeTypes(ctx),
+			},
+		},
+		"billing_transfer_unassigned_end_customers": BillingTransferUnassignedEndCustomersType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferUnassignedEndCustomersValue{}.AttributeTypes(ctx),
+			},
+		},
+		"billing_transfer_unassigned_rpmas": BillingTransferUnassignedRpmasType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferUnassignedRpmasValue{}.AttributeTypes(ctx),
+			},
+		},
 		"cloud_incidents": CloudIncidentsType{
 			basetypes.ObjectType{
 				AttrTypes: CloudIncidentsValue{}.AttributeTypes(ctx),
@@ -3431,24 +4031,30 @@ func (v SettingsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"cloud_incidents":               cloudIncidents,
-			"cost_anomalies":                costAnomalies,
-			"credit_utilization":            creditUtilization,
-			"cud_approval":                  cudApproval,
-			"cud_purchased":                 cudPurchased,
-			"daily_digest":                  dailyDigest,
-			"data_integration_sync_failure": dataIntegrationSyncFailure,
-			"expert_insights":               expertInsights,
-			"insights":                      insights,
-			"monthly_digest":                monthlyDigest,
-			"new_invoices":                  newInvoices,
-			"new_proforma_invoices":         newProformaInvoices,
-			"new_sku_usage":                 newSkuUsage,
-			"payment_reminders":             paymentReminders,
-			"quota_utilization":             quotaUtilization,
-			"savings_plan_approval":         savingsPlanApproval,
-			"savings_plan_purchased":        savingsPlanPurchased,
-			"weekly_digest":                 weeklyDigest,
+			"billing_transfer_agreement_revoked":        billingTransferAgreementRevoked,
+			"billing_transfer_cur_export_missing":       billingTransferCurExportMissing,
+			"billing_transfer_new_end_customer":         billingTransferNewEndCustomer,
+			"billing_transfer_new_rpma":                 billingTransferNewRpma,
+			"billing_transfer_unassigned_end_customers": billingTransferUnassignedEndCustomers,
+			"billing_transfer_unassigned_rpmas":         billingTransferUnassignedRpmas,
+			"cloud_incidents":                           cloudIncidents,
+			"cost_anomalies":                            costAnomalies,
+			"credit_utilization":                        creditUtilization,
+			"cud_approval":                              cudApproval,
+			"cud_purchased":                             cudPurchased,
+			"daily_digest":                              dailyDigest,
+			"data_integration_sync_failure":             dataIntegrationSyncFailure,
+			"expert_insights":                           expertInsights,
+			"insights":                                  insights,
+			"monthly_digest":                            monthlyDigest,
+			"new_invoices":                              newInvoices,
+			"new_proforma_invoices":                     newProformaInvoices,
+			"new_sku_usage":                             newSkuUsage,
+			"payment_reminders":                         paymentReminders,
+			"quota_utilization":                         quotaUtilization,
+			"savings_plan_approval":                     savingsPlanApproval,
+			"savings_plan_purchased":                    savingsPlanPurchased,
+			"weekly_digest":                             weeklyDigest,
 		})
 
 	return objVal, diags
@@ -3467,6 +4073,30 @@ func (v SettingsValue) Equal(o attr.Value) bool {
 
 	if v.state != attr.ValueStateKnown {
 		return true
+	}
+
+	if !v.BillingTransferAgreementRevoked.Equal(other.BillingTransferAgreementRevoked) {
+		return false
+	}
+
+	if !v.BillingTransferCurExportMissing.Equal(other.BillingTransferCurExportMissing) {
+		return false
+	}
+
+	if !v.BillingTransferNewEndCustomer.Equal(other.BillingTransferNewEndCustomer) {
+		return false
+	}
+
+	if !v.BillingTransferNewRpma.Equal(other.BillingTransferNewRpma) {
+		return false
+	}
+
+	if !v.BillingTransferUnassignedEndCustomers.Equal(other.BillingTransferUnassignedEndCustomers) {
+		return false
+	}
+
+	if !v.BillingTransferUnassignedRpmas.Equal(other.BillingTransferUnassignedRpmas) {
+		return false
 	}
 
 	if !v.CloudIncidents.Equal(other.CloudIncidents) {
@@ -3554,6 +4184,36 @@ func (v SettingsValue) Type(ctx context.Context) attr.Type {
 
 func (v SettingsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
+		"billing_transfer_agreement_revoked": BillingTransferAgreementRevokedType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferAgreementRevokedValue{}.AttributeTypes(ctx),
+			},
+		},
+		"billing_transfer_cur_export_missing": BillingTransferCurExportMissingType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferCurExportMissingValue{}.AttributeTypes(ctx),
+			},
+		},
+		"billing_transfer_new_end_customer": BillingTransferNewEndCustomerType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferNewEndCustomerValue{}.AttributeTypes(ctx),
+			},
+		},
+		"billing_transfer_new_rpma": BillingTransferNewRpmaType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferNewRpmaValue{}.AttributeTypes(ctx),
+			},
+		},
+		"billing_transfer_unassigned_end_customers": BillingTransferUnassignedEndCustomersType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferUnassignedEndCustomersValue{}.AttributeTypes(ctx),
+			},
+		},
+		"billing_transfer_unassigned_rpmas": BillingTransferUnassignedRpmasType{
+			basetypes.ObjectType{
+				AttrTypes: BillingTransferUnassignedRpmasValue{}.AttributeTypes(ctx),
+			},
+		},
 		"cloud_incidents": CloudIncidentsType{
 			basetypes.ObjectType{
 				AttrTypes: CloudIncidentsValue{}.AttributeTypes(ctx),
@@ -3645,6 +4305,1614 @@ func (v SettingsValue) AttributeTypes(ctx context.Context) map[string]attr.Type 
 			},
 		},
 	}
+}
+
+var _ basetypes.ObjectTypable = BillingTransferAgreementRevokedType{}
+
+type BillingTransferAgreementRevokedType struct {
+	basetypes.ObjectType
+}
+
+func (t BillingTransferAgreementRevokedType) Equal(o attr.Type) bool {
+	other, ok := o.(BillingTransferAgreementRevokedType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t BillingTransferAgreementRevokedType) String() string {
+	return "BillingTransferAgreementRevokedType"
+}
+
+func (t BillingTransferAgreementRevokedType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewBillingTransferAgreementRevokedValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewBillingTransferAgreementRevokedValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return BillingTransferAgreementRevokedValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferAgreementRevokedValueNull() BillingTransferAgreementRevokedValue {
+	return BillingTransferAgreementRevokedValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewBillingTransferAgreementRevokedValueUnknown() BillingTransferAgreementRevokedValue {
+	return BillingTransferAgreementRevokedValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewBillingTransferAgreementRevokedValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (BillingTransferAgreementRevokedValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing BillingTransferAgreementRevokedValue Attribute Value",
+				"While creating a BillingTransferAgreementRevokedValue value, a missing attribute value was detected. "+
+					"A BillingTransferAgreementRevokedValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferAgreementRevokedValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid BillingTransferAgreementRevokedValue Attribute Type",
+				"While creating a BillingTransferAgreementRevokedValue value, an invalid attribute value was detected. "+
+					"A BillingTransferAgreementRevokedValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferAgreementRevokedValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("BillingTransferAgreementRevokedValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra BillingTransferAgreementRevokedValue Attribute Value",
+				"While creating a BillingTransferAgreementRevokedValue value, an extra attribute value was detected. "+
+					"A BillingTransferAgreementRevokedValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra BillingTransferAgreementRevokedValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferAgreementRevokedValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferAgreementRevokedValueUnknown(), diags
+	}
+
+	return BillingTransferAgreementRevokedValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferAgreementRevokedValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) BillingTransferAgreementRevokedValue {
+	object, diags := NewBillingTransferAgreementRevokedValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewBillingTransferAgreementRevokedValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t BillingTransferAgreementRevokedType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewBillingTransferAgreementRevokedValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewBillingTransferAgreementRevokedValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewBillingTransferAgreementRevokedValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewBillingTransferAgreementRevokedValueMust(BillingTransferAgreementRevokedValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t BillingTransferAgreementRevokedType) ValueType(ctx context.Context) attr.Value {
+	return BillingTransferAgreementRevokedValue{}
+}
+
+var _ basetypes.ObjectValuable = BillingTransferAgreementRevokedValue{}
+
+type BillingTransferAgreementRevokedValue struct {
+	state attr.ValueState
+}
+
+func (v BillingTransferAgreementRevokedValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v BillingTransferAgreementRevokedValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v BillingTransferAgreementRevokedValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v BillingTransferAgreementRevokedValue) String() string {
+	return "BillingTransferAgreementRevokedValue"
+}
+
+func (v BillingTransferAgreementRevokedValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v BillingTransferAgreementRevokedValue) Equal(o attr.Value) bool {
+	other, ok := o.(BillingTransferAgreementRevokedValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v BillingTransferAgreementRevokedValue) Type(ctx context.Context) attr.Type {
+	return BillingTransferAgreementRevokedType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v BillingTransferAgreementRevokedValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = BillingTransferCurExportMissingType{}
+
+type BillingTransferCurExportMissingType struct {
+	basetypes.ObjectType
+}
+
+func (t BillingTransferCurExportMissingType) Equal(o attr.Type) bool {
+	other, ok := o.(BillingTransferCurExportMissingType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t BillingTransferCurExportMissingType) String() string {
+	return "BillingTransferCurExportMissingType"
+}
+
+func (t BillingTransferCurExportMissingType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewBillingTransferCurExportMissingValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewBillingTransferCurExportMissingValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return BillingTransferCurExportMissingValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferCurExportMissingValueNull() BillingTransferCurExportMissingValue {
+	return BillingTransferCurExportMissingValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewBillingTransferCurExportMissingValueUnknown() BillingTransferCurExportMissingValue {
+	return BillingTransferCurExportMissingValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewBillingTransferCurExportMissingValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (BillingTransferCurExportMissingValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing BillingTransferCurExportMissingValue Attribute Value",
+				"While creating a BillingTransferCurExportMissingValue value, a missing attribute value was detected. "+
+					"A BillingTransferCurExportMissingValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferCurExportMissingValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid BillingTransferCurExportMissingValue Attribute Type",
+				"While creating a BillingTransferCurExportMissingValue value, an invalid attribute value was detected. "+
+					"A BillingTransferCurExportMissingValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferCurExportMissingValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("BillingTransferCurExportMissingValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra BillingTransferCurExportMissingValue Attribute Value",
+				"While creating a BillingTransferCurExportMissingValue value, an extra attribute value was detected. "+
+					"A BillingTransferCurExportMissingValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra BillingTransferCurExportMissingValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferCurExportMissingValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferCurExportMissingValueUnknown(), diags
+	}
+
+	return BillingTransferCurExportMissingValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferCurExportMissingValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) BillingTransferCurExportMissingValue {
+	object, diags := NewBillingTransferCurExportMissingValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewBillingTransferCurExportMissingValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t BillingTransferCurExportMissingType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewBillingTransferCurExportMissingValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewBillingTransferCurExportMissingValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewBillingTransferCurExportMissingValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewBillingTransferCurExportMissingValueMust(BillingTransferCurExportMissingValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t BillingTransferCurExportMissingType) ValueType(ctx context.Context) attr.Value {
+	return BillingTransferCurExportMissingValue{}
+}
+
+var _ basetypes.ObjectValuable = BillingTransferCurExportMissingValue{}
+
+type BillingTransferCurExportMissingValue struct {
+	state attr.ValueState
+}
+
+func (v BillingTransferCurExportMissingValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v BillingTransferCurExportMissingValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v BillingTransferCurExportMissingValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v BillingTransferCurExportMissingValue) String() string {
+	return "BillingTransferCurExportMissingValue"
+}
+
+func (v BillingTransferCurExportMissingValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v BillingTransferCurExportMissingValue) Equal(o attr.Value) bool {
+	other, ok := o.(BillingTransferCurExportMissingValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v BillingTransferCurExportMissingValue) Type(ctx context.Context) attr.Type {
+	return BillingTransferCurExportMissingType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v BillingTransferCurExportMissingValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = BillingTransferNewEndCustomerType{}
+
+type BillingTransferNewEndCustomerType struct {
+	basetypes.ObjectType
+}
+
+func (t BillingTransferNewEndCustomerType) Equal(o attr.Type) bool {
+	other, ok := o.(BillingTransferNewEndCustomerType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t BillingTransferNewEndCustomerType) String() string {
+	return "BillingTransferNewEndCustomerType"
+}
+
+func (t BillingTransferNewEndCustomerType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewBillingTransferNewEndCustomerValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewBillingTransferNewEndCustomerValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return BillingTransferNewEndCustomerValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferNewEndCustomerValueNull() BillingTransferNewEndCustomerValue {
+	return BillingTransferNewEndCustomerValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewBillingTransferNewEndCustomerValueUnknown() BillingTransferNewEndCustomerValue {
+	return BillingTransferNewEndCustomerValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewBillingTransferNewEndCustomerValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (BillingTransferNewEndCustomerValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing BillingTransferNewEndCustomerValue Attribute Value",
+				"While creating a BillingTransferNewEndCustomerValue value, a missing attribute value was detected. "+
+					"A BillingTransferNewEndCustomerValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferNewEndCustomerValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid BillingTransferNewEndCustomerValue Attribute Type",
+				"While creating a BillingTransferNewEndCustomerValue value, an invalid attribute value was detected. "+
+					"A BillingTransferNewEndCustomerValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferNewEndCustomerValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("BillingTransferNewEndCustomerValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra BillingTransferNewEndCustomerValue Attribute Value",
+				"While creating a BillingTransferNewEndCustomerValue value, an extra attribute value was detected. "+
+					"A BillingTransferNewEndCustomerValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra BillingTransferNewEndCustomerValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferNewEndCustomerValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferNewEndCustomerValueUnknown(), diags
+	}
+
+	return BillingTransferNewEndCustomerValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferNewEndCustomerValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) BillingTransferNewEndCustomerValue {
+	object, diags := NewBillingTransferNewEndCustomerValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewBillingTransferNewEndCustomerValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t BillingTransferNewEndCustomerType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewBillingTransferNewEndCustomerValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewBillingTransferNewEndCustomerValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewBillingTransferNewEndCustomerValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewBillingTransferNewEndCustomerValueMust(BillingTransferNewEndCustomerValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t BillingTransferNewEndCustomerType) ValueType(ctx context.Context) attr.Value {
+	return BillingTransferNewEndCustomerValue{}
+}
+
+var _ basetypes.ObjectValuable = BillingTransferNewEndCustomerValue{}
+
+type BillingTransferNewEndCustomerValue struct {
+	state attr.ValueState
+}
+
+func (v BillingTransferNewEndCustomerValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v BillingTransferNewEndCustomerValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v BillingTransferNewEndCustomerValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v BillingTransferNewEndCustomerValue) String() string {
+	return "BillingTransferNewEndCustomerValue"
+}
+
+func (v BillingTransferNewEndCustomerValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v BillingTransferNewEndCustomerValue) Equal(o attr.Value) bool {
+	other, ok := o.(BillingTransferNewEndCustomerValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v BillingTransferNewEndCustomerValue) Type(ctx context.Context) attr.Type {
+	return BillingTransferNewEndCustomerType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v BillingTransferNewEndCustomerValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = BillingTransferNewRpmaType{}
+
+type BillingTransferNewRpmaType struct {
+	basetypes.ObjectType
+}
+
+func (t BillingTransferNewRpmaType) Equal(o attr.Type) bool {
+	other, ok := o.(BillingTransferNewRpmaType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t BillingTransferNewRpmaType) String() string {
+	return "BillingTransferNewRpmaType"
+}
+
+func (t BillingTransferNewRpmaType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewBillingTransferNewRpmaValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewBillingTransferNewRpmaValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return BillingTransferNewRpmaValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferNewRpmaValueNull() BillingTransferNewRpmaValue {
+	return BillingTransferNewRpmaValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewBillingTransferNewRpmaValueUnknown() BillingTransferNewRpmaValue {
+	return BillingTransferNewRpmaValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewBillingTransferNewRpmaValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (BillingTransferNewRpmaValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing BillingTransferNewRpmaValue Attribute Value",
+				"While creating a BillingTransferNewRpmaValue value, a missing attribute value was detected. "+
+					"A BillingTransferNewRpmaValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferNewRpmaValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid BillingTransferNewRpmaValue Attribute Type",
+				"While creating a BillingTransferNewRpmaValue value, an invalid attribute value was detected. "+
+					"A BillingTransferNewRpmaValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferNewRpmaValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("BillingTransferNewRpmaValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra BillingTransferNewRpmaValue Attribute Value",
+				"While creating a BillingTransferNewRpmaValue value, an extra attribute value was detected. "+
+					"A BillingTransferNewRpmaValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra BillingTransferNewRpmaValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferNewRpmaValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferNewRpmaValueUnknown(), diags
+	}
+
+	return BillingTransferNewRpmaValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferNewRpmaValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) BillingTransferNewRpmaValue {
+	object, diags := NewBillingTransferNewRpmaValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewBillingTransferNewRpmaValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t BillingTransferNewRpmaType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewBillingTransferNewRpmaValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewBillingTransferNewRpmaValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewBillingTransferNewRpmaValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewBillingTransferNewRpmaValueMust(BillingTransferNewRpmaValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t BillingTransferNewRpmaType) ValueType(ctx context.Context) attr.Value {
+	return BillingTransferNewRpmaValue{}
+}
+
+var _ basetypes.ObjectValuable = BillingTransferNewRpmaValue{}
+
+type BillingTransferNewRpmaValue struct {
+	state attr.ValueState
+}
+
+func (v BillingTransferNewRpmaValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v BillingTransferNewRpmaValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v BillingTransferNewRpmaValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v BillingTransferNewRpmaValue) String() string {
+	return "BillingTransferNewRpmaValue"
+}
+
+func (v BillingTransferNewRpmaValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v BillingTransferNewRpmaValue) Equal(o attr.Value) bool {
+	other, ok := o.(BillingTransferNewRpmaValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v BillingTransferNewRpmaValue) Type(ctx context.Context) attr.Type {
+	return BillingTransferNewRpmaType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v BillingTransferNewRpmaValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = BillingTransferUnassignedEndCustomersType{}
+
+type BillingTransferUnassignedEndCustomersType struct {
+	basetypes.ObjectType
+}
+
+func (t BillingTransferUnassignedEndCustomersType) Equal(o attr.Type) bool {
+	other, ok := o.(BillingTransferUnassignedEndCustomersType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t BillingTransferUnassignedEndCustomersType) String() string {
+	return "BillingTransferUnassignedEndCustomersType"
+}
+
+func (t BillingTransferUnassignedEndCustomersType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewBillingTransferUnassignedEndCustomersValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewBillingTransferUnassignedEndCustomersValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return BillingTransferUnassignedEndCustomersValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferUnassignedEndCustomersValueNull() BillingTransferUnassignedEndCustomersValue {
+	return BillingTransferUnassignedEndCustomersValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewBillingTransferUnassignedEndCustomersValueUnknown() BillingTransferUnassignedEndCustomersValue {
+	return BillingTransferUnassignedEndCustomersValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewBillingTransferUnassignedEndCustomersValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (BillingTransferUnassignedEndCustomersValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing BillingTransferUnassignedEndCustomersValue Attribute Value",
+				"While creating a BillingTransferUnassignedEndCustomersValue value, a missing attribute value was detected. "+
+					"A BillingTransferUnassignedEndCustomersValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferUnassignedEndCustomersValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid BillingTransferUnassignedEndCustomersValue Attribute Type",
+				"While creating a BillingTransferUnassignedEndCustomersValue value, an invalid attribute value was detected. "+
+					"A BillingTransferUnassignedEndCustomersValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferUnassignedEndCustomersValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("BillingTransferUnassignedEndCustomersValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra BillingTransferUnassignedEndCustomersValue Attribute Value",
+				"While creating a BillingTransferUnassignedEndCustomersValue value, an extra attribute value was detected. "+
+					"A BillingTransferUnassignedEndCustomersValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra BillingTransferUnassignedEndCustomersValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferUnassignedEndCustomersValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferUnassignedEndCustomersValueUnknown(), diags
+	}
+
+	return BillingTransferUnassignedEndCustomersValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferUnassignedEndCustomersValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) BillingTransferUnassignedEndCustomersValue {
+	object, diags := NewBillingTransferUnassignedEndCustomersValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewBillingTransferUnassignedEndCustomersValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t BillingTransferUnassignedEndCustomersType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewBillingTransferUnassignedEndCustomersValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewBillingTransferUnassignedEndCustomersValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewBillingTransferUnassignedEndCustomersValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewBillingTransferUnassignedEndCustomersValueMust(BillingTransferUnassignedEndCustomersValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t BillingTransferUnassignedEndCustomersType) ValueType(ctx context.Context) attr.Value {
+	return BillingTransferUnassignedEndCustomersValue{}
+}
+
+var _ basetypes.ObjectValuable = BillingTransferUnassignedEndCustomersValue{}
+
+type BillingTransferUnassignedEndCustomersValue struct {
+	state attr.ValueState
+}
+
+func (v BillingTransferUnassignedEndCustomersValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v BillingTransferUnassignedEndCustomersValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v BillingTransferUnassignedEndCustomersValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v BillingTransferUnassignedEndCustomersValue) String() string {
+	return "BillingTransferUnassignedEndCustomersValue"
+}
+
+func (v BillingTransferUnassignedEndCustomersValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v BillingTransferUnassignedEndCustomersValue) Equal(o attr.Value) bool {
+	other, ok := o.(BillingTransferUnassignedEndCustomersValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v BillingTransferUnassignedEndCustomersValue) Type(ctx context.Context) attr.Type {
+	return BillingTransferUnassignedEndCustomersType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v BillingTransferUnassignedEndCustomersValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = BillingTransferUnassignedRpmasType{}
+
+type BillingTransferUnassignedRpmasType struct {
+	basetypes.ObjectType
+}
+
+func (t BillingTransferUnassignedRpmasType) Equal(o attr.Type) bool {
+	other, ok := o.(BillingTransferUnassignedRpmasType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t BillingTransferUnassignedRpmasType) String() string {
+	return "BillingTransferUnassignedRpmasType"
+}
+
+func (t BillingTransferUnassignedRpmasType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewBillingTransferUnassignedRpmasValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewBillingTransferUnassignedRpmasValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return BillingTransferUnassignedRpmasValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferUnassignedRpmasValueNull() BillingTransferUnassignedRpmasValue {
+	return BillingTransferUnassignedRpmasValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewBillingTransferUnassignedRpmasValueUnknown() BillingTransferUnassignedRpmasValue {
+	return BillingTransferUnassignedRpmasValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewBillingTransferUnassignedRpmasValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (BillingTransferUnassignedRpmasValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing BillingTransferUnassignedRpmasValue Attribute Value",
+				"While creating a BillingTransferUnassignedRpmasValue value, a missing attribute value was detected. "+
+					"A BillingTransferUnassignedRpmasValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferUnassignedRpmasValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid BillingTransferUnassignedRpmasValue Attribute Type",
+				"While creating a BillingTransferUnassignedRpmasValue value, an invalid attribute value was detected. "+
+					"A BillingTransferUnassignedRpmasValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("BillingTransferUnassignedRpmasValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("BillingTransferUnassignedRpmasValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra BillingTransferUnassignedRpmasValue Attribute Value",
+				"While creating a BillingTransferUnassignedRpmasValue value, an extra attribute value was detected. "+
+					"A BillingTransferUnassignedRpmasValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra BillingTransferUnassignedRpmasValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferUnassignedRpmasValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewBillingTransferUnassignedRpmasValueUnknown(), diags
+	}
+
+	return BillingTransferUnassignedRpmasValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewBillingTransferUnassignedRpmasValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) BillingTransferUnassignedRpmasValue {
+	object, diags := NewBillingTransferUnassignedRpmasValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewBillingTransferUnassignedRpmasValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t BillingTransferUnassignedRpmasType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewBillingTransferUnassignedRpmasValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewBillingTransferUnassignedRpmasValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewBillingTransferUnassignedRpmasValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewBillingTransferUnassignedRpmasValueMust(BillingTransferUnassignedRpmasValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t BillingTransferUnassignedRpmasType) ValueType(ctx context.Context) attr.Value {
+	return BillingTransferUnassignedRpmasValue{}
+}
+
+var _ basetypes.ObjectValuable = BillingTransferUnassignedRpmasValue{}
+
+type BillingTransferUnassignedRpmasValue struct {
+	state attr.ValueState
+}
+
+func (v BillingTransferUnassignedRpmasValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v BillingTransferUnassignedRpmasValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v BillingTransferUnassignedRpmasValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v BillingTransferUnassignedRpmasValue) String() string {
+	return "BillingTransferUnassignedRpmasValue"
+}
+
+func (v BillingTransferUnassignedRpmasValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v BillingTransferUnassignedRpmasValue) Equal(o attr.Value) bool {
+	other, ok := o.(BillingTransferUnassignedRpmasValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v BillingTransferUnassignedRpmasValue) Type(ctx context.Context) attr.Type {
+	return BillingTransferUnassignedRpmasType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v BillingTransferUnassignedRpmasValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
 }
 
 var _ basetypes.ObjectTypable = CloudIncidentsType{}

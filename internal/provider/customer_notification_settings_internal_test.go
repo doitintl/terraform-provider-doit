@@ -530,8 +530,8 @@ func customerNotificationSettingsAttribute(t *testing.T) schema.SingleNestedAttr
 // unsubscribes the type.
 func TestCustomerNotificationSettingsTypesClearOnOmit(t *testing.T) {
 	settings := customerNotificationSettingsAttribute(t)
-	if len(settings.Attributes) != len(notificationTypes) {
-		t.Errorf("settings has %d types, want %d", len(settings.Attributes), len(notificationTypes))
+	if len(settings.Attributes) != len(customerNotificationTypes()) {
+		t.Errorf("settings has %d types, want %d", len(settings.Attributes), len(customerNotificationTypes()))
 	}
 	for name, a := range settings.Attributes {
 		typeAttr, ok := a.(schema.SingleNestedAttribute)
@@ -606,25 +606,25 @@ func TestCustomerNotificationSettingsListValidators(t *testing.T) {
 	}
 }
 
-// Every settings type of the organization schema is in notificationTypes and
+// Every settings type of the organization schema is in customerNotificationTypes and
 // described without a user permission.
 func TestCustomerNotificationTypesCoverSchema(t *testing.T) {
 	attrTypes := resource_customer_notification.SettingsValue{}.AttributeTypes(t.Context())
 	described := map[string]bool{}
-	for _, nt := range notificationTypes {
+	for _, nt := range customerNotificationTypes() {
 		if _, ok := attrTypes[nt.attr]; !ok {
-			t.Errorf("notificationTypes lists %q, which is not in the organization schema", nt.attr)
+			t.Errorf("customerNotificationTypes lists %q, which is not in the organization schema", nt.attr)
 		}
 		described[nt.attr] = true
 	}
 	for name := range attrTypes {
 		if !described[name] {
-			t.Errorf("settings.%s is missing from notificationTypes", name)
+			t.Errorf("settings.%s is missing from customerNotificationTypes", name)
 		}
 	}
 
 	settings := customerNotificationSettingsAttribute(t)
-	for _, nt := range notificationTypes {
+	for _, nt := range customerNotificationTypes() {
 		if got, want := settings.Attributes[nt.attr].GetDescription(), customerNotificationTypeDescription(nt); got != want {
 			t.Errorf("settings.%s description = %q, want %q", nt.attr, got, want)
 		}

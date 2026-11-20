@@ -223,7 +223,7 @@ func (r *customerNotificationResource) Schema(ctx context.Context, _ resource.Sc
 		}
 
 		typeDescriptions := map[string]string{}
-		for _, t := range notificationTypes {
+		for _, t := range customerNotificationTypes() {
 			typeDescriptions[t.attr] = customerNotificationTypeDescription(t)
 		}
 		setCostAnomalyDescriptions(settings.Attributes, typeDescriptions)

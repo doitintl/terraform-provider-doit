@@ -5724,6 +5724,48 @@
 							"computed_optional_required": "required",
 							"attributes": [
 								{
+									"name": "billing_transfer_agreement_revoked",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Billing transfer, distributor and reseller tenants: a billing transfer agreement was revoked."
+									}
+								},
+								{
+									"name": "billing_transfer_cur_export_missing",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Billing transfer, distributor tenants: an end customer's Cost and Usage Report export was not found one day after the transfer started."
+									}
+								},
+								{
+									"name": "billing_transfer_new_end_customer",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Billing transfer, reseller tenants: a new end customer was onboarded."
+									}
+								},
+								{
+									"name": "billing_transfer_new_rpma",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Billing transfer, distributor tenants: a new reseller payer account was onboarded."
+									}
+								},
+								{
+									"name": "billing_transfer_unassigned_end_customers",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Billing transfer, reseller tenants: a daily digest listing every end customer not yet assigned to a customer."
+									}
+								},
+								{
+									"name": "billing_transfer_unassigned_rpmas",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Billing transfer, distributor tenants: a daily digest listing every reseller payer account not yet assigned to a customer."
+									}
+								},
+								{
 									"name": "cloud_incidents",
 									"single_nested": {
 										"computed_optional_required": "computed_optional",
@@ -6225,7 +6267,7 @@
 									}
 								}
 							],
-							"description": "Subscribed notification settings. One property per type. A present property means that type is\nsubscribed. At least one property is required. `costAnomalies` is not required. `awsBillingDataImport`\nis not a personal type and is rejected with `422`. `conditions` is not a field and is rejected with\n`422`.\n\nThe caller still needs Users Manager (`usersManager`). For every subscribed type other than `costAnomalies`, the\ntarget user must hold the permission below on create and on update. The type permission is not\nre-checked on read. The `403` problem includes `permission` (the id) and `notificationType` (the\nproperty name). Cost anomalies do not add this check. That difference is intentional: the Console\nassociates cloud cost anomalies with Cloud Analytics, and this API does not require a target-user\nCloud Analytics permission for `costAnomalies`.\n\n| Property | Permission | Permission id |\n| --- | --- | --- |\n| `newInvoices`, `newProformaInvoices`, `paymentReminders`, `creditUtilization` | Invoice Viewer | `HN6A3cPzDBcAIlc3ncDy` |\n| `quotaUtilization`, `dailyDigest`, `weeklyDigest`, `monthlyDigest`, `newSkuUsage` | Cloud Analytics User | `sfmBZeLN8uXWooCqJ4NO` |\n| `savingsPlanApproval`, `savingsPlanPurchased`, `cudApproval`, `cudPurchased` | Cloud Analytics User | `sfmBZeLN8uXWooCqJ4NO` |\n| `cloudIncidents` | Issues Viewer | `dEJbIiUcHn8GhW7IiWLW` |\n| `expertInsights`, `insights` | Insights Manager | `Co8Hf8SfDWvS7PxPlqc6` |\n| `dataIntegrationSyncFailure` | Assets Manager | `wfDH3k1FmYKHlQBwGIzZ` |"
+							"description": "Subscribed notification settings. One property per type. A present property means that type is\nsubscribed. At least one property is required. `costAnomalies` is not required. `awsBillingDataImport`\nis not a personal type and is rejected with `422`. `conditions` is not a field and is rejected with\n`422`.\n\nThe caller still needs Users Manager (`usersManager`). For every subscribed type other than `costAnomalies`, the\ntarget user must hold the permission below on create and on update. The type permission is not\nre-checked on read. The `403` problem includes `permission` (the id) and `notificationType` (the\nproperty name). Cost anomalies do not add this check. That difference is intentional: the Console\nassociates cloud cost anomalies with Cloud Analytics, and this API does not require a target-user\nCloud Analytics permission for `costAnomalies`.\n\n| Property | Permission | Permission id |\n| --- | --- | --- |\n| `newInvoices`, `newProformaInvoices`, `paymentReminders`, `creditUtilization` | Invoice Viewer | `HN6A3cPzDBcAIlc3ncDy` |\n| `quotaUtilization`, `dailyDigest`, `weeklyDigest`, `monthlyDigest`, `newSkuUsage` | Cloud Analytics User | `sfmBZeLN8uXWooCqJ4NO` |\n| `savingsPlanApproval`, `savingsPlanPurchased`, `cudApproval`, `cudPurchased` | Cloud Analytics User | `sfmBZeLN8uXWooCqJ4NO` |\n| `cloudIncidents` | Issues Viewer | `dEJbIiUcHn8GhW7IiWLW` |\n| `expertInsights`, `insights` | Insights Manager | `Co8Hf8SfDWvS7PxPlqc6` |\n| `dataIntegrationSyncFailure` | Assets Manager | `wfDH3k1FmYKHlQBwGIzZ` |\n| `billingTransferNewRpma`, `billingTransferNewEndCustomer`, `billingTransferUnassignedRpmas`, `billingTransferUnassignedEndCustomers`, `billingTransferAgreementRevoked`, `billingTransferCurExportMissing` | Billing Transfer Admin | `nkv2dwh5gd4hPBa2IqTb` |"
 						}
 					},
 					{
