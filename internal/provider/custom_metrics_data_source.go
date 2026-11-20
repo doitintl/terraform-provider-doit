@@ -84,10 +84,14 @@ func (d *customMetricsDataSource) Read(ctx context.Context, req datasource.ReadR
 		if data.SortOrder.IsNull() {
 			data.SortOrder = types.StringUnknown()
 		}
+		// With max_results set, or not yet known, page_token is the next page's
+		// token. Only in auto-pagination mode (max_results omitted) is a
+		// configured one just the starting point, which stays as configured.
+		autoPagination := data.MaxResults.IsNull()
 		if data.MaxResults.IsNull() {
 			data.MaxResults = types.Int64Unknown()
 		}
-		if data.PageToken.IsNull() {
+		if !autoPagination || data.PageToken.IsNull() {
 			data.PageToken = types.StringUnknown()
 		}
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -125,10 +129,16 @@ func (d *customMetricsDataSource) Read(ctx context.Context, req datasource.ReadR
 		items = page.Items
 		// Keep the next page's token for the user.
 		data.PageToken = types.StringPointerValue(page.PageToken)
-		data.RowCount = customMetricsRowCount(page, len(items))
+		data.RowCount = types.Int64Value(int64(len(items)))
+		if rowCount := nullableToPointer(page.RowCount); rowCount != nil {
+			data.RowCount = types.Int64Value(*rowCount)
+		}
 	} else {
 		// row_count is the API's total across all pages, so it is taken from the
 		// first page even when a page_token starts the read after the first item.
+		// Without a count from the API, the number of items fetched over all
+		// pages stands in for it.
+		var apiRowCount *int64
 		first := true
 		for {
 			page, ok := d.listPage(ctx, params, &resp.Diagnostics)
@@ -136,7 +146,7 @@ func (d *customMetricsDataSource) Read(ctx context.Context, req datasource.ReadR
 				return
 			}
 			if first {
-				data.RowCount = customMetricsRowCount(page, len(page.Items))
+				apiRowCount = nullableToPointer(page.RowCount)
 				first = false
 			}
 			items = append(items, page.Items...)
@@ -144,6 +154,10 @@ func (d *customMetricsDataSource) Read(ctx context.Context, req datasource.ReadR
 				break
 			}
 			params.PageToken = page.PageToken
+		}
+		data.RowCount = types.Int64Value(int64(len(items)))
+		if apiRowCount != nil {
+			data.RowCount = types.Int64Value(*apiRowCount)
 		}
 		// A configured page_token stays as configured.
 		data.MaxResults = types.Int64Null()
@@ -168,13 +182,4 @@ func (d *customMetricsDataSource) listPage(ctx context.Context, params *models.L
 		return nil, false
 	}
 	return apiResp.JSON200, true
-}
-
-// customMetricsRowCount returns the API's rowCount, or the number of items
-// fetched when the API omits it.
-func customMetricsRowCount(page *models.CustomMetricListResponse, fallback int) types.Int64 {
-	if rowCount := nullableToPointer(page.RowCount); rowCount != nil {
-		return types.Int64Value(*rowCount)
-	}
-	return types.Int64Value(int64(fallback))
 }

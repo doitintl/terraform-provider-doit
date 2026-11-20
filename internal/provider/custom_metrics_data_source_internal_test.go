@@ -208,6 +208,44 @@ func TestCustomMetricsDataSource_Pagination(t *testing.T) {
 			wantMaxResult: types.Int64Null(),
 		},
 		{
+			name: "row_count falls back to all fetched items across pages when the API omits it",
+			pages: map[string]string{
+				"":   fmt.Sprintf(`{"items": [%s, %s], "pageToken": "t2"}`, cmItemJSON("m1", "one"), cmItemJSON("m2", "two")),
+				"t2": fmt.Sprintf(`{"items": [%s], "pageToken": "t3"}`, cmItemJSON("m3", "three")),
+				"t3": fmt.Sprintf(`{"items": [%s]}`, cmItemJSON("m4", "four")),
+			},
+			wantNames:     []string{"one", "two", "three", "four"},
+			wantTokens:    []string{"", "t2", "t3"},
+			wantRowCount:  4,
+			wantPageToken: types.StringNull(),
+			wantMaxResult: types.Int64Null(),
+		},
+		{
+			name: "row_count falls back to all fetched items across pages when the API returns null",
+			pages: map[string]string{
+				"":   fmt.Sprintf(`{"items": [%s, %s], "pageToken": "t2", "rowCount": null}`, cmItemJSON("m1", "one"), cmItemJSON("m2", "two")),
+				"t2": fmt.Sprintf(`{"items": [%s], "pageToken": "t3", "rowCount": null}`, cmItemJSON("m3", "three")),
+				"t3": fmt.Sprintf(`{"items": [%s], "rowCount": null}`, cmItemJSON("m4", "four")),
+			},
+			wantNames:     []string{"one", "two", "three", "four"},
+			wantTokens:    []string{"", "t2", "t3"},
+			wantRowCount:  4,
+			wantPageToken: types.StringNull(),
+			wantMaxResult: types.Int64Null(),
+		},
+		{
+			name: "a row_count the first page supplies wins over the fetched count",
+			pages: map[string]string{
+				"":   fmt.Sprintf(`{"items": [%s], "pageToken": "t2", "rowCount": 9}`, cmItemJSON("m1", "one")),
+				"t2": fmt.Sprintf(`{"items": [%s]}`, cmItemJSON("m2", "two")),
+			},
+			wantNames:     []string{"one", "two"},
+			wantTokens:    []string{"", "t2"},
+			wantRowCount:  9,
+			wantPageToken: types.StringNull(),
+			wantMaxResult: types.Int64Null(),
+		},
+		{
 			name:          "no items is an empty list",
 			pages:         map[string]string{"": `{"items": [], "rowCount": 0}`},
 			wantNames:     []string{},
@@ -378,6 +416,19 @@ func TestCustomMetricsDataSource_UnknownConfigDefensiveFallback(t *testing.T) {
 		{"unknown sort_order", map[string]tftypes.Value{"sort_order": unknownString}},
 		{"unknown max_results", map[string]tftypes.Value{"max_results": unknownNumber}},
 		{"unknown page_token", map[string]tftypes.Value{"page_token": unknownString}},
+		{"max_results and a starting page_token next to an unknown filter", map[string]tftypes.Value{
+			"max_results": cmInt(2),
+			"page_token":  cmString("t2"),
+			"filter":      unknownString,
+		}},
+		{"unknown max_results next to a known page_token", map[string]tftypes.Value{
+			"max_results": unknownNumber,
+			"page_token":  cmString("t2"),
+		}},
+		{"a starting page_token in auto-pagination mode next to an unknown filter", map[string]tftypes.Value{
+			"page_token": cmString("t2"),
+			"filter":     unknownString,
+		}},
 		{"known inputs next to an unknown one", map[string]tftypes.Value{
 			"name_contains": cmString("cost"),
 			"sort_by":       cmString("name"),
@@ -443,8 +494,21 @@ func TestCustomMetricsDataSource_UnknownConfigDefensiveFallback(t *testing.T) {
 			wantString("filter", data.Filter)
 			wantString("sort_by", data.SortBy)
 			wantString("sort_order", data.SortOrder)
-			wantString("page_token", data.PageToken)
-			if !data.MaxResults.IsUnknown() {
+			// With max_results set (or unknown) page_token is the next page's
+			// token, which is not known without the call; without max_results a
+			// configured page_token is only the starting point and stays.
+			if _, manual := tc.overrides["max_results"]; manual {
+				if !data.PageToken.IsUnknown() {
+					t.Errorf("page_token = %s, want unknown in single-page mode", data.PageToken)
+				}
+			} else {
+				wantString("page_token", data.PageToken)
+			}
+			if override, ok := tc.overrides["max_results"]; ok && override.IsKnown() {
+				if !data.MaxResults.Equal(types.Int64Value(2)) {
+					t.Errorf("max_results = %s, want the configured 2", data.MaxResults)
+				}
+			} else if !data.MaxResults.IsUnknown() {
 				t.Errorf("max_results = %s, want unknown", data.MaxResults)
 			}
 		})
