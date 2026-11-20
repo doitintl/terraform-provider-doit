@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_custom_metric"
-	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -21,7 +20,11 @@ import (
 func readCustomMetricHelper(t *testing.T, server *httptest.Server, overrides map[string]tftypes.Value) (customMetricDataSourceModel, diag.Diagnostics) {
 	t.Helper()
 
-	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
+	// NewTestServer starts on the first Client() call and sets server.URL then,
+	// so the client is taken before the URL is read. The retry client is the
+	// provider's own: it turns a 403 into an error, as in production.
+	httpClient := server.Client()
+	client, err := newClientWithHTTPClient(server.URL, "test-token", "", "1.9.0", "dev", httpClient)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -146,6 +149,22 @@ func TestCustomMetricDataSource_NotFound(t *testing.T) {
 	}
 	if got := diags.Errors()[0].Detail(); !strings.Contains(got, "preset") || !strings.Contains(got, "404") {
 		t.Errorf("error detail = %q, want it to name the ID and status", got)
+	}
+}
+
+// TestCustomMetricDataSource_NotEntitled reads without the calculated metrics
+// entitlement. The retry client returns a 403 as an error, so the message must
+// carry the status and body.
+func TestCustomMetricDataSource_NotEntitled(t *testing.T) {
+	t.Parallel()
+
+	server := customMetricServer(t, http.StatusForbidden, `{"code": "analytics.feature_not_entitled"}`)
+	_, diags := readCustomMetricHelper(t, server, map[string]tftypes.Value{"id": cmString("m1")})
+	if !diags.HasError() {
+		t.Fatal("Read() returned no error for a 403")
+	}
+	if got := diags.Errors()[0].Detail(); !strings.Contains(got, "403") || !strings.Contains(got, "analytics.feature_not_entitled") {
+		t.Errorf("error detail = %q, want the status and body", got)
 	}
 }
 
