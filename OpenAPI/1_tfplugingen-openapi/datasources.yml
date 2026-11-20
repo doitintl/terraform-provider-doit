@@ -392,6 +392,10 @@ data_sources:
     read:
       path: /billing/v1/invoices/{id}/pdf
       method: GET
+  custom_metric:
+    read:
+      path: /analytics/v1/custom-metrics/{id}
+      method: GET
   custom_metrics:
     read:
       path: /analytics/v1/custom-metrics
