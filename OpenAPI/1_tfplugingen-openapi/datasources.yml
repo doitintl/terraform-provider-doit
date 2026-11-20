@@ -384,6 +384,10 @@ data_sources:
     read:
       path: /insights/v2/recipes/{recipeId}/results
       method: GET
+  extended_metrics:
+    read:
+      path: /analytics/v1/extended-metrics
+      method: GET
   invoice_pdf:
     read:
       path: /billing/v1/invoices/{id}/pdf
