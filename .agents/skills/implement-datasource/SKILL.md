@@ -103,7 +103,7 @@ If the defensive fallback writes state, it must predict what a real read of the 
 
 Decide each attribute from what this data source's own read writes, not from its schema class. `Optional+Computed` covers both cases: a filter is an input the read keeps, while `page_token` in a list data source is a result, because every read replaces it (see [Unknown guard](#unknown-guard)).
 
-> **Linter:** `unknownguard` — flags data source `Read` methods missing a defensive unknown-configuration guard. For list data sources (`max_results`, `page_token` and `row_count`) it also requires an `IsFullyKnown()` guard that sets `PageToken` and `RowCount` unknown unconditionally. Otherwise it checks guard presence only.
+> **Linter:** `unknownguard` — flags data source `Read` methods missing a defensive unknown-configuration guard. For list data sources (`max_results`, `page_token` and `row_count`) it also requires a `!req.Config.Raw.IsFullyKnown()` guard (alone or ORed with other conditions; an ANDed or inverted check lets unknown configuration through) that sets `PageToken` and `RowCount` unknown unconditionally. Otherwise it checks guard presence only.
 
 ### API Response Validation
 

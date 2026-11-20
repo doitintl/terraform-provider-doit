@@ -107,6 +107,10 @@ type listPage struct {
 
 // listFakeServer serves pages keyed by the incoming pageToken: "" is the first
 // page, "t1" the second, and so on. It records each request's query.
+//
+// A numeric rowCount grows by one with every request after the first, so only
+// the count of the read's first response gives the expected row_count. A
+// data source that takes the count from a later page fails.
 type listFakeServer struct {
 	*httptest.Server
 	mu       sync.Mutex
@@ -119,6 +123,7 @@ func newListFakeServer(t *testing.T, c listDataSourceCase, pages []listPage) *li
 	s.Server = httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		s.requests = append(s.requests, r.URL.RawQuery)
+		request := len(s.requests) - 1
 		s.mu.Unlock()
 		if r.URL.Path != c.path {
 			http.Error(w, "unexpected path "+r.URL.Path, http.StatusNotFound)
@@ -145,8 +150,11 @@ func newListFakeServer(t *testing.T, c listDataSourceCase, pages []listPage) *li
 		if index+1 < len(pages) {
 			body += fmt.Sprintf(`,"pageToken":"t%d"`, index+1)
 		}
-		if pages[index].rowCount != "" {
-			body += `,"rowCount":` + pages[index].rowCount
+		if rowCount := pages[index].rowCount; rowCount != "" {
+			if n, err := strconv.Atoi(rowCount); err == nil {
+				rowCount = strconv.Itoa(n + request)
+			}
+			body += `,"rowCount":` + rowCount
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(body + "}"))
@@ -505,14 +513,15 @@ func TestListDataSourceRead(t *testing.T) {
 				if got := listInt64(t, state["row_count"]); got != want.rowCount {
 					t.Errorf("row_count = %d, want %d (-1 is null)", got, want.rowCount)
 				}
-				var pageToken string
-				if !state["page_token"].IsNull() {
-					if err := state["page_token"].As(&pageToken); err != nil {
-						t.Fatal(err)
+				// Without a next page, page_token must be null, not "": a
+				// configuration that chains on page_token != null would
+				// otherwise read the first page again.
+				if wantPageToken := tftypes.NewValue(tftypes.String, nil); want.pageToken == "" {
+					if !state["page_token"].Equal(wantPageToken) {
+						t.Errorf("page_token = %v, want null", state["page_token"])
 					}
-				}
-				if pageToken != want.pageToken {
-					t.Errorf("page_token = %q, want %q", pageToken, want.pageToken)
+				} else if wantPageToken = tfString(want.pageToken); !state["page_token"].Equal(wantPageToken) {
+					t.Errorf("page_token = %v, want %v", state["page_token"], wantPageToken)
 				}
 				if _, configured := row.config["max_results"]; !configured && !state["max_results"].IsNull() {
 					t.Errorf("max_results = %v, want null", state["max_results"])

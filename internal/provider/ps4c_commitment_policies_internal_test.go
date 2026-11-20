@@ -242,7 +242,8 @@ func TestPs4cCommitmentPoliciesRead_ManualPagination_PageTokenOnly(t *testing.T)
 		}
 
 		// rowCount is the total across all pages, including the page before
-		// start-token.
+		// start-token. This page reports a different count, so the test fails
+		// if a later page's count replaces the first page's.
 		_, _ = fmt.Fprint(w, `{
 			"items": [
 				{
@@ -256,7 +257,7 @@ func TestPs4cCommitmentPoliciesRead_ManualPagination_PageTokenOnly(t *testing.T)
 				}
 			],
 			"pageToken": null,
-			"rowCount": 3
+			"rowCount": 4
 		}`)
 	}))
 

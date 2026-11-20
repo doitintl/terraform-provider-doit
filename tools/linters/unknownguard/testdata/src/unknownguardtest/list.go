@@ -100,3 +100,63 @@ func (d *noRowCountListDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 }
+
+func (v value) IsKnown() bool { return true }
+
+type maxResultsModel struct {
+	listModel
+	MaxResults value
+}
+
+// BAD: the guard only covers auto-pagination mode, so unknown configuration
+// with max_results set reaches the API.
+type restrictedListDataSource struct{}
+
+func (d *restrictedListDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	s := datasource_list.ListDataSourceSchema(ctx)
+	resp.Schema = s
+}
+
+func (d *restrictedListDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) { // want `list data source Read\(\) must guard unknown protocol configuration with req.Config.Raw.IsFullyKnown\(\)`
+	var data maxResultsModel
+	if !listConfig(req).Config.Raw.IsFullyKnown() && data.MaxResults.IsNull() {
+		data.RowCount = Int64Unknown()
+		data.PageToken = StringUnknown()
+		return
+	}
+}
+
+// BAD: the condition is inverted, so the fallback runs for known configuration.
+type invertedListDataSource struct{}
+
+func (d *invertedListDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	s := datasource_list.ListDataSourceSchema(ctx)
+	resp.Schema = s
+}
+
+func (d *invertedListDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) { // want `list data source Read\(\) must guard unknown protocol configuration with req.Config.Raw.IsFullyKnown\(\)`
+	var data listModel
+	if listConfig(req).Config.Raw.IsFullyKnown() {
+		data.RowCount = Int64Unknown()
+		data.PageToken = StringUnknown()
+		return
+	}
+}
+
+// GOOD: a guard that also fires on other conditions still covers every
+// configuration that is not fully known.
+type widerListDataSource struct{}
+
+func (d *widerListDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	s := datasource_list.ListDataSourceSchema(ctx)
+	resp.Schema = s
+}
+
+func (d *widerListDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data maxResultsModel
+	if !listConfig(req).Config.Raw.IsFullyKnown() || !data.MaxResults.IsKnown() {
+		data.RowCount = Int64Unknown()
+		data.PageToken = StringUnknown()
+		return
+	}
+}

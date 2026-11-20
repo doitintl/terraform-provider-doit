@@ -21,14 +21,18 @@
 // List data sources (max_results, page_token and row_count in the schema) get
 // one stricter check, because their fallback is fully determined: a read
 // replaces page_token with the next page's token or null in every mode, and
-// row_count is a result. Their Read() must guard with IsFullyKnown(), and the
-// guard's body must assign PageToken = types.StringUnknown() and
+// row_count is a result. Their Read() must guard with a condition that holds
+// for every configuration that is not fully known (!x.IsFullyKnown(), alone or
+// ORed with other conditions; an inverted or ANDed check lets unknown
+// configuration reach the API), and the guard's body must assign
+// PageToken = types.StringUnknown() and
 // RowCount = types.Int64Unknown() as top-level statements, not under a
 // condition such as "only when page_token is null".
 package unknownguard
 
 import (
 	"go/ast"
+	"go/token"
 	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/tools/linters/schemaparser"
@@ -254,7 +258,7 @@ func checkListGuard(pass *analysis.Pass, fn *ast.FuncDecl) {
 			return false
 		}
 		ifStmt, ok := n.(*ast.IfStmt)
-		if ok && callsMethod(ifStmt.Cond, "IsFullyKnown") {
+		if ok && coversNotFullyKnown(ifStmt.Cond) {
 			guard = ifStmt
 			return false
 		}
@@ -290,18 +294,16 @@ func checkListGuard(pass *analysis.Pass, fn *ast.FuncDecl) {
 	}
 }
 
-// callsMethod reports whether expr contains a call of a method named name.
-func callsMethod(expr ast.Expr, name string) bool {
-	found := false
-	ast.Inspect(expr, func(n ast.Node) bool {
-		if call, ok := n.(*ast.CallExpr); ok {
-			if sel, ok := call.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == name {
-				found = true
-			}
-		}
-		return !found
-	})
-	return found
+// coversNotFullyKnown reports whether cond holds whenever the configuration is
+// not fully known: it is !x.IsFullyKnown(), possibly ORed with other conditions.
+func coversNotFullyKnown(cond ast.Expr) bool {
+	switch e := ast.Unparen(cond).(type) {
+	case *ast.UnaryExpr:
+		return e.Op == token.NOT && isCallTo(ast.Unparen(e.X), "IsFullyKnown")
+	case *ast.BinaryExpr:
+		return e.Op == token.LOR && (coversNotFullyKnown(e.X) || coversNotFullyKnown(e.Y))
+	}
+	return false
 }
 
 // isCallTo reports whether expr is a call of a function or method named name.
