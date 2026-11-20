@@ -6506,6 +6506,8 @@ type AnnotationListItem struct {
 }
 
 // AnomaliesResponse List of detected cloud cost anomalies.
+//
+// Example: {"anomalies":[{"acknowledged":false,"actualCost":1312.37,"allocations":[{"id":"mN0pQ1rS2tU3vW4xY5zA","name":"Production"}],"attribution":"Production","billingAccount":"012345-ABCDEF-678901","costOfAnomaly":412.37,"deactivationReason":null,"endTime":null,"expectedMaxCost":900,"id":"aBcD1234eFgH5678iJkL","initialNotifications":[],"linkedAnomalies":[],"monitorLevel":"service","notifications":[],"platform":"google-cloud","scope":"example-project","serviceName":"Compute Engine","severityLevel":"warning","startTime":1792454400000,"status":"active","timeFrame":"daily","top3SKUs":[{"cost":301.12,"name":"N2 Instance Core running in Americas"}]}],"anomalySummary":{"countBySeverity":{"critical":0,"information":0,"warning":1},"totalCostOfAnomaly":412.37},"rowCount":1,"totalCount":1,"totalCountExact":true,"truncated":false}
 type AnomaliesResponse struct {
 	// Anomalies Anomalies in this page. Always an array; empty (`[]`) when there are no matching anomalies.
 	Anomalies []AnomalyItem `json:"anomalies"`
@@ -10737,6 +10739,8 @@ type EligibleSpendDataPoint struct {
 }
 
 // Error Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type Error struct {
 	// Error Detailed error message.
 	Error *string `json:"error,omitempty"`
@@ -12158,7 +12162,7 @@ type GeographicAccessCountry struct {
 	Name string `json:"name"`
 }
 
-// GetAnomaly200Response defines model for GetAnomaly200Response.
+// GetAnomaly200Response Example: {"acknowledged":false,"actualCost":1312.37,"allocations":[{"id":"mN0pQ1rS2tU3vW4xY5zA","name":"Production"}],"attribution":"Production","billingAccount":"012345-ABCDEF-678901","costOfAnomaly":412.37,"customerFeedback":{"reviewStatus":"NEEDS_REVIEW"},"deactivationReason":null,"endTime":null,"expectedMaxCost":900,"initialNotifications":[],"linkedAnomalies":[],"monitorLevel":"service","notifications":[],"platform":"google-cloud","scope":"example-project","serviceName":"Compute Engine","severityLevel":"warning","startTime":1792454400000,"status":"active","timeFrame":"daily","top3SKUs":[{"cost":301.12,"name":"N2 Instance Core running in Americas"}]}
 type GetAnomaly200Response struct {
 	// Acknowledged Has the anomaly been acknowledged
 	Acknowledged *bool `json:"acknowledged,omitempty"`
@@ -12262,7 +12266,7 @@ type GetAnomaly200ResponseAllocationsItem struct {
 	Name string `json:"name"`
 }
 
-// GetAnomalyExplanation200Response defines model for GetAnomalyExplanation200Response.
+// GetAnomalyExplanation200Response Example: {"evidence":[{"id":"aBcD1234eFgH5678iJkL","type":"anomaly"},{"id":"qR7sT8uV9wX0yZ1aB2cD","type":"billingAnomalyDocument"}],"explanation":{"aiGenerated":true,"generatedBy":"ava","text":"Compute Engine spend in example-project rose above the expected range after additional N2 instances ran in the Americas."},"facts":{"actualCost":1312.37,"costOfAnomaly":412.37,"expectedMaxCost":900,"platform":"google-cloud","scope":"example-project","serviceName":"Compute Engine","severityLevel":"warning","top3SKUs":[{"cost":301.12,"name":"N2 Instance Core running in Americas"}]}}
 type GetAnomalyExplanation200Response struct {
 	// Evidence Customer-scoped identifiers the explanation was grounded in.
 	Evidence []GetAnomalyExplanation200ResponseEvidenceItem `json:"evidence"`
@@ -14893,36 +14897,58 @@ type SortOrder string
 type TenantId = string
 
 // N400 Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type N400 = Error
 
 // N401 Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type N401 = Error
 
 // N403 Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type N403 = Error
 
 // N403ResourceOrForbidden Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type N403ResourceOrForbidden = Error
 
 // N404 Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type N404 = Error
 
 // N422 Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type N422 = Error
 
 // N425 Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type N425 = Error
 
 // N429 Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type N429 = Error
 
 // N500 Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type N500 = Error
 
 // N502 Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type N502 = Error
 
 // N503 Standard error response structure.
+//
+// Example: {"error":"The request could not be completed."}
 type N503 = Error
 
 // BadRequest RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
@@ -19009,7 +19035,7 @@ type ClientInterface interface {
 
 	// CreateDatahubDatasetWithBody Create dataset
 	//
-	// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+	// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events. A `name` that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400`, because reports would merge the dataset with that provider. Matching ignores case, so `Google-cloud` is rejected, while `Google Cloud` is accepted. `displayName` can use any value, including a reserved name.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -19018,7 +19044,7 @@ type ClientInterface interface {
 
 	// CreateDatahubDataset Create dataset
 	//
-	// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+	// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events. A `name` that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400`, because reports would merge the dataset with that provider. Matching ignores case, so `Google-cloud` is rejected, while `Google Cloud` is accepted. `displayName` can use any value, including a reserved name.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -22825,7 +22851,7 @@ func (c *Client) ListDatahubDatasets(ctx context.Context, reqEditors ...RequestE
 
 // CreateDatahubDatasetWithBody Create dataset
 //
-// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events. A `name` that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400`, because reports would merge the dataset with that provider. Matching ignores case, so `Google-cloud` is rejected, while `Google Cloud` is accepted. `displayName` can use any value, including a reserved name.
 //
 // Takes any type of body and a specified content type.
 //
@@ -22844,7 +22870,7 @@ func (c *Client) CreateDatahubDatasetWithBody(ctx context.Context, contentType s
 
 // CreateDatahubDataset Create dataset
 //
-// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events. A `name` that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400`, because reports would merge the dataset with that provider. Matching ignores case, so `Google-cloud` is rejected, while `Google Cloud` is accepted. `displayName` can use any value, including a reserved name.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -35770,7 +35796,7 @@ type ClientWithResponsesInterface interface {
 
 	// CreateDatahubDatasetWithBodyWithResponse Create dataset
 	//
-	// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+	// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events. A `name` that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400`, because reports would merge the dataset with that provider. Matching ignores case, so `Google-cloud` is rejected, while `Google Cloud` is accepted. `displayName` can use any value, including a reserved name.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -35779,7 +35805,7 @@ type ClientWithResponsesInterface interface {
 
 	// CreateDatahubDatasetWithResponse Create dataset
 	//
-	// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+	// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events. A `name` that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400`, because reports would merge the dataset with that provider. Matching ignores case, so `Google-cloud` is rejected, while `Google Cloud` is accepted. `displayName` can use any value, including a reserved name.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -48602,7 +48628,7 @@ type DeleteUserNotificationResp struct {
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthorized
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
-	ApplicationproblemJSON403 *UserNotificationForbidden
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *NotFound
 	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
@@ -48648,7 +48674,7 @@ func (r DeleteUserNotificationResp) GetApplicationproblemJSON401() *Unauthorized
 }
 
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
-func (r DeleteUserNotificationResp) GetApplicationproblemJSON403() *UserNotificationForbidden {
+func (r DeleteUserNotificationResp) GetApplicationproblemJSON403() *Forbidden {
 	return r.ApplicationproblemJSON403
 }
 
@@ -48923,7 +48949,7 @@ type UpdateUserNotificationResp struct {
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthorized
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
-	ApplicationproblemJSON403 *Forbidden
+	ApplicationproblemJSON403 *UserNotificationForbidden
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *NotFound
 	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
@@ -48982,7 +49008,7 @@ func (r UpdateUserNotificationResp) GetApplicationproblemJSON401() *Unauthorized
 }
 
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
-func (r UpdateUserNotificationResp) GetApplicationproblemJSON403() *Forbidden {
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON403() *UserNotificationForbidden {
 	return r.ApplicationproblemJSON403
 }
 
@@ -54364,7 +54390,7 @@ func (c *ClientWithResponses) ListDatahubDatasetsWithResponse(ctx context.Contex
 
 // CreateDatahubDatasetWithBodyWithResponse Create dataset
 //
-// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events. A `name` that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400`, because reports would merge the dataset with that provider. Matching ignores case, so `Google-cloud` is rejected, while `Google Cloud` is accepted. `displayName` can use any value, including a reserved name.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -54379,7 +54405,7 @@ func (c *ClientWithResponses) CreateDatahubDatasetWithBodyWithResponse(ctx conte
 
 // CreateDatahubDatasetWithResponse Create dataset
 //
-// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+// Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events. A `name` that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400`, because reports would merge the dataset with that provider. Matching ignores case, so `Google-cloud` is rejected, while `Google Cloud` is accepted. `displayName` can use any value, including a reserved name.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -68306,7 +68332,7 @@ func ParseDeleteUserNotificationResp(rsp *http.Response) (*DeleteUserNotificatio
 		response.ApplicationproblemJSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest UserNotificationForbidden
+		var dest Forbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -68762,7 +68788,7 @@ func ParseUpdateUserNotificationResp(rsp *http.Response) (*UpdateUserNotificatio
 		response.ApplicationproblemJSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest Forbidden
+		var dest UserNotificationForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

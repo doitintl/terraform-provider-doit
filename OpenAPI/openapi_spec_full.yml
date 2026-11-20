@@ -4135,7 +4135,7 @@ paths:
       tags:
         - Contracts
       summary: List contracts
-      description: Lists the contracts held by the specified customer. Callable by a T1/T2 PartnerOps principal for its own tenant or any descendant tenant. Read access requires contractsReadOnly or contractsViewer, plus the billing:contracts or channelops entitlement. User API tokens must include the matching permission in their scope.
+      description: Lists the contracts held by the specified customer. Callable by a T1/T2 PartnerOps principal for its own tenant or any descendant tenant. Read access requires the contractsViewer or contractsManager permission, plus the billing:contracts or channelops entitlement. User API tokens must include one of the permissions in their scope.
       operationId: listContracts
       parameters:
         - name: customerID
@@ -4161,7 +4161,7 @@ paths:
       tags:
         - Contracts
       summary: Create contract
-      description: Creates a draft contract for the specified customer. Requires the caller to be the direct parent (T1 for a T2-level contract, T2 for a T3-level contract). Write access requires contractsViewer without contractsReadOnly, plus the billing:contracts or channelops entitlement; user API tokens must include the matching permission in their scope.
+      description: Creates a draft contract for the specified customer. Requires the caller to be the direct parent (T1 for a T2-level contract, T2 for a T3-level contract). Write access requires the contractsManager permission, plus the billing:contracts or channelops entitlement; user API tokens must include it in their scope.
       operationId: createContract
       parameters:
         - name: customerID
@@ -4194,7 +4194,7 @@ paths:
       tags:
         - Contracts
       summary: Retrieve a contract
-      description: Returns the specified contract.
+      description: Returns the specified contract. Requires the contractsViewer or contractsManager permission. User API tokens must include one of them in their scope.
       operationId: getContract
       parameters:
         - name: customerID
@@ -4224,7 +4224,7 @@ paths:
       tags:
         - Contracts
       summary: Update contract
-      description: Creates a new version of the contract. The contract type is immutable and cannot be changed by an update.
+      description: Creates a new version of the contract. The contract type is immutable and cannot be changed by an update. Requires the contractsManager permission. User API tokens must include it in their scope.
       operationId: updateContract
       parameters:
         - name: customerID
@@ -4263,7 +4263,7 @@ paths:
       tags:
         - Contracts
       summary: Activate contract
-      description: Transitions a draft contract to active or scheduled (when the start date is in the future). Produces the same system state as activating via the Console.
+      description: Transitions a draft contract to active or scheduled (when the start date is in the future). Produces the same system state as activating via the Console. Requires the contractsManager permission. User API tokens must include it in their scope.
       operationId: activateContract
       parameters:
         - name: customerID
@@ -4298,7 +4298,7 @@ paths:
       tags:
         - Contracts
       summary: Cancel contract
-      description: Cancels (deactivates) a contract. Active contracts cannot be deleted; cancel is the terminal operation.
+      description: Cancels (deactivates) a contract. Active contracts cannot be deleted; cancel is the terminal operation. Requires the contractsManager permission. User API tokens must include it in their scope.
       operationId: cancelContract
       parameters:
         - name: customerID
@@ -4605,6 +4605,34 @@ paths:
                       $ref: "#/components/schemas/NotificationEvent"
                   linkedAnomalies:
                     $ref: "#/components/schemas/LinkedAnomalies"
+                example:
+                  attribution: Production
+                  allocations:
+                    - id: mN0pQ1rS2tU3vW4xY5zA
+                      name: Production
+                  billingAccount: 012345-ABCDEF-678901
+                  costOfAnomaly: 412.37
+                  actualCost: 1312.37
+                  expectedMaxCost: 900
+                  platform: google-cloud
+                  scope: example-project
+                  serviceName: Compute Engine
+                  severityLevel: warning
+                  startTime: 1792454400000
+                  endTime: null
+                  deactivationReason: null
+                  timeFrame: daily
+                  top3SKUs:
+                    - name: N2 Instance Core running in Americas
+                      cost: 301.12
+                  monitorLevel: service
+                  status: active
+                  acknowledged: false
+                  customerFeedback:
+                    reviewStatus: NEEDS_REVIEW
+                  notifications: []
+                  initialNotifications: []
+                  linkedAnomalies: []
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -4643,6 +4671,10 @@ paths:
           schema:
             type: string
       requestBody:
+        description: >-
+          The review-status change to apply. Moving to `NEEDS_REVIEW` or `UNDER_REVIEW` clears
+          `resolution` and `resolutionNote`. Resolving, or changing `resolution`, without a
+          `resolutionNote` clears any previous note.
         required: true
         content:
           application/json:
@@ -4762,6 +4794,29 @@ paths:
                       aiGenerated:
                         type: boolean
                         description: Always true; present so consumers can identify AI-generated content explicitly.
+                example:
+                  facts:
+                    serviceName: Compute Engine
+                    platform: google-cloud
+                    scope: example-project
+                    severityLevel: warning
+                    costOfAnomaly: 412.37
+                    actualCost: 1312.37
+                    expectedMaxCost: 900
+                    top3SKUs:
+                      - name: N2 Instance Core running in Americas
+                        cost: 301.12
+                  evidence:
+                    - type: anomaly
+                      id: aBcD1234eFgH5678iJkL
+                    - type: billingAnomalyDocument
+                      id: qR7sT8uV9wX0yZ1aB2cD
+                  explanation:
+                    text: >-
+                      Compute Engine spend in example-project rose above the expected range after
+                      additional N2 instances ran in the Americas.
+                    generatedBy: ava
+                    aiGenerated: true
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -4873,7 +4928,9 @@ paths:
       tags:
         - DataHub
       summary: Ingest CSV file
-      description: Sends a batch of events to DataHub using a CSV file, either uncompressed or compressed in ZIP or GZ format. It may take up to 15 minutes for the data to become available in the DoiT console.
+      description: >-
+        Sends a batch of events to DataHub using a CSV file, either uncompressed or compressed in ZIP or GZ format. It may take up to 15 minutes for the data to become available in the DoiT console.
+        A provider name that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400` when it would create a new dataset. Datasets that already use such a name keep accepting data. Matching is exact and case-sensitive.
       operationId: datahubEventsCSVFile
       x-cli-name: ingest-datahub-events-csv
       x-cli-aliases:
@@ -4984,7 +5041,7 @@ paths:
         Sends provider-native records as JSON instead of a CSV file. The records use the same columns as the
         template's CSV (currently `anthropic-spend-report@1` only) and are validated, normalized and booked on
         `periodEnd` exactly like a CSV upload. It may take up to 15 minutes for the data to become available in the
-        DoiT console.
+        DoiT console. A provider name that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400` when it would create a new dataset. Datasets that already use such a name keep accepting data. Matching is exact and case-sensitive.
       operationId: datahubImportProviderRecords
       x-cli-name: import-datahub-provider-records
       requestBody:
@@ -5090,7 +5147,8 @@ paths:
       tags:
         - DataHub
       summary: Ingest JSON
-      description: Sends a batch of events to DataHub.
+      description: >-
+        Sends a batch of events to DataHub. A provider name that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400` when it would create a new dataset. Datasets that already use such a name keep accepting data. Matching is exact and case-sensitive.
       operationId: datahubEvents
       x-cli-name: ingest-datahub-events
       x-cli-aliases:
@@ -5306,7 +5364,10 @@ paths:
       tags:
         - DataHub
       summary: Create dataset
-      description: Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+      description: >-
+        Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+        A `name` that exactly matches a built-in provider, such as `google-cloud`, `amazon-web-services` or `microsoft-azure`, is rejected with `400`, because reports would merge the dataset with that provider.
+        Matching ignores case, so `Google-cloud` is rejected, while `Google Cloud` is accepted. `displayName` can use any value, including a reserved name.
       operationId: createDatahubDataset
       requestBody:
         required: true
@@ -8889,7 +8950,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          $ref: "#/components/responses/Forbidden"
+          $ref: "#/components/responses/UserNotificationForbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -8938,7 +8999,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          $ref: "#/components/responses/UserNotificationForbidden"
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -21959,6 +22020,14 @@ components:
         inviteId:
           type: string
           description: The invite document ID.
+        invitedAt:
+          type: string
+          format: date-time
+          description: When the renewed invitation window started.
+        inviteExpiresAt:
+          type: string
+          format: date-time
+          description: When the renewed invitation expires.
     CancelInviteResponse:
       type: object
       description: Response confirming invite cancellation.
@@ -21970,6 +22039,10 @@ components:
         inviteId:
           type: string
           description: The invite document ID.
+        cancelledAt:
+          type: string
+          format: date-time
+          description: When the invitation was cancelled.
     AdvancedAnalysis:
       type: object
       description: Advanced analysis options. Each can be set independently.
@@ -23004,6 +23077,44 @@ components:
                 Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents. Every
                 matching anomaly contributes, linked ones included, so a single cost spike described at
                 more than one level of detail contributes once per anomaly describing it.
+      example:
+        anomalies:
+          - id: aBcD1234eFgH5678iJkL
+            attribution: Production
+            allocations:
+              - id: mN0pQ1rS2tU3vW4xY5zA
+                name: Production
+            billingAccount: 012345-ABCDEF-678901
+            costOfAnomaly: 412.37
+            actualCost: 1312.37
+            expectedMaxCost: 900
+            platform: google-cloud
+            scope: example-project
+            serviceName: Compute Engine
+            severityLevel: warning
+            startTime: 1792454400000
+            endTime: null
+            deactivationReason: null
+            timeFrame: daily
+            top3SKUs:
+              - name: N2 Instance Core running in Americas
+                cost: 301.12
+            monitorLevel: service
+            status: active
+            acknowledged: false
+            notifications: []
+            initialNotifications: []
+            linkedAnomalies: []
+        rowCount: 1
+        truncated: false
+        totalCount: 1
+        totalCountExact: true
+        anomalySummary:
+          countBySeverity:
+            information: 0
+            warning: 1
+            critical: 0
+          totalCostOfAnomaly: 412.37
     AnomalyItem:
       required:
         - attribution
@@ -23237,15 +23348,18 @@ components:
           description: Email of the user who made the last review-feedback update. Absent when the anomaly was never reviewed.
     AnomalyStatusUpdate:
       type: object
+      description: >-
+        Request body for `patchAnomaly`: a partial update of the anomaly's review status, using the
+        same review workflow as the console.
       required:
         - customerFeedback
       properties:
         customerFeedback:
           type: object
           description: >-
-            Partial review-status update. Fields that are omitted are left unchanged.
-            `reviewStatus` drives the state machine; `resolution` and `resolutionNote`
-            apply only when resolving.
+            Partial review-status update. `reviewStatus` drives the state machine; `resolution`
+            and `resolutionNote` apply only when resolving, and some transitions clear them (see
+            the `patchAnomaly` request body description).
           properties:
             reviewStatus:
               type: string
@@ -23289,6 +23403,13 @@ components:
                   description: >-
                     Free-text resolution comment; stored as the tagged resolution comment on
                     the anomaly feed. Length-capped like console comments.
+      example:
+        customerFeedback:
+          reviewStatus: RESOLVED
+          resolution: ANOMALY_CONFIRMED
+          resolutionNote:
+            reason: EXPECTED_COST_SPIKE
+            comment: Planned load test ahead of the quarterly release.
     NotificationEvent:
       type: object
       description: |-
@@ -24643,6 +24764,8 @@ components:
         error:
           type: string
           description: Detailed error message.
+      example:
+        error: The request could not be completed.
     ExternalAPIGetValue:
       type: object
       description: Single value entry used by some dimension endpoints.
@@ -30531,7 +30654,7 @@ components:
         estimatedEquivalentRecommendedCommitment:
           type: number
           format: double
-          description: Shelf-price hourly equivalent ($/h) of the recommended commitment, derived from the median hourly eligible usage over the last 60 days multiplied by `estimatedAverageCoverage`. Use this to compare the recommendation line to eligible usage on charts.
+          description: Shelf-price hourly equivalent ($/h) of the recommended commitment, derived from the median hourly eligible usage over the recommendation's lookback period (the same window `estimatedAverageCoverage` is calculated over) multiplied by `estimatedAverageCoverage`. Use this to compare the recommendation line to eligible usage on charts.
     AwsRecommendations:
       type: object
       properties:
@@ -31692,6 +31815,7 @@ components:
         - namespace
         - accountId
         - platform
+        - platformCloudProvider
       properties:
         workloadId:
           type: string
@@ -31722,7 +31846,7 @@ components:
               type: string
         platformCloudProvider:
           type: string
-          description: The cloud the cluster runs on. Absent when the ID does not carry it.
+          description: The cloud the cluster runs on. Empty when unknown.
     AttributeWorkloadNonNetworkResourceTypes:
       type: object
       required:
