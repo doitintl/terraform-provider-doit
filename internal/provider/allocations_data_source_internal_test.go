@@ -47,7 +47,9 @@ func readAllocationsQueries(t *testing.T, overrides map[string]tftypes.Value) []
 
 	recorder := &allocationsQueryRecorder{}
 	server := httptest.NewTestServer(t, recorder.handler())
-	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
+	// NewTestServer starts on the first Client call, which assigns server.URL.
+	httpClient := server.Client()
+	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(httpClient))
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -131,7 +133,11 @@ func TestAllocationsDataSource_SortParameters(t *testing.T) {
 
 	t.Run("unset", func(t *testing.T) {
 		t.Parallel()
-		for i, q := range readAllocationsQueries(t, nil) {
+		reqs := readAllocationsQueries(t, nil)
+		if len(reqs) != 2 {
+			t.Fatalf("requests = %d, want 2", len(reqs))
+		}
+		for i, q := range reqs {
 			if q.Has("sortBy") || q.Has("sortOrder") {
 				t.Errorf("request %d: query %q carries sort parameters although none are configured", i, q.Encode())
 			}
