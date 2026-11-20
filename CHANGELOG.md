@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.13.0 (2026-11-20)
 
 ### BREAKING CHANGES
 
@@ -24,6 +24,10 @@
 
 - **data-source/doit_budgets**: New `budgets[].current_period_amount` attribute ([doiteng/omni#72329](https://github.com/doiteng/omni/pull/72329))
 
+- **resource/doit_report, data-source/doit_report**: `config.display_settings` has three new chart options, `show_data_labels`, `logarithmic_scale` and `show_totals_panel`. They default to `false`; removing an option, or the whole `display_settings` block, resets it to `false`. The API accepts them on every layout, including ones where they have no effect, such as `table` ([#479](https://github.com/doitintl/terraform-provider-doit/pull/479), [doiteng/omni#71096](https://github.com/doiteng/omni/pull/71096))
+
+- **resource/doit_asset, data-source/doit_asset, data-source/doit_assets**: New computed `support` object with the vendor support `model` and `tier` of an asset. It is null when the API does not return it, which does not mean the asset has no support, and it is refreshed on every read because the API re-infers tiers daily ([#480](https://github.com/doitintl/terraform-provider-doit/pull/480), [doiteng/omni#71259](https://github.com/doiteng/omni/pull/71259))
+
 ### BUG FIXES
 
 - **resource/doit_budget**: A budget with `growth_per_period` or rollover no longer shows a permanent diff on `amount`. The API returned the grown amount of the current period in `amount`; it now returns the configured amount ([doiteng/omni#72329](https://github.com/doiteng/omni/pull/72329))
@@ -33,6 +37,10 @@
 - **resource/doit_allocation, resource/doit_alert, resource/doit_customer_subscription**: An update that only removed an attribute from the configuration (such as `anomaly_detection` or `config.scopes[].mode`) planned `update_time` (allocation, alert), `last_alerted` (alert) and `name` (subscription) with their stored values, so state kept the old values until the next refresh. They are now planned unknown on every update
 
 - **resource/doit_datahub_dataset**: An update that only removed `description`, `display_name` or `logo_name` from the configuration planned `records`, `updated_by` and `last_updated` with their stored values, so the apply could fail with "Provider produced inconsistent result" when the API returned new ones (for example when another user or service account had last updated the dataset). They are now planned unknown on every update
+
+- **resource/doit_budget**: `alerts = []` is now accepted. A budget created without `alerts` reads back as an empty list, so the configuration written by `-generate-config-out` failed validation with "Budget alerts cannot be empty". The API applies no default alerts for an empty list, and an update with `[]` removes the existing ones; more than 3 alerts are still rejected ([#494](https://github.com/doitintl/terraform-provider-doit/pull/494), [#482](https://github.com/doitintl/terraform-provider-doit/issues/482))
+
+- **data-source/doit_allocations**: `sort_by` and `sort_order` were accepted but never sent to the API, so they had no effect. They are now sent on every page, with and without `max_results` ([#511](https://github.com/doitintl/terraform-provider-doit/pull/511), [#508](https://github.com/doitintl/terraform-provider-doit/issues/508))
 
 - **data-source/doit_commitments**: A `page_token` without `max_results` is now where the read starts. It was ignored, and every page from the first one was fetched ([#507](https://github.com/doitintl/terraform-provider-doit/issues/507))
 
@@ -47,6 +55,20 @@
 - **data-source/doit_budgets**: The example's `budget_risks` output is keyed by budget ID instead of name, so it no longer fails with "Duplicate object key" when two budgets share a name ([#507](https://github.com/doitintl/terraform-provider-doit/issues/507))
 
 - **guide/pagination**: Lists every paged data source and what its `row_count` counts, guards the chained-page example with `count` (an unguarded second read starts over at the first page once the first read reached the last one), and explains that a page can be empty while `page_token` is set ([#507](https://github.com/doitintl/terraform-provider-doit/issues/507))
+
+### INTERNAL
+
+- Upgraded Go to 1.27.4
+- Upgraded dependencies: `oapi-codegen/runtime` 1.9.0, `golang.org/x/oauth2` 0.38.0 and `golang.org/x/*`
+- Upgraded CI workflow actions (`setup-go` v7.1.0, `action-junit-report` v6.7.1)
+- Added the `modifyplanresp` and `retrystatus` custom linters; `retrystatus` follows `StatusCode()` into variables and int parameters ([#496](https://github.com/doitintl/terraform-provider-doit/pull/496), [#478](https://github.com/doitintl/terraform-provider-doit/pull/478), [#512](https://github.com/doitintl/terraform-provider-doit/pull/512))
+- The acceptance-test sweeper only runs with `TF_ACC_SWEEP` set ([#495](https://github.com/doitintl/terraform-provider-doit/pull/495))
+- `make apply-pr` merges spec diffs with a three-way `git merge-file` ([#485](https://github.com/doitintl/terraform-provider-doit/pull/485))
+- Added the `zerocount` custom linter, which flags `.#`/`.%` count checks of `"0"` that also pass for null attributes, and replaced the 22 existing checks with `knownvalue` state checks ([#477](https://github.com/doitintl/terraform-provider-doit/pull/477))
+- `make testacc-run` keeps `$` anchors in the `TEST` pattern ([#476](https://github.com/doitintl/terraform-provider-doit/pull/476))
+- Acceptance test fixes: role tests take their permissions from the authenticated user's own role ([#481](https://github.com/doitintl/terraform-provider-doit/pull/481)), the customer subscriptions pagination test no longer compares the tenant-wide `row_count` ([#492](https://github.com/doitintl/terraform-provider-doit/pull/492)), and `file_output` downloads are validated in a `Check` instead of managed state ([#493](https://github.com/doitintl/terraform-provider-doit/pull/493))
+- Updated the contributor skills with the lessons from the budget seasonal amount adoption ([#498](https://github.com/doitintl/terraform-provider-doit/pull/498))
+- Synced the OpenAPI spec from upstream with no provider changes ([#515](https://github.com/doitintl/terraform-provider-doit/pull/515))
 
 ## v1.12.0 (2026-11-06)
 
