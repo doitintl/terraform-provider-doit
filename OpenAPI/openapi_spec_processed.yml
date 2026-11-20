@@ -237,7 +237,7 @@ paths:
       tags: [Alerts]
       summary: List eligible Slack destinations
       operationId: listAlertSlackChannels
-      description: Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+      description: "Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are returned in workspace order: the shared channel (if any), then public channels, then private channels. They are not sorted by name or identifier. A page can hold fewer than maxResults items, even none, when nameContains filters out most channels in the part of the workspace scanned for that request; keep following pageToken until it is absent to receive every channel. Keep nameContains unchanged when following pageToken."
       parameters:
         - name: nameContains
           in: query
@@ -8746,7 +8746,7 @@ components:
           enum: [public, private]
     AlertSlackChannelList:
       type: object
-      required: [items, rowCount, workspaceStatus, isWorkspaceConnected, hasSharedChannel, channelsComplete]
+      required: [items, workspaceStatus, isWorkspaceConnected, hasSharedChannel, channelsComplete]
       properties:
         items:
           type: array
@@ -8754,10 +8754,10 @@ components:
             $ref: "#/components/schemas/AlertSlackChannel"
         rowCount:
           type: integer
-          description: Total eligible channels after filtering and before pagination.
+          description: Total eligible channels after filtering. Present only when the whole list was returned by a single request without a pageToken; omitted otherwise, because the total is not known until every channel has been listed.
         pageToken:
           type: string
-          description: Opaque continuation token. Omitted on the final page.
+          description: Opaque continuation token. Omitted on the final page. Present means more channels remain, even when items is empty.
         workspaceStatus:
           type: string
           enum: [none, ok, inactive, missing_private_scope]
@@ -8768,7 +8768,7 @@ components:
           type: boolean
         channelsComplete:
           type: boolean
-          description: Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.
+          description: "Whether the channels returned by this request are complete. False when the list may be missing channels: a transient Slack failure, a missing private-channel scope, or a service-account caller (private channels are never listed for service accounts). It does not signal more pages; use pageToken for that. Callers that validate channel availability should not treat a partial list as authoritative."
     AlertSlackChannelRequest:
       type: object
       required: [id]

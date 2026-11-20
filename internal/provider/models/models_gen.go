@@ -6150,17 +6150,17 @@ type AlertSlackChannelType string
 
 // AlertSlackChannelList defines model for AlertSlackChannelList.
 type AlertSlackChannelList struct {
-	// ChannelsComplete Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.
+	// ChannelsComplete Whether the channels returned by this request are complete. False when the list may be missing channels: a transient Slack failure, a missing private-channel scope, or a service-account caller (private channels are never listed for service accounts). It does not signal more pages; use pageToken for that. Callers that validate channel availability should not treat a partial list as authoritative.
 	ChannelsComplete     bool                `json:"channelsComplete"`
 	HasSharedChannel     bool                `json:"hasSharedChannel"`
 	IsWorkspaceConnected bool                `json:"isWorkspaceConnected"`
 	Items                []AlertSlackChannel `json:"items"`
 
-	// PageToken Opaque continuation token. Omitted on the final page.
+	// PageToken Opaque continuation token. Omitted on the final page. Present means more channels remain, even when items is empty.
 	PageToken *string `json:"pageToken,omitempty"`
 
-	// RowCount Total eligible channels after filtering and before pagination.
-	RowCount int `json:"rowCount"`
+	// RowCount Total eligible channels after filtering. Present only when the whole list was returned by a single request without a pageToken; omitted otherwise, because the total is not known until every channel has been listed.
+	RowCount *int `json:"rowCount,omitempty"`
 
 	// WorkspaceStatus Integration status. Reconnect for inactive; grant private-channel scopes for missing_private_scope. None means no usable workspace was found; a shared channel may still be available.
 	WorkspaceStatus AlertSlackChannelListWorkspaceStatus `json:"workspaceStatus"`
@@ -17161,7 +17161,7 @@ type ClientInterface interface {
 
 	// ListAlertSlackChannels List eligible Slack destinations
 	//
-	// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+	// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are returned in workspace order: the shared channel (if any), then public channels, then private channels. They are not sorted by name or identifier. A page can hold fewer than maxResults items, even none, when nameContains filters out most channels in the part of the workspace scanned for that request; keep following pageToken until it is absent to receive every channel. Keep nameContains unchanged when following pageToken.
 	//
 	// Corresponds with GET /analytics/v1/alerts/slack-channels (the `ListAlertSlackChannels` operationId).
 	ListAlertSlackChannels(ctx context.Context, params *ListAlertSlackChannelsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -19502,7 +19502,7 @@ func (c *Client) CreateAlert(ctx context.Context, body CreateAlertJSONRequestBod
 
 // ListAlertSlackChannels List eligible Slack destinations
 //
-// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are returned in workspace order: the shared channel (if any), then public channels, then private channels. They are not sorted by name or identifier. A page can hold fewer than maxResults items, even none, when nameContains filters out most channels in the part of the workspace scanned for that request; keep following pageToken until it is absent to receive every channel. Keep nameContains unchanged when following pageToken.
 //
 // Corresponds with GET /analytics/v1/alerts/slack-channels (the `ListAlertSlackChannels` operationId).
 func (c *Client) ListAlertSlackChannels(ctx context.Context, params *ListAlertSlackChannelsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -33382,7 +33382,7 @@ type ClientWithResponsesInterface interface {
 
 	// ListAlertSlackChannelsWithResponse List eligible Slack destinations
 	//
-	// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+	// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are returned in workspace order: the shared channel (if any), then public channels, then private channels. They are not sorted by name or identifier. A page can hold fewer than maxResults items, even none, when nameContains filters out most channels in the part of the workspace scanned for that request; keep following pageToken until it is absent to receive every channel. Keep nameContains unchanged when following pageToken.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -50723,7 +50723,7 @@ func (c *ClientWithResponses) CreateAlertWithResponse(ctx context.Context, body 
 
 // ListAlertSlackChannelsWithResponse List eligible Slack destinations
 //
-// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are returned in workspace order: the shared channel (if any), then public channels, then private channels. They are not sorted by name or identifier. A page can hold fewer than maxResults items, even none, when nameContains filters out most channels in the part of the workspace scanned for that request; keep following pageToken until it is absent to receive every channel. Keep nameContains unchanged when following pageToken.
 //
 // Returns a wrapper object for the known response body format(s).
 //

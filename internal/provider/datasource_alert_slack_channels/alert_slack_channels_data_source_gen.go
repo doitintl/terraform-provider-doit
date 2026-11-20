@@ -22,8 +22,8 @@ func AlertSlackChannelsDataSourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"channels_complete": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.",
-				MarkdownDescription: "Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.",
+				Description:         "Whether the channels returned by this request are complete. False when the list may be missing channels: a transient Slack failure, a missing private-channel scope, or a service-account caller (private channels are never listed for service accounts). It does not signal more pages; use pageToken for that. Callers that validate channel availability should not treat a partial list as authoritative.",
+				MarkdownDescription: "Whether the channels returned by this request are complete. False when the list may be missing channels: a transient Slack failure, a missing private-channel scope, or a service-account caller (private channels are never listed for service accounts). It does not signal more pages; use pageToken for that. Callers that validate channel availability should not treat a partial list as authoritative.",
 			},
 			"has_shared_channel": schema.BoolAttribute{
 				Computed: true,
@@ -88,8 +88,8 @@ func AlertSlackChannelsDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "Total eligible channels after filtering and before pagination.",
-				MarkdownDescription: "Total eligible channels after filtering and before pagination.",
+				Description:         "Total eligible channels after filtering. Present only when the whole list was returned by a single request without a pageToken; omitted otherwise, because the total is not known until every channel has been listed.",
+				MarkdownDescription: "Total eligible channels after filtering. Present only when the whole list was returned by a single request without a pageToken; omitted otherwise, because the total is not known until every channel has been listed.",
 			},
 			"workspace_status": schema.StringAttribute{
 				Computed:            true,

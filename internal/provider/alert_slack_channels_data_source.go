@@ -3,6 +3,8 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_alert_slack_channels"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -37,7 +39,11 @@ func (d *alertSlackChannelsDataSource) Schema(ctx context.Context, req datasourc
 	s := datasource_alert_slack_channels.AlertSlackChannelsDataSourceSchema(ctx)
 	const description = "Retrieves Slack channels eligible for Alert notifications. " +
 		"When `max_results` is omitted, the provider fetches all pages using the API's maximum page size of 500; " +
-		"set `max_results` to control the page size yourself and fetch a single page."
+		"set `max_results` to control the page size yourself and fetch a single page. " +
+		"Channels are returned in workspace order (the shared channel, then public, then private channels), not sorted by name or ID. " +
+		"With `max_results` a page can hold fewer channels than requested, even none, while `page_token` is set " +
+		"because `name_contains` filtered out most of the scanned channels; keep following `page_token` until it is null. " +
+		"`row_count` is then null as well, because the total is only known once every channel has been listed."
 	s.Description = description
 	s.MarkdownDescription = description
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
@@ -60,6 +66,32 @@ func (d *alertSlackChannelsDataSource) Configure(ctx context.Context, req dataso
 	}
 
 	d.client = client
+}
+
+// invalidCursorMarker is how the retry client reports a 400: it surfaces every
+// non-retryable 4xx as an error whose text starts with the status code.
+const invalidCursorMarker = "non-retryable error: 400"
+
+// slackChannelsRestartHint explains a 400 on a request that carried a page token:
+// Slack no longer accepts the cursor, and the API resolves that by restarting from
+// the first page. It returns "" when the hint does not apply.
+func slackChannelsRestartHint(badRequest, hadPageToken bool) string {
+	if !badRequest || !hadPageToken {
+		return ""
+	}
+	return "\nThe page_token may be invalid or expired; read again without page_token to restart from the first page."
+}
+
+// slackChannelsRequestError describes a failed request. The retry client returns a
+// 400 as an error, a plain client as a response, so Read passes whichever it got.
+func slackChannelsRequestError(err error, hadPageToken bool) string {
+	return fmt.Sprintf("Unable to read alert slack channels: %v", err) +
+		slackChannelsRestartHint(strings.Contains(err.Error(), invalidCursorMarker), hadPageToken)
+}
+
+func slackChannelsStatusError(status int, body []byte, hadPageToken bool) string {
+	return fmt.Sprintf("API returned status %d: %s", status, string(body)) +
+		slackChannelsRestartHint(status == http.StatusBadRequest, hadPageToken)
 }
 
 func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -115,18 +147,12 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 
 		apiResp, err := d.client.ListAlertSlackChannelsWithResponse(ctx, params)
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Alert Slack Channels",
-				fmt.Sprintf("Unable to read alert slack channels: %v", err),
-			)
+			resp.Diagnostics.AddError("Error Reading Alert Slack Channels", slackChannelsRequestError(err, params.PageToken != nil))
 			return
 		}
 
 		if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Alert Slack Channels",
-				fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
-			)
+			resp.Diagnostics.AddError("Error Reading Alert Slack Channels", slackChannelsStatusError(apiResp.StatusCode(), apiResp.Body, params.PageToken != nil))
 			return
 		}
 
@@ -139,7 +165,13 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 
 		// Preserve API's page_token for user to fetch next page
 		data.PageToken = types.StringPointerValue(result.PageToken)
-		data.RowCount = types.Int64Value(int64(result.RowCount))
+		// The API returns rowCount only when this single request saw the whole list;
+		// otherwise the total is unknown, so row_count stays null instead of
+		// reporting the size of the page as a total.
+		data.RowCount = types.Int64Null()
+		if result.RowCount != nil {
+			data.RowCount = types.Int64Value(int64(*result.RowCount))
+		}
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
 		if !data.PageToken.IsNull() {
@@ -150,18 +182,12 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 		for {
 			apiResp, err := d.client.ListAlertSlackChannelsWithResponse(ctx, params)
 			if err != nil {
-				resp.Diagnostics.AddError(
-					"Error Reading Alert Slack Channels",
-					fmt.Sprintf("Unable to read alert slack channels: %v", err),
-				)
+				resp.Diagnostics.AddError("Error Reading Alert Slack Channels", slackChannelsRequestError(err, params.PageToken != nil))
 				return
 			}
 
 			if apiResp.StatusCode() != 200 || apiResp.JSON200 == nil {
-				resp.Diagnostics.AddError(
-					"Error Reading Alert Slack Channels",
-					fmt.Sprintf("API returned status %d: %s", apiResp.StatusCode(), string(apiResp.Body)),
-				)
+				resp.Diagnostics.AddError("Error Reading Alert Slack Channels", slackChannelsStatusError(apiResp.StatusCode(), apiResp.Body, params.PageToken != nil))
 				return
 			}
 
@@ -179,7 +205,7 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 			params.PageToken = result.PageToken
 		}
 
-		// Auto mode: set counts based on what we fetched
+		// Auto mode: the API omits rowCount on follow-up pages, so count what we fetched
 		data.RowCount = types.Int64Value(int64(len(allChannels)))
 		data.PageToken = types.StringNull()
 		data.MaxResults = types.Int64Null()
@@ -192,9 +218,10 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 	if !channelsComplete {
 		resp.Diagnostics.AddWarning(
 			"Incomplete Slack Channel List",
-			"The API reported that the Slack channel list is incomplete (channels_complete = false), "+
-				"typically because Slack rate limited or transiently failed the lookup. Channels may be missing "+
-				"from the result; do not treat it as authoritative. Re-run the read later to get a complete list.",
+			"The API reported that the Slack channel list may be incomplete (channels_complete = false). "+
+				"Causes are a Slack rate limit or transient failure (re-read later), a missing private-channel scope "+
+				"(see workspace_status), or a service-account caller, for which private channels are never listed. "+
+				"Channels may be missing from the result; do not treat it as authoritative.",
 		)
 	}
 
