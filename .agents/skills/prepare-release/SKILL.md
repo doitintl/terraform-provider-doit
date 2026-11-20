@@ -203,29 +203,6 @@ Check and update:
 
 - [ ] The environment variables in `.envrc.example` match what `README.md` documents
 
-### DCI API Status Document
-
-Update `.test/Current Status of DCI API.md`:
-
-1. **Check open Jira tickets:** For each ticket listed in the "Open API Issues" section that is NOT in the "Resolved Issues" table, fetch the current status from Jira using the Atlassian MCP:
-
-   ```
-   getJiraIssue(cloudId: "doitintl.atlassian.net", issueIdOrKey: "CMP-XXXXX", fields: ["summary", "status"])
-   ```
-
-2. **Update ticket statuses:** If a ticket status changed:
-   - If now **Done** or **Canceled**: move it from the open issues table to the "Resolved Issues" table.
-   - If status changed but still open: update the Status column in the open issues table.
-
-3. **Update implementation matrix:** Check if any new data sources or resources were implemented since the last release:
-   - Update the "Endpoint Suitability Matrix" Data Source column (e.g., from `📋 Ready` to `✅ Implemented`).
-   - Move items from "Data Sources Ready for Implementation" to "Data Sources Implemented" table.
-   - Update the "Implementation Opportunities" table with a Status column.
-   - Update the "Data Source Only — Implemented" and "Ready for Implementation" roadmap tables.
-   - Update the implementation counts (e.g., "Data Sources Implemented (N)").
-
-4. **Update the document date** at the top of the file.
-
 ---
 
 ## Step 8: Update CHANGELOG.md
