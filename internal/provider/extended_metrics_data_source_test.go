@@ -1,6 +1,7 @@
 package provider_test
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"slices"
@@ -28,21 +29,30 @@ func getExtendedMetricsRowCount(t *testing.T) int {
 	t.Helper()
 	skipIfNoAcc(t)
 	extendedMetricsRowCountOnce.Do(func() {
-		client := getAPIClient(t)
-		resp, err := client.ListExtendedMetricsWithResponse(t.Context(), &models.ListExtendedMetricsParams{MaxResults: new(int64(1))})
+		n, err := probeExtendedMetricsRowCount(t.Context(), getAPIClient(t))
 		if err != nil {
 			t.Fatalf("Failed to list extended metrics: %v", err)
 		}
-		if resp.JSON200 == nil {
-			t.Fatalf("Failed to list extended metrics: status %d, body: %s", resp.StatusCode(), string(resp.Body))
-		}
-		if rowCount := resp.JSON200.RowCount; rowCount.IsSpecified() && !rowCount.IsNull() {
-			extendedMetricsRowCount = int(rowCount.MustGet())
-		} else {
-			extendedMetricsRowCount = len(resp.JSON200.Items)
-		}
+		extendedMetricsRowCount = n
 	})
 	return extendedMetricsRowCount
+}
+
+// probeExtendedMetricsRowCount reads two items and returns the API's row count.
+// When the API omits it, the items read stand in for it: two is enough for the
+// pagination tests, which only need to know that there are at least two.
+func probeExtendedMetricsRowCount(ctx context.Context, client *models.ClientWithResponses) (int, error) {
+	resp, err := client.ListExtendedMetricsWithResponse(ctx, &models.ListExtendedMetricsParams{MaxResults: new(int64(2))})
+	if err != nil {
+		return 0, err
+	}
+	if resp.JSON200 == nil {
+		return 0, fmt.Errorf("status %d, body: %s", resp.StatusCode(), string(resp.Body))
+	}
+	if rowCount := resp.JSON200.RowCount; rowCount.IsSpecified() && !rowCount.IsNull() {
+		return int(rowCount.MustGet()), nil
+	}
+	return len(resp.JSON200.Items), nil
 }
 
 // testCheckExtendedMetricsDataSources verifies that row_count equals the number
