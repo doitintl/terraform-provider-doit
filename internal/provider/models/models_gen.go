@@ -9611,6 +9611,7 @@ type CreateUserNotificationRequest struct {
 	// | `cloudIncidents` | Issues Viewer | `dEJbIiUcHn8GhW7IiWLW` |
 	// | `expertInsights`, `insights` | Insights Manager | `Co8Hf8SfDWvS7PxPlqc6` |
 	// | `dataIntegrationSyncFailure` | Assets Manager | `wfDH3k1FmYKHlQBwGIzZ` |
+	// | `billingTransferNewRpma`, `billingTransferNewEndCustomer`, `billingTransferUnassignedRpmas`, `billingTransferUnassignedEndCustomers`, `billingTransferAgreementRevoked`, `billingTransferCurExportMissing` | Billing Transfer Admin | `nkv2dwh5gd4hPBa2IqTb` |
 	Settings UserNotificationSettings `json:"settings"`
 }
 
@@ -13292,6 +13293,24 @@ type PatchNotificationEmptySettings = map[string]interface{}
 
 // PatchUserNotificationSettings Merge-patch for `settings`. Omit a property to leave that type unchanged. Send `null` to unsubscribe that type. After the merge at least one type must remain.
 type PatchUserNotificationSettings struct {
+	// BillingTransferAgreementRevoked Billing transfer, distributor and reseller tenants: a billing transfer agreement was revoked.
+	BillingTransferAgreementRevoked nullable.Nullable[NotificationEmptySettings] `json:"billingTransferAgreementRevoked,omitempty"`
+
+	// BillingTransferCurExportMissing Billing transfer, distributor tenants: an end customer's Cost and Usage Report export was not found one day after the transfer started.
+	BillingTransferCurExportMissing nullable.Nullable[NotificationEmptySettings] `json:"billingTransferCurExportMissing,omitempty"`
+
+	// BillingTransferNewEndCustomer Billing transfer, reseller tenants: a new end customer was onboarded.
+	BillingTransferNewEndCustomer nullable.Nullable[NotificationEmptySettings] `json:"billingTransferNewEndCustomer,omitempty"`
+
+	// BillingTransferNewRpma Billing transfer, distributor tenants: a new reseller payer account was onboarded.
+	BillingTransferNewRpma nullable.Nullable[NotificationEmptySettings] `json:"billingTransferNewRpma,omitempty"`
+
+	// BillingTransferUnassignedEndCustomers Billing transfer, reseller tenants: a daily digest listing every end customer not yet assigned to a customer.
+	BillingTransferUnassignedEndCustomers nullable.Nullable[NotificationEmptySettings] `json:"billingTransferUnassignedEndCustomers,omitempty"`
+
+	// BillingTransferUnassignedRpmas Billing transfer, distributor tenants: a daily digest listing every reseller payer account not yet assigned to a customer.
+	BillingTransferUnassignedRpmas nullable.Nullable[NotificationEmptySettings] `json:"billingTransferUnassignedRpmas,omitempty"`
+
 	// CloudIncidents Cloud incidents.
 	CloudIncidents nullable.Nullable[NotificationEmptySettings] `json:"cloudIncidents,omitempty"`
 
@@ -14557,7 +14576,26 @@ type UserNotificationListResponse struct {
 // | `cloudIncidents` | Issues Viewer | `dEJbIiUcHn8GhW7IiWLW` |
 // | `expertInsights`, `insights` | Insights Manager | `Co8Hf8SfDWvS7PxPlqc6` |
 // | `dataIntegrationSyncFailure` | Assets Manager | `wfDH3k1FmYKHlQBwGIzZ` |
+// | `billingTransferNewRpma`, `billingTransferNewEndCustomer`, `billingTransferUnassignedRpmas`, `billingTransferUnassignedEndCustomers`, `billingTransferAgreementRevoked`, `billingTransferCurExportMissing` | Billing Transfer Admin | `nkv2dwh5gd4hPBa2IqTb` |
 type UserNotificationSettings struct {
+	// BillingTransferAgreementRevoked Billing transfer, distributor and reseller tenants: a billing transfer agreement was revoked.
+	BillingTransferAgreementRevoked *NotificationEmptySettings `json:"billingTransferAgreementRevoked,omitempty"`
+
+	// BillingTransferCurExportMissing Billing transfer, distributor tenants: an end customer's Cost and Usage Report export was not found one day after the transfer started.
+	BillingTransferCurExportMissing *NotificationEmptySettings `json:"billingTransferCurExportMissing,omitempty"`
+
+	// BillingTransferNewEndCustomer Billing transfer, reseller tenants: a new end customer was onboarded.
+	BillingTransferNewEndCustomer *NotificationEmptySettings `json:"billingTransferNewEndCustomer,omitempty"`
+
+	// BillingTransferNewRpma Billing transfer, distributor tenants: a new reseller payer account was onboarded.
+	BillingTransferNewRpma *NotificationEmptySettings `json:"billingTransferNewRpma,omitempty"`
+
+	// BillingTransferUnassignedEndCustomers Billing transfer, reseller tenants: a daily digest listing every end customer not yet assigned to a customer.
+	BillingTransferUnassignedEndCustomers *NotificationEmptySettings `json:"billingTransferUnassignedEndCustomers,omitempty"`
+
+	// BillingTransferUnassignedRpmas Billing transfer, distributor tenants: a daily digest listing every reseller payer account not yet assigned to a customer.
+	BillingTransferUnassignedRpmas *NotificationEmptySettings `json:"billingTransferUnassignedRpmas,omitempty"`
+
 	// CloudIncidents Cloud incidents.
 	CloudIncidents *NotificationEmptySettings `json:"cloudIncidents,omitempty"`
 

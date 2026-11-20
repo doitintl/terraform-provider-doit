@@ -349,7 +349,9 @@ const testUserNotificationOtherTypesNull = `"newInvoices": null, "newProformaInv
 	"creditUtilization": null, "quotaUtilization": null, "cloudIncidents": null, "newSkuUsage": null,
 	"dailyDigest": null, "weeklyDigest": null, "monthlyDigest": null, "expertInsights": null, "insights": null,
 	"savingsPlanApproval": null, "savingsPlanPurchased": null, "cudApproval": null, "cudPurchased": null,
-	"dataIntegrationSyncFailure": null,`
+	"dataIntegrationSyncFailure": null,
+	"billingTransferNewRpma": null, "billingTransferNewEndCustomer": null, "billingTransferUnassignedRpmas": null,
+	"billingTransferUnassignedEndCustomers": null, "billingTransferAgreementRevoked": null, "billingTransferCurExportMissing": null,`
 
 // The merge patch must carry explicit nulls for every unset optional member
 // and every type that is not subscribed: an omitted member would keep its

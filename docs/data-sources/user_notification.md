@@ -119,6 +119,12 @@ Read-Only:
 
 Read-Only:
 
+- `billing_transfer_agreement_revoked` (Attributes) Billing transfer, distributor and reseller tenants: a billing transfer agreement was revoked. (see [below for nested schema](#nestedatt--settings--billing_transfer_agreement_revoked))
+- `billing_transfer_cur_export_missing` (Attributes) Billing transfer, distributor tenants: an end customer's Cost and Usage Report export was not found one day after the transfer started. (see [below for nested schema](#nestedatt--settings--billing_transfer_cur_export_missing))
+- `billing_transfer_new_end_customer` (Attributes) Billing transfer, reseller tenants: a new end customer was onboarded. (see [below for nested schema](#nestedatt--settings--billing_transfer_new_end_customer))
+- `billing_transfer_new_rpma` (Attributes) Billing transfer, distributor tenants: a new reseller payer account was onboarded. (see [below for nested schema](#nestedatt--settings--billing_transfer_new_rpma))
+- `billing_transfer_unassigned_end_customers` (Attributes) Billing transfer, reseller tenants: a daily digest listing every end customer not yet assigned to a customer. (see [below for nested schema](#nestedatt--settings--billing_transfer_unassigned_end_customers))
+- `billing_transfer_unassigned_rpmas` (Attributes) Billing transfer, distributor tenants: a daily digest listing every reseller payer account not yet assigned to a customer. (see [below for nested schema](#nestedatt--settings--billing_transfer_unassigned_rpmas))
 - `cloud_incidents` (Attributes) Cloud incidents. (see [below for nested schema](#nestedatt--settings--cloud_incidents))
 - `cost_anomalies` (Attributes) Cloud cost anomalies. (see [below for nested schema](#nestedatt--settings--cost_anomalies))
 - `credit_utilization` (Attributes) Credit utilization. (see [below for nested schema](#nestedatt--settings--credit_utilization))
@@ -137,6 +143,30 @@ Read-Only:
 - `savings_plan_approval` (Attributes) PerfectScale for Commitments, AWS Savings Plans: purchases require approval. (see [below for nested schema](#nestedatt--settings--savings_plan_approval))
 - `savings_plan_purchased` (Attributes) PerfectScale for Commitments, AWS Savings Plans: a Savings Plan was purchased. (see [below for nested schema](#nestedatt--settings--savings_plan_purchased))
 - `weekly_digest` (Attributes) Weekly digest. (see [below for nested schema](#nestedatt--settings--weekly_digest))
+
+<a id="nestedatt--settings--billing_transfer_agreement_revoked"></a>
+### Nested Schema for `settings.billing_transfer_agreement_revoked`
+
+
+<a id="nestedatt--settings--billing_transfer_cur_export_missing"></a>
+### Nested Schema for `settings.billing_transfer_cur_export_missing`
+
+
+<a id="nestedatt--settings--billing_transfer_new_end_customer"></a>
+### Nested Schema for `settings.billing_transfer_new_end_customer`
+
+
+<a id="nestedatt--settings--billing_transfer_new_rpma"></a>
+### Nested Schema for `settings.billing_transfer_new_rpma`
+
+
+<a id="nestedatt--settings--billing_transfer_unassigned_end_customers"></a>
+### Nested Schema for `settings.billing_transfer_unassigned_end_customers`
+
+
+<a id="nestedatt--settings--billing_transfer_unassigned_rpmas"></a>
+### Nested Schema for `settings.billing_transfer_unassigned_rpmas`
+
 
 <a id="nestedatt--settings--cloud_incidents"></a>
 ### Nested Schema for `settings.cloud_incidents`

@@ -63,16 +63,18 @@ func TestAccUserNotification_SettingsTypes(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-un-types")
 
 	created := testAccUserNotificationSettingsConfig(rName, rName, `
-    credit_utilization = {}
-    cloud_incidents    = {}
-    new_invoices       = {}
+    credit_utilization                 = {}
+    cloud_incidents                    = {}
+    new_invoices                       = {}
+    billing_transfer_agreement_revoked = {}
     insights = {
       pillars    = ["security", "cost"]
       severities = ["critical"]
     }
 `)
 	switched := testAccUserNotificationSettingsConfig(rName, rName, `
-    new_invoices = {}
+    new_invoices                        = {}
+    billing_transfer_cur_export_missing = {}
     daily_digest = { allocation_ids = [doit_allocation.a.id] }
     insights     = { providers = ["aws"] }
     cost_anomalies = {
@@ -80,7 +82,8 @@ func TestAccUserNotification_SettingsTypes(t *testing.T) {
     }
 `)
 	renamed := testAccUserNotificationSettingsConfig(rName, rName+"-renamed", `
-    new_invoices = {}
+    new_invoices                        = {}
+    billing_transfer_cur_export_missing = {}
     daily_digest = { allocation_ids = [doit_allocation.a.id] }
     insights     = { providers = ["aws"] }
     cost_anomalies = {
@@ -106,6 +109,8 @@ func TestAccUserNotification_SettingsTypes(t *testing.T) {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("credit_utilization"), knownvalue.ObjectExact(map[string]knownvalue.Check{})),
 					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("cloud_incidents"), knownvalue.ObjectExact(map[string]knownvalue.Check{})),
+					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("billing_transfer_agreement_revoked"), knownvalue.ObjectExact(map[string]knownvalue.Check{})),
+					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("billing_transfer_cur_export_missing"), knownvalue.Null()),
 					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("new_invoices", "billing_profile_ids"), testAccEmptyList),
 					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("insights", "pillars"),
 						knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("security"), knownvalue.StringExact("cost")})),
@@ -123,11 +128,14 @@ func TestAccUserNotification_SettingsTypes(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction(testAccUserNotificationAddr, plancheck.ResourceActionUpdate),
 						plancheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("credit_utilization"), knownvalue.Null()),
+						plancheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("billing_transfer_agreement_revoked"), knownvalue.Null()),
 						plancheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("insights", "pillars"), testAccEmptyList),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("credit_utilization"), knownvalue.Null()),
+					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("billing_transfer_agreement_revoked"), knownvalue.Null()),
+					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("billing_transfer_cur_export_missing"), knownvalue.ObjectExact(map[string]knownvalue.Check{})),
 					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("cloud_incidents"), knownvalue.Null()),
 					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("insights", "pillars"), testAccEmptyList),
 					statecheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("insights", "severities"), testAccEmptyList),
@@ -151,6 +159,8 @@ func TestAccUserNotification_SettingsTypes(t *testing.T) {
 						plancheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("insights", "severities"), testAccEmptyList),
 						plancheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("credit_utilization"), knownvalue.Null()),
 						plancheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("weekly_digest"), knownvalue.Null()),
+						plancheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("billing_transfer_agreement_revoked"), knownvalue.Null()),
+						plancheck.ExpectKnownValue(testAccUserNotificationAddr, testAccUserNotificationSettingsPath("billing_transfer_cur_export_missing"), knownvalue.ObjectExact(map[string]knownvalue.Check{})),
 					},
 				},
 			},
@@ -238,6 +248,13 @@ func TestAccUserNotification_SettingsTypesImport(t *testing.T) {
     cud_approval                  = {}
     cud_purchased                 = {}
     data_integration_sync_failure = {}
+
+    billing_transfer_new_rpma                 = {}
+    billing_transfer_new_end_customer         = {}
+    billing_transfer_unassigned_rpmas         = {}
+    billing_transfer_unassigned_end_customers = {}
+    billing_transfer_agreement_revoked        = {}
+    billing_transfer_cur_export_missing       = {}
 `)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -335,10 +352,11 @@ resource "doit_user_notification" "this" {
 func TestAccUserNotificationDataSource_SettingsTypes(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-un-ds-types")
 	config := testAccUserNotificationSettingsConfig(rName, rName, `
-    credit_utilization = {}
-    new_invoices       = {}
-    daily_digest       = { allocation_ids = [doit_allocation.a.id] }
-    insights           = { pillars = ["security"] }
+    credit_utilization                = {}
+    new_invoices                      = {}
+    daily_digest                      = { allocation_ids = [doit_allocation.a.id] }
+    insights                          = { pillars = ["security"] }
+    billing_transfer_new_end_customer = {}
 `) + `
 data "doit_user_notification" "test" {
   user_id = doit_user_notification.this.user_id
@@ -371,6 +389,8 @@ data "doit_user_notifications" "test" {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(testAccUserNotificationDataSourceAddr, testAccUserNotificationSettingsPath("credit_utilization"), knownvalue.ObjectExact(map[string]knownvalue.Check{})),
 					statecheck.ExpectKnownValue(testAccUserNotificationDataSourceAddr, testAccUserNotificationSettingsPath("cloud_incidents"), knownvalue.Null()),
+					statecheck.ExpectKnownValue(testAccUserNotificationDataSourceAddr, testAccUserNotificationSettingsPath("billing_transfer_new_end_customer"), knownvalue.ObjectExact(map[string]knownvalue.Check{})),
+					statecheck.ExpectKnownValue(testAccUserNotificationDataSourceAddr, testAccUserNotificationSettingsPath("billing_transfer_new_rpma"), knownvalue.Null()),
 					statecheck.ExpectKnownValue(testAccUserNotificationDataSourceAddr, testAccUserNotificationSettingsPath("cost_anomalies"), knownvalue.Null()),
 					statecheck.ExpectKnownValue(testAccUserNotificationDataSourceAddr, testAccUserNotificationSettingsPath("new_invoices", "billing_profile_ids"), testAccEmptyList),
 					statecheck.ExpectKnownValue(testAccUserNotificationDataSourceAddr, testAccUserNotificationSettingsPath("insights", "severities"), testAccEmptyList),

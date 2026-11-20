@@ -304,6 +304,24 @@ func overlayUserNotificationSettings(ctx context.Context, resolved, plan *resour
 	if plan.DataIntegrationSyncFailure.IsUnknown() {
 		plan.DataIntegrationSyncFailure = resolved.DataIntegrationSyncFailure
 	}
+	if plan.BillingTransferNewRpma.IsUnknown() {
+		plan.BillingTransferNewRpma = resolved.BillingTransferNewRpma
+	}
+	if plan.BillingTransferNewEndCustomer.IsUnknown() {
+		plan.BillingTransferNewEndCustomer = resolved.BillingTransferNewEndCustomer
+	}
+	if plan.BillingTransferUnassignedRpmas.IsUnknown() {
+		plan.BillingTransferUnassignedRpmas = resolved.BillingTransferUnassignedRpmas
+	}
+	if plan.BillingTransferUnassignedEndCustomers.IsUnknown() {
+		plan.BillingTransferUnassignedEndCustomers = resolved.BillingTransferUnassignedEndCustomers
+	}
+	if plan.BillingTransferAgreementRevoked.IsUnknown() {
+		plan.BillingTransferAgreementRevoked = resolved.BillingTransferAgreementRevoked
+	}
+	if plan.BillingTransferCurExportMissing.IsUnknown() {
+		plan.BillingTransferCurExportMissing = resolved.BillingTransferCurExportMissing
+	}
 	if plan.DailyDigest.IsUnknown() {
 		plan.DailyDigest = resolved.DailyDigest
 	}

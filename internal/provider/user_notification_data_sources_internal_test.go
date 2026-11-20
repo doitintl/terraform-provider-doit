@@ -9,6 +9,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_user_notifications"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -324,6 +325,40 @@ func TestUserNotificationsDataSourceRead(t *testing.T) {
 	}
 	if !items[1].Settings.CostAnomalies.Repeat.IsNull() || !items[1].Etag.IsNull() || items[1].Destinations.IsNull() {
 		t.Fatalf("second item = %+v", items[1])
+	}
+}
+
+// A subscribed empty type reads as {}, and every type the API leaves out as null.
+func TestUserNotificationsDataSourceReadEmptyType(t *testing.T) {
+	var gotPath atomic.Value
+	server := userNotificationDataSourceTestServer(t, 200, `{"items": [{
+		"id": "notif-3", "name": "Billing transfer",
+		"settings": {"billingTransferNewEndCustomer": {}}
+	}]}`, &gotPath)
+	userID := tftypes.NewValue(tftypes.String, "user-1")
+	resp := readUserNotificationDataSourceForTest(t, server, &userID, nil)
+	if resp.Diagnostics.HasError() {
+		t.Fatal(resp.Diagnostics)
+	}
+
+	var data userNotificationsDataSourceModel
+	if diags := resp.State.Get(t.Context(), &data); diags.HasError() {
+		t.Fatal(diags)
+	}
+	var items []datasource_user_notifications.ItemsValue
+	if diags := data.Items.ElementsAs(t.Context(), &items, false); diags.HasError() {
+		t.Fatal(diags)
+	}
+	if len(items) != 1 {
+		t.Fatalf("items = %d, want 1", len(items))
+	}
+	settings := items[0].Settings
+	want := datasource_user_notifications.NewBillingTransferNewEndCustomerValueMust(map[string]attr.Type{}, map[string]attr.Value{})
+	if !settings.BillingTransferNewEndCustomer.Equal(want) {
+		t.Errorf("billing_transfer_new_end_customer = %s, want {}", settings.BillingTransferNewEndCustomer)
+	}
+	if !settings.BillingTransferNewRpma.IsNull() || !settings.CreditUtilization.IsNull() || !settings.CostAnomalies.IsNull() {
+		t.Errorf("unsubscribed types must be null: %s", settings)
 	}
 }
 

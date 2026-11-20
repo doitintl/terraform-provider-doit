@@ -18598,6 +18598,7 @@ components:
         | `cloudIncidents` | Issues Viewer | `dEJbIiUcHn8GhW7IiWLW` |
         | `expertInsights`, `insights` | Insights Manager | `Co8Hf8SfDWvS7PxPlqc6` |
         | `dataIntegrationSyncFailure` | Assets Manager | `wfDH3k1FmYKHlQBwGIzZ` |
+        | `billingTransferNewRpma`, `billingTransferNewEndCustomer`, `billingTransferUnassignedRpmas`, `billingTransferUnassignedEndCustomers`, `billingTransferAgreementRevoked`, `billingTransferCurExportMissing` | Billing Transfer Admin | `nkv2dwh5gd4hPBa2IqTb` |
       properties:
         newInvoices:
           description: New invoices.
@@ -18674,6 +18675,39 @@ components:
             - $ref: "#/components/schemas/NotificationEmptySettings"
         dataIntegrationSyncFailure:
           description: Data integration sync failures.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+        billingTransferNewRpma:
+          description: >-
+            Billing transfer, distributor tenants: a new reseller payer account was onboarded.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+        billingTransferNewEndCustomer:
+          description: >-
+            Billing transfer, reseller tenants: a new end customer was onboarded.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+        billingTransferUnassignedRpmas:
+          description: >-
+            Billing transfer, distributor tenants: a daily digest listing every reseller payer account
+            not yet assigned to a customer.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+        billingTransferUnassignedEndCustomers:
+          description: >-
+            Billing transfer, reseller tenants: a daily digest listing every end customer not yet
+            assigned to a customer.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+        billingTransferAgreementRevoked:
+          description: >-
+            Billing transfer, distributor and reseller tenants: a billing transfer agreement was revoked.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+        billingTransferCurExportMissing:
+          description: >-
+            Billing transfer, distributor tenants: an end customer's Cost and Usage Report export was not
+            found one day after the transfer started.
           allOf:
             - $ref: "#/components/schemas/NotificationEmptySettings"
     UserNotificationEmailDestination:
@@ -19053,6 +19087,45 @@ components:
           nullable: true
         dataIntegrationSyncFailure:
           description: Data integration sync failures.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+          nullable: true
+        billingTransferNewRpma:
+          description: >-
+            Billing transfer, distributor tenants: a new reseller payer account was onboarded.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+          nullable: true
+        billingTransferNewEndCustomer:
+          description: >-
+            Billing transfer, reseller tenants: a new end customer was onboarded.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+          nullable: true
+        billingTransferUnassignedRpmas:
+          description: >-
+            Billing transfer, distributor tenants: a daily digest listing every reseller payer account
+            not yet assigned to a customer.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+          nullable: true
+        billingTransferUnassignedEndCustomers:
+          description: >-
+            Billing transfer, reseller tenants: a daily digest listing every end customer not yet
+            assigned to a customer.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+          nullable: true
+        billingTransferAgreementRevoked:
+          description: >-
+            Billing transfer, distributor and reseller tenants: a billing transfer agreement was revoked.
+          allOf:
+            - $ref: "#/components/schemas/NotificationEmptySettings"
+          nullable: true
+        billingTransferCurExportMissing:
+          description: >-
+            Billing transfer, distributor tenants: an end customer's Cost and Usage Report export was not
+            found one day after the transfer started.
           allOf:
             - $ref: "#/components/schemas/NotificationEmptySettings"
           nullable: true

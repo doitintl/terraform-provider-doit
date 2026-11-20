@@ -172,6 +172,30 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 			dataIntegrationSyncFailure.PlanModifiers = append(dataIntegrationSyncFailure.PlanModifiers, useNullForOmittedNotificationSetting())
 			settings.Attributes["data_integration_sync_failure"] = dataIntegrationSyncFailure
 		}
+		if billingTransferNewRpma, ok := settings.Attributes["billing_transfer_new_rpma"].(schema.SingleNestedAttribute); ok {
+			billingTransferNewRpma.PlanModifiers = append(billingTransferNewRpma.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["billing_transfer_new_rpma"] = billingTransferNewRpma
+		}
+		if billingTransferNewEndCustomer, ok := settings.Attributes["billing_transfer_new_end_customer"].(schema.SingleNestedAttribute); ok {
+			billingTransferNewEndCustomer.PlanModifiers = append(billingTransferNewEndCustomer.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["billing_transfer_new_end_customer"] = billingTransferNewEndCustomer
+		}
+		if billingTransferUnassignedRpmas, ok := settings.Attributes["billing_transfer_unassigned_rpmas"].(schema.SingleNestedAttribute); ok {
+			billingTransferUnassignedRpmas.PlanModifiers = append(billingTransferUnassignedRpmas.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["billing_transfer_unassigned_rpmas"] = billingTransferUnassignedRpmas
+		}
+		if billingTransferUnassignedEndCustomers, ok := settings.Attributes["billing_transfer_unassigned_end_customers"].(schema.SingleNestedAttribute); ok {
+			billingTransferUnassignedEndCustomers.PlanModifiers = append(billingTransferUnassignedEndCustomers.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["billing_transfer_unassigned_end_customers"] = billingTransferUnassignedEndCustomers
+		}
+		if billingTransferAgreementRevoked, ok := settings.Attributes["billing_transfer_agreement_revoked"].(schema.SingleNestedAttribute); ok {
+			billingTransferAgreementRevoked.PlanModifiers = append(billingTransferAgreementRevoked.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["billing_transfer_agreement_revoked"] = billingTransferAgreementRevoked
+		}
+		if billingTransferCurExportMissing, ok := settings.Attributes["billing_transfer_cur_export_missing"].(schema.SingleNestedAttribute); ok {
+			billingTransferCurExportMissing.PlanModifiers = append(billingTransferCurExportMissing.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["billing_transfer_cur_export_missing"] = billingTransferCurExportMissing
+		}
 		if newInvoices, ok := settings.Attributes["new_invoices"].(schema.SingleNestedAttribute); ok {
 			newInvoices.PlanModifiers = append(newInvoices.PlanModifiers, useNullForOmittedNotificationSetting())
 			if ids, ok := newInvoices.Attributes["billing_profile_ids"].(schema.ListAttribute); ok {

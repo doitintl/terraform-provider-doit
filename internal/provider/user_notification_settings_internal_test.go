@@ -19,24 +19,30 @@ import (
 func testUserNotificationSettings(t *testing.T, set map[string]attr.Value) resource_user_notification.SettingsValue {
 	t.Helper()
 	values := map[string]attr.Value{
-		"new_invoices":                  resource_user_notification.NewNewInvoicesValueNull(),
-		"new_proforma_invoices":         resource_user_notification.NewNewProformaInvoicesValueNull(),
-		"payment_reminders":             resource_user_notification.NewPaymentRemindersValueNull(),
-		"credit_utilization":            resource_user_notification.NewCreditUtilizationValueNull(),
-		"quota_utilization":             resource_user_notification.NewQuotaUtilizationValueNull(),
-		"cloud_incidents":               resource_user_notification.NewCloudIncidentsValueNull(),
-		"new_sku_usage":                 resource_user_notification.NewNewSkuUsageValueNull(),
-		"daily_digest":                  resource_user_notification.NewDailyDigestValueNull(),
-		"weekly_digest":                 resource_user_notification.NewWeeklyDigestValueNull(),
-		"monthly_digest":                resource_user_notification.NewMonthlyDigestValueNull(),
-		"expert_insights":               resource_user_notification.NewExpertInsightsValueNull(),
-		"insights":                      resource_user_notification.NewInsightsValueNull(),
-		"cost_anomalies":                resource_user_notification.NewCostAnomaliesValueNull(),
-		"savings_plan_approval":         resource_user_notification.NewSavingsPlanApprovalValueNull(),
-		"savings_plan_purchased":        resource_user_notification.NewSavingsPlanPurchasedValueNull(),
-		"cud_approval":                  resource_user_notification.NewCudApprovalValueNull(),
-		"cud_purchased":                 resource_user_notification.NewCudPurchasedValueNull(),
-		"data_integration_sync_failure": resource_user_notification.NewDataIntegrationSyncFailureValueNull(),
+		"new_invoices":                              resource_user_notification.NewNewInvoicesValueNull(),
+		"new_proforma_invoices":                     resource_user_notification.NewNewProformaInvoicesValueNull(),
+		"payment_reminders":                         resource_user_notification.NewPaymentRemindersValueNull(),
+		"credit_utilization":                        resource_user_notification.NewCreditUtilizationValueNull(),
+		"quota_utilization":                         resource_user_notification.NewQuotaUtilizationValueNull(),
+		"cloud_incidents":                           resource_user_notification.NewCloudIncidentsValueNull(),
+		"new_sku_usage":                             resource_user_notification.NewNewSkuUsageValueNull(),
+		"daily_digest":                              resource_user_notification.NewDailyDigestValueNull(),
+		"weekly_digest":                             resource_user_notification.NewWeeklyDigestValueNull(),
+		"monthly_digest":                            resource_user_notification.NewMonthlyDigestValueNull(),
+		"expert_insights":                           resource_user_notification.NewExpertInsightsValueNull(),
+		"insights":                                  resource_user_notification.NewInsightsValueNull(),
+		"cost_anomalies":                            resource_user_notification.NewCostAnomaliesValueNull(),
+		"savings_plan_approval":                     resource_user_notification.NewSavingsPlanApprovalValueNull(),
+		"savings_plan_purchased":                    resource_user_notification.NewSavingsPlanPurchasedValueNull(),
+		"cud_approval":                              resource_user_notification.NewCudApprovalValueNull(),
+		"cud_purchased":                             resource_user_notification.NewCudPurchasedValueNull(),
+		"data_integration_sync_failure":             resource_user_notification.NewDataIntegrationSyncFailureValueNull(),
+		"billing_transfer_new_rpma":                 resource_user_notification.NewBillingTransferNewRpmaValueNull(),
+		"billing_transfer_new_end_customer":         resource_user_notification.NewBillingTransferNewEndCustomerValueNull(),
+		"billing_transfer_unassigned_rpmas":         resource_user_notification.NewBillingTransferUnassignedRpmasValueNull(),
+		"billing_transfer_unassigned_end_customers": resource_user_notification.NewBillingTransferUnassignedEndCustomersValueNull(),
+		"billing_transfer_agreement_revoked":        resource_user_notification.NewBillingTransferAgreementRevokedValueNull(),
+		"billing_transfer_cur_export_missing":       resource_user_notification.NewBillingTransferCurExportMissingValueNull(),
 	}
 	for name, v := range set {
 		if _, ok := values[name]; !ok {
@@ -50,6 +56,11 @@ func testUserNotificationSettings(t *testing.T, set map[string]attr.Value) resou
 func testCreditUtilization(t *testing.T) resource_user_notification.CreditUtilizationValue {
 	t.Helper()
 	return resource_user_notification.NewCreditUtilizationValueMust(map[string]attr.Type{}, map[string]attr.Value{})
+}
+
+func testBillingTransferAgreementRevoked(t *testing.T) resource_user_notification.BillingTransferAgreementRevokedValue {
+	t.Helper()
+	return resource_user_notification.NewBillingTransferAgreementRevokedValueMust(map[string]attr.Type{}, map[string]attr.Value{})
 }
 
 func testNewInvoices(t *testing.T, ids types.List) resource_user_notification.NewInvoicesValue {
@@ -90,10 +101,11 @@ func testStrings(t *testing.T, values ...string) types.List {
 func testMultiTypeResponse() *models.UserNotification {
 	resp := testUserNotificationResponse()
 	resp.Settings = models.UserNotificationSettings{
-		CreditUtilization:   &models.NotificationEmptySettings{},
-		NewInvoices:         &models.BillingProfileNotificationSettings{},
-		NewProformaInvoices: &models.BillingProfileNotificationSettings{BillingProfileIds: &[]string{"ent_2", "ent_1"}},
-		DailyDigest:         &models.DigestNotificationSettings{AllocationIds: []string{"alloc-b", "alloc-a"}},
+		CreditUtilization:               &models.NotificationEmptySettings{},
+		BillingTransferAgreementRevoked: &models.NotificationEmptySettings{},
+		NewInvoices:                     &models.BillingProfileNotificationSettings{},
+		NewProformaInvoices:             &models.BillingProfileNotificationSettings{BillingProfileIds: &[]string{"ent_2", "ent_1"}},
+		DailyDigest:                     &models.DigestNotificationSettings{AllocationIds: []string{"alloc-b", "alloc-a"}},
 		Insights: &models.InsightsNotificationSettings{
 			Pillars: &[]string{"security", "cost"},
 		},
@@ -110,11 +122,12 @@ func TestMapUserNotificationToModel_SettingsTypes(t *testing.T) {
 		map[string]attr.Value{"billing_profile_ids": testStrings(t, "ent_2", "ent_1")},
 	)
 	want := testUserNotificationSettings(t, map[string]attr.Value{
-		"credit_utilization":    testCreditUtilization(t),
-		"new_invoices":          testNewInvoices(t, testStrings(t)), // absent → []
-		"new_proforma_invoices": proforma,
-		"daily_digest":          testDailyDigest(t, testStrings(t, "alloc-b", "alloc-a")),
-		"insights":              testInsights(t, testStrings(t, "security", "cost"), testStrings(t), testStrings(t)),
+		"credit_utilization":                 testCreditUtilization(t),
+		"billing_transfer_agreement_revoked": testBillingTransferAgreementRevoked(t),
+		"new_invoices":                       testNewInvoices(t, testStrings(t)), // absent → []
+		"new_proforma_invoices":              proforma,
+		"daily_digest":                       testDailyDigest(t, testStrings(t, "alloc-b", "alloc-a")),
+		"insights":                           testInsights(t, testStrings(t, "security", "cost"), testStrings(t), testStrings(t)),
 	})
 
 	if !state.Settings.Equal(want) {
@@ -136,6 +149,13 @@ func TestMapUserNotificationToDataSource_SettingsTypes(t *testing.T) {
 	}
 	if !data.Settings.CloudIncidents.IsNull() {
 		t.Errorf("cloud_incidents = %s, want null", data.Settings.CloudIncidents)
+	}
+	wantRevoked := datasource_user_notification.NewBillingTransferAgreementRevokedValueMust(map[string]attr.Type{}, map[string]attr.Value{})
+	if !data.Settings.BillingTransferAgreementRevoked.Equal(wantRevoked) {
+		t.Errorf("billing_transfer_agreement_revoked = %s, want {}", data.Settings.BillingTransferAgreementRevoked)
+	}
+	if !data.Settings.BillingTransferCurExportMissing.IsNull() {
+		t.Errorf("billing_transfer_cur_export_missing = %s, want null", data.Settings.BillingTransferCurExportMissing)
 	}
 	wantDigest := datasource_user_notification.NewDailyDigestValueMust(
 		datasource_user_notification.DailyDigestValue{}.AttributeTypes(t.Context()),
@@ -164,6 +184,7 @@ func TestUserNotificationToCreateRequest_SettingsTypes(t *testing.T) {
 		"name": "Anomaly alerts",
 		"settings": {
 			"creditUtilization": {},
+			"billingTransferAgreementRevoked": {},
 			"newInvoices": {},
 			"newProformaInvoices": {"billingProfileIds": ["ent_2", "ent_1"]},
 			"dailyDigest": {"allocationIds": ["alloc-b", "alloc-a"]},
@@ -185,6 +206,7 @@ func TestUserNotificationToUpdateRequest_SettingsTypes(t *testing.T) {
 		"name": "Anomaly alerts",
 		"settings": {
 			"creditUtilization": {},
+			"billingTransferAgreementRevoked": {},
 			"newInvoices": {"billingProfileIds": []},
 			"newProformaInvoices": {"billingProfileIds": ["ent_2", "ent_1"]},
 			"dailyDigest": {"allocationIds": ["alloc-b", "alloc-a"]},
@@ -193,7 +215,9 @@ func TestUserNotificationToUpdateRequest_SettingsTypes(t *testing.T) {
 			"paymentReminders": null, "quotaUtilization": null, "cloudIncidents": null, "newSkuUsage": null,
 			"weeklyDigest": null, "monthlyDigest": null, "expertInsights": null,
 			"savingsPlanApproval": null, "savingsPlanPurchased": null, "cudApproval": null, "cudPurchased": null,
-			"dataIntegrationSyncFailure": null
+			"dataIntegrationSyncFailure": null,
+			"billingTransferNewRpma": null, "billingTransferNewEndCustomer": null, "billingTransferUnassignedRpmas": null,
+			"billingTransferUnassignedEndCustomers": null, "billingTransferCurExportMissing": null
 		}
 	}`)
 }

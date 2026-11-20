@@ -45,6 +45,24 @@ func toUserNotificationCreateSettings(ctx context.Context, s resource_user_notif
 	if notificationSubscribed(s.DataIntegrationSyncFailure) {
 		out.DataIntegrationSyncFailure = &models.NotificationEmptySettings{}
 	}
+	if notificationSubscribed(s.BillingTransferNewRpma) {
+		out.BillingTransferNewRpma = &models.NotificationEmptySettings{}
+	}
+	if notificationSubscribed(s.BillingTransferNewEndCustomer) {
+		out.BillingTransferNewEndCustomer = &models.NotificationEmptySettings{}
+	}
+	if notificationSubscribed(s.BillingTransferUnassignedRpmas) {
+		out.BillingTransferUnassignedRpmas = &models.NotificationEmptySettings{}
+	}
+	if notificationSubscribed(s.BillingTransferUnassignedEndCustomers) {
+		out.BillingTransferUnassignedEndCustomers = &models.NotificationEmptySettings{}
+	}
+	if notificationSubscribed(s.BillingTransferAgreementRevoked) {
+		out.BillingTransferAgreementRevoked = &models.NotificationEmptySettings{}
+	}
+	if notificationSubscribed(s.BillingTransferCurExportMissing) {
+		out.BillingTransferCurExportMissing = &models.NotificationEmptySettings{}
+	}
 	if notificationSubscribed(s.NewInvoices) {
 		v, d := notificationBillingProfiles(ctx, s.NewInvoices.BillingProfileIds)
 		diags.Append(d...)
@@ -145,6 +163,36 @@ func toUserNotificationPatchSettings(ctx context.Context, s resource_user_notifi
 		out.DataIntegrationSyncFailure.Set(models.NotificationEmptySettings{})
 	} else {
 		out.DataIntegrationSyncFailure.SetNull()
+	}
+	if notificationSubscribed(s.BillingTransferNewRpma) {
+		out.BillingTransferNewRpma.Set(models.NotificationEmptySettings{})
+	} else {
+		out.BillingTransferNewRpma.SetNull()
+	}
+	if notificationSubscribed(s.BillingTransferNewEndCustomer) {
+		out.BillingTransferNewEndCustomer.Set(models.NotificationEmptySettings{})
+	} else {
+		out.BillingTransferNewEndCustomer.SetNull()
+	}
+	if notificationSubscribed(s.BillingTransferUnassignedRpmas) {
+		out.BillingTransferUnassignedRpmas.Set(models.NotificationEmptySettings{})
+	} else {
+		out.BillingTransferUnassignedRpmas.SetNull()
+	}
+	if notificationSubscribed(s.BillingTransferUnassignedEndCustomers) {
+		out.BillingTransferUnassignedEndCustomers.Set(models.NotificationEmptySettings{})
+	} else {
+		out.BillingTransferUnassignedEndCustomers.SetNull()
+	}
+	if notificationSubscribed(s.BillingTransferAgreementRevoked) {
+		out.BillingTransferAgreementRevoked.Set(models.NotificationEmptySettings{})
+	} else {
+		out.BillingTransferAgreementRevoked.SetNull()
+	}
+	if notificationSubscribed(s.BillingTransferCurExportMissing) {
+		out.BillingTransferCurExportMissing.Set(models.NotificationEmptySettings{})
+	} else {
+		out.BillingTransferCurExportMissing.SetNull()
 	}
 	if notificationSubscribed(s.NewInvoices) {
 		v, d := notificationBillingProfiles(ctx, s.NewInvoices.BillingProfileIds)
