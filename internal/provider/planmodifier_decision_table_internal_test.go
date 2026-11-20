@@ -17,6 +17,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_budget"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_custom_metric"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_user_notification"
 )
@@ -120,6 +121,7 @@ func TestObjectNullWhenConfigNullModifiers(t *testing.T) {
 		{"notification when_cost_grows", useNullForOmittedNotificationSetting(), resource_user_notification.WhenCostGrowsValue{}.AttributeTypes(ctx), tfsdk.Config{}},
 		{"notification min_increase", useNullForOmittedNotificationSetting(), resource_user_notification.MinIncreaseValue{}.AttributeTypes(ctx), tfsdk.Config{}},
 		{"budget rollover", useNullForOmittedBudgetRollover(), resource_budget.RolloverValue{}.AttributeTypes(ctx), tfsdk.Config{}},
+		{"custom metric decimals", useNullForUnknownCustomMetricDecimalsWhenConfigNull(), resource_custom_metric.DecimalsValue{}.AttributeTypes(ctx), tfsdk.Config{}},
 	}
 
 	// The configured and the planned object are the same (a configured

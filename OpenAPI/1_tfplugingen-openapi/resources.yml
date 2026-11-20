@@ -279,3 +279,16 @@ resources:
     delete:
       path: /customers/v1/subscriptions/{id}
       method: DELETE
+  custom_metric:
+    create:
+      path: /analytics/v1/custom-metrics
+      method: POST
+    read:
+      path: /analytics/v1/custom-metrics/{id}
+      method: GET
+    update:
+      path: /analytics/v1/custom-metrics/{id}
+      method: PATCH
+    delete:
+      path: /analytics/v1/custom-metrics/{id}
+      method: DELETE

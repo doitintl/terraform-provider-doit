@@ -116,6 +116,9 @@ func setCostAnomalyDescriptions(attributes map[string]schema.Attribute, descript
 		case schema.SingleNestedAttribute:
 			a.Description, a.MarkdownDescription = description, description
 			attributes[name] = a
+		case schema.ListNestedAttribute:
+			a.Description, a.MarkdownDescription = description, description
+			attributes[name] = a
 		default:
 			// Only the kinds the cost anomaly schemas use are supported; any
 			// other kind panics instead of silently keeping its description.

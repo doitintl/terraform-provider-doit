@@ -386,5 +386,6 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewCustomerNotificationResource,
 		NewCustomerSubscriptionResource,
 		NewRoleResource,
+		NewCustomMetricResource,
 	}
 }

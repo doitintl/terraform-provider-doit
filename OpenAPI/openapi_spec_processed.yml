@@ -28,6 +28,10 @@ tags:
     description: AI-generated budget recommendations you can accept (link to a budget you created) or dismiss.
   - name: Dimensions
     description: View available dimensions for analysis.
+  - name: Custom Metrics
+    description: Custom metrics, computed by a formula over allocation costs, usage and savings.
+  - name: Extended Metrics
+    description: The extended metric keys a customer can use in custom metric variables, reports and alerts.
   - name: Reports
     description: Manage Cloud Analytics reports and get reports data in JSON format.
   - name: Widgets (Beta)
@@ -1736,6 +1740,510 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+  /analytics/v1/custom-metrics:
+    post:
+      operationId: createCustomMetric
+      tags:
+        - Custom Metrics
+      summary: Create a custom metric
+      description: |
+        Creates a custom metric owned by the caller. Requires the
+        `analytics:calculatedMetrics` entitlement and a metrics write
+        permission.
+
+        Create the allocations first (`POST /analytics/v1/allocations`), then
+        reference them from `variables[].allocationId`. The order of
+        `variables` sets their letters: the first is `A`, the second `B`, up
+        to `E`. Write `formula` with those letters.
+
+        With `dryRun=true`, the response is `200` with the metric that would
+        be created. Its `id`, `etag`, `createTime` and `updateTime` are
+        placeholders.
+
+        Errors (RFC 9457 Problem Details, `code` field):
+
+        - `400 validation_failed`: the body breaks a rule. `details` holds
+          one entry per problem, with `field` set to a path such as
+          `variables[1].allocationId` and `issue` set to one of:
+          - `required`: a required field is missing or blank.
+          - `value_not_in_enum`: a value outside its allowed set.
+          - `out_of_range`: a number outside its bounds, or `decimals.min`
+            greater than `decimals.max`.
+          - `invalid_formula`: `formula` does not parse; `detail` says why.
+          - `unknown_variable`: `formula` uses a letter with no variable.
+          - `allocation_not_found`: no allocation with this id for the
+            customer.
+          - `allocation_not_single`: the id names a group allocation.
+          - `allocation_not_available`: a preset allocation the customer is
+            not entitled to.
+          - `extended_metric_not_found`: an `extended` metric key that
+            `GET /analytics/v1/extended-metrics` does not list with data
+            source `billing` or `billing-datahub`.
+        - `400 idempotency_key_required`: no `Idempotency-Key` header.
+        - `400 tenant_id_required`: a caller with access to more than one
+          customer sent no `X-Tenant-Id`.
+        - `403 analytics.feature_not_entitled`: the customer does not have
+          the calculated metrics entitlement.
+        - `403 forbidden`: no metrics write permission, a read-only token,
+          or an `X-Tenant-Id` that the credential cannot access.
+        - `409 idempotency_request_in_progress`: a request with the same
+          `Idempotency-Key` is still running. Retry with backoff.
+        - `422 idempotency_key_reused`: the `Idempotency-Key` was used with
+          a different body.
+        - `503 service_unavailable`: the customer's extended metrics could
+          not be checked, or an `extended` key is missing while part of the
+          data that decides the list could not be read. The key is not
+          rejected: retry after `Retry-After` seconds.
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+        - $ref: "#/components/parameters/tenantId"
+      requestBody:
+        description: The metric to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomMetricCreate"
+            examples:
+              costPerRide:
+                summary: Cost of one allocation divided by usage of another
+                value:
+                  name: Cost per ride
+                  description: Total cost divided by reported rides
+                  variables:
+                    - metric: {type: basic, value: cost}
+                      allocationId: aL1oC9tR2iDe5Kq7Zw3x
+                    - metric: {type: basic, value: usage}
+                      allocationId: bU4sG6eR8iDe0Mn2Jp5y
+                  formula: A/B
+                  unitType: number
+                  decimals: {min: 0, max: 2}
+              extendedMetric:
+                summary: Cost of one allocation divided by an extended metric, such as a DataHub metric
+                value:
+                  name: Cost per completed ride
+                  variables:
+                    - metric: {type: basic, value: cost}
+                      allocationId: aL1oC9tR2iDe5Kq7Zw3x
+                    - metric: {type: extended, value: completed_rides}
+                      allocationId: bU4sG6eR8iDe0Mn2Jp5y
+                  formula: A/B
+                  unitType: currency
+                  decimals: {min: 2, max: 2}
+      responses:
+        "201":
+          description: The metric was created.
+          headers:
+            Location:
+              $ref: "#/components/headers/Location"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomMetric"
+              examples:
+                costPerRide:
+                  $ref: "#/components/examples/CostPerRide"
+          links:
+            getCustomMetric:
+              operationId: getCustomMetric
+              parameters:
+                id: $response.body#/id
+            updateCustomMetric:
+              operationId: updateCustomMetric
+              parameters:
+                id: $response.body#/id
+                If-Match: $response.header.ETag
+            deleteCustomMetric:
+              operationId: deleteCustomMetric
+              parameters:
+                id: $response.body#/id
+                If-Match: $response.header.ETag
+        "200":
+          description: >-
+            Dry-run preview: the metric that would be created. `id`, `etag`, `createTime` and `updateTime` are placeholders, and nothing was written.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomMetric"
+              examples:
+                preview:
+                  summary: Dry-run preview with placeholder generated fields
+                  value:
+                    id: dryrun
+                    etag: '"dry-run"'
+                    name: Cost per ride
+                    description: Total cost divided by reported rides
+                    owner: finops@example.com
+                    variables:
+                      - letter: A
+                        metric: {type: basic, value: cost}
+                        allocationId: aL1oC9tR2iDe5Kq7Zw3x
+                      - letter: B
+                        metric: {type: basic, value: usage}
+                        allocationId: bU4sG6eR8iDe0Mn2Jp5y
+                    formula: A/B
+                    unitType: number
+                    decimals: {min: 0, max: 2}
+                    createTime: "2026-10-12T09:30:00Z"
+                    updateTime: "2026-10-12T09:30:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /analytics/v1/custom-metrics/{id}:
+    parameters:
+      - $ref: "#/components/parameters/CustomMetricId"
+    get:
+      operationId: getCustomMetric
+      tags:
+        - Custom Metrics
+      summary: Get a custom metric
+      description: |
+        Returns one custom metric, with its `etag` in the body and in the
+        strong `ETag` header. Requires the `analytics:calculatedMetrics`
+        entitlement and a metrics read permission.
+
+        Errors (RFC 9457 Problem Details, `code` field):
+
+        - `400 validation_failed`: `id` has the wrong format.
+        - `400 tenant_id_required`: a caller with access to more than one
+          customer sent no `X-Tenant-Id`.
+        - `403 analytics.feature_not_entitled`: the customer does not have
+          the calculated metrics entitlement.
+        - `403 forbidden`: no metrics read permission, or an `X-Tenant-Id`
+          that the credential cannot access.
+        - `404 not_found`: no custom metric with this id for the customer.
+          A preset metric id also gets `404`.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: The metric.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomMetric"
+              examples:
+                costPerRide:
+                  $ref: "#/components/examples/CostPerRide"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    patch:
+      operationId: updateCustomMetric
+      tags:
+        - Custom Metrics
+      summary: Update a custom metric
+      description: |
+        Changes the fields in the body and leaves the others as they are
+        (JSON Merge Patch, RFC 7396). Requires the
+        `analytics:calculatedMetrics` entitlement and a metrics write
+        permission, and the caller must own the metric, be an editor of it,
+        or the metric must be editable by everyone. Send the metric's `etag`
+        in `If-Match`.
+
+        - A field you leave out is not changed.
+        - `variables` replaces the whole list, and the letters follow the
+          new order. The formula must still name only defined letters, so
+          send `formula` too when the number or order of variables changes.
+        - `decimals` sets both bounds: send `min` and `max` together.
+          `decimals: null` removes the display precision.
+        - Every other field rejects `null`. Send `description: ""` to clear
+          the description.
+
+        With `dryRun=true`, the response is the metric as it would be after
+        the update, and nothing is written.
+
+        Errors (RFC 9457 Problem Details, `code` field):
+
+        - `400 validation_failed`: an empty body, or the updated metric
+          breaks a rule. `details` uses the same `field` paths and `issue`
+          values as `createCustomMetric`.
+        - `400 idempotency_key_required`: no `Idempotency-Key` header.
+        - `400 tenant_id_required`: a caller with access to more than one
+          customer sent no `X-Tenant-Id`.
+        - `403 analytics.feature_not_entitled`: the customer does not have
+          the calculated metrics entitlement.
+        - `403 analytics.custom_metric_not_owner`: the caller may not edit this
+          metric.
+        - `403 forbidden`: no metrics write permission, a read-only token,
+          or an `X-Tenant-Id` that the credential cannot access.
+        - `404 not_found`: no custom metric with this id for the customer.
+        - `409 analytics.custom_metric_modified`: another request changed the
+          metric while this one was running. Retryable: read the metric
+          again, then retry.
+        - `409 idempotency_request_in_progress`: a request with the same
+          `Idempotency-Key` is still running. Retry with backoff.
+        - `412 precondition_failed`: `If-Match` does not match the current
+          `etag`. Read the metric again, then retry.
+        - `422 idempotency_key_reused`: the `Idempotency-Key` was used with
+          a different body.
+        - `428 precondition_required`: no `If-Match` header.
+        - `503 service_unavailable`: the customer's extended metrics could
+          not be checked, or an `extended` key is missing while part of the
+          data that decides the list could not be read. The key is not
+          rejected: retry after `Retry-After` seconds.
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/dryRun"
+        - $ref: "#/components/parameters/tenantId"
+      requestBody:
+        description: The fields to change.
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/CustomMetricUpdate"
+            examples:
+              rename:
+                summary: Rename a metric
+                value:
+                  name: Cost per completed ride
+              changeFormula:
+                summary: Add a variable and use it in the formula
+                value:
+                  variables:
+                    - metric: {type: basic, value: cost}
+                      allocationId: aL1oC9tR2iDe5Kq7Zw3x
+                    - metric: {type: basic, value: usage}
+                      allocationId: bU4sG6eR8iDe0Mn2Jp5y
+                    - metric: {type: basic, value: savings}
+                      allocationId: aL1oC9tR2iDe5Kq7Zw3x
+                  formula: (A-C)/B
+              clearDecimals:
+                summary: Remove the display precision
+                value:
+                  decimals: null
+      responses:
+        "200":
+          description: The updated metric, or with `dryRun=true` the metric as it would be.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomMetric"
+              examples:
+                renamed:
+                  summary: The metric after a rename
+                  value:
+                    id: m8Tq2LxV4cRn7YpB1sKd
+                    etag: '"4d81b0c6e29a"'
+                    name: Cost per completed ride
+                    description: Total cost divided by reported rides
+                    owner: finops@example.com
+                    variables:
+                      - letter: A
+                        metric: {type: basic, value: cost}
+                        allocationId: aL1oC9tR2iDe5Kq7Zw3x
+                      - letter: B
+                        metric: {type: basic, value: usage}
+                        allocationId: bU4sG6eR8iDe0Mn2Jp5y
+                    formula: A/B
+                    unitType: number
+                    decimals: {min: 0, max: 2}
+                    createTime: "2026-10-12T09:30:00Z"
+                    updateTime: "2026-10-14T16:05:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      operationId: deleteCustomMetric
+      tags:
+        - Custom Metrics
+      summary: Delete a custom metric
+      description: |
+        Deletes a custom metric. This cannot be undone. Requires the
+        `analytics:calculatedMetrics` entitlement and a metrics write
+        permission, and only the owner can delete a metric. Send the
+        metric's `etag` in `If-Match`.
+
+        A metric that a report or an alert uses cannot be deleted. Remove it
+        from them first.
+
+        A retry with the same `Idempotency-Key` returns the first `204`. A
+        new request for a metric that no longer exists, including one that
+        is already deleted, returns `404 not_found`: treat it as gone.
+
+        With `dryRun=true`, every check runs and nothing is deleted.
+
+        Errors (RFC 9457 Problem Details, `code` field):
+
+        - `400 idempotency_key_required`: no `Idempotency-Key` header.
+        - `400 tenant_id_required`: a caller with access to more than one
+          customer sent no `X-Tenant-Id`.
+        - `403 analytics.feature_not_entitled`: the customer does not have
+          the calculated metrics entitlement.
+        - `403 analytics.custom_metric_not_owner`: the caller does not own the
+          metric.
+        - `403 forbidden`: no metrics write permission, a read-only token,
+          or an `X-Tenant-Id` that the credential cannot access.
+        - `404 not_found`: no custom metric with this id for the customer,
+          including a metric that is already deleted.
+        - `409 delete_blocked_by_dependencies`: reports, allocations or alerts
+          use the metric. `details` has one entry per user, with `issue`
+          set to `used_by_report`, `used_by_allocation` or `used_by_alert`,
+          and `resourceType` and `resourceId` naming that user, for example
+          `{"issue": "used_by_report", "resourceType": "report",
+          "resourceId": "..."}`. An allocation uses the metric when one of
+          its splits is weighted by it.
+        - `409 idempotency_request_in_progress`: a request with the same
+          `Idempotency-Key` is still running. Retry with backoff.
+        - `412 precondition_failed`: `If-Match` does not match the current
+          `etag`. Read the metric again, then retry.
+        - `422 idempotency_key_reused`: the `Idempotency-Key` was used for
+          another request.
+        - `428 precondition_required`: no `If-Match` header.
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/dryRun"
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "204":
+          description: The metric was deleted, or with `dryRun=true` it could be.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /analytics/v1/reports:
     get:
       tags:
@@ -12864,6 +13372,287 @@ components:
         - AED
         - THB
         - COP
+    CustomMetric:
+      type: object
+      additionalProperties: false
+      description: A custom metric.
+      example:
+        id: m8Tq2LxV4cRn7YpB1sKd
+        etag: '"9f2c4e1a7b3d"'
+        name: Cost per ride
+        description: Total cost divided by reported rides
+        owner: finops@example.com
+        variables:
+          - letter: A
+            metric: {type: basic, value: cost}
+            allocationId: aL1oC9tR2iDe5Kq7Zw3x
+          - letter: B
+            metric: {type: basic, value: usage}
+            allocationId: bU4sG6eR8iDe0Mn2Jp5y
+        formula: A/B
+        unitType: number
+        decimals: {min: 0, max: 2}
+        createTime: "2026-10-12T09:30:00Z"
+        updateTime: "2026-10-12T09:30:00Z"
+      required:
+        - id
+        - etag
+        - name
+        - description
+        - owner
+        - variables
+        - formula
+        - unitType
+        - decimals
+        - createTime
+        - updateTime
+      properties:
+        id:
+          type: string
+          readOnly: true
+          description: >-
+            Identifier of the metric. Reports use it in `metric: {type: custom, value: <id>}`.
+          example: m8Tq2LxV4cRn7YpB1sKd
+        etag:
+          type: string
+          readOnly: true
+          pattern: ^"[!-~]+"$
+          description: >-
+            Strong entity tag, the same value as the `ETag` header. It changes on every update. Send it in `If-Match`.
+          example: '"9f2c4e1a7b3d"'
+        name:
+          type: string
+          description: Name of the metric, exactly as sent. It is not trimmed.
+          example: Cost per ride
+        description:
+          type: string
+          description: >-
+            Description of the metric, exactly as sent. An empty string when there is none.
+          example: Total cost divided by reported rides
+        owner:
+          type: string
+          format: email
+          readOnly: true
+          description: Email of the owner.
+          example: finops@example.com
+        variables:
+          type: array
+          description: The variables, in letter order. The first is `A`.
+          minItems: 1
+          maxItems: 5
+          items:
+            $ref: "#/components/schemas/CustomMetricVariable"
+          example:
+            - letter: A
+              metric: {type: basic, value: cost}
+              allocationId: aL1oC9tR2iDe5Kq7Zw3x
+            - letter: B
+              metric: {type: basic, value: usage}
+              allocationId: bU4sG6eR8iDe0Mn2Jp5y
+        formula:
+          $ref: "#/components/schemas/CustomMetricFormula"
+        unitType:
+          $ref: "#/components/schemas/CustomMetricUnitType"
+        decimals:
+          description: >-
+            Display precision, or `null` when the metric has none and reports use their default formatting. The server never fills in a value: a metric created without `decimals`, or updated with `decimals: null`, returns `null` from create, update and get alike.
+          allOf:
+            - $ref: "#/components/schemas/CustomMetricDecimals"
+          nullable: true
+          example: {min: 0, max: 2}
+        createTime:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the metric was created (RFC 3339, UTC).
+          example: "2026-10-12T09:30:00Z"
+        updateTime:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the metric was last changed (RFC 3339, UTC).
+          example: "2026-10-12T09:30:00Z"
+    CustomMetricCreate:
+      type: object
+      additionalProperties: false
+      description: Request body to create a metric.
+      required:
+        - name
+        - variables
+        - formula
+      properties:
+        name:
+          $ref: "#/components/schemas/CustomMetricName"
+        description:
+          type: string
+          description: Description of the metric.
+          default: ""
+          example: Total cost divided by reported rides
+        variables:
+          $ref: "#/components/schemas/CustomMetricVariableInputList"
+        formula:
+          $ref: "#/components/schemas/CustomMetricFormula"
+        unitType:
+          $ref: "#/components/schemas/CustomMetricUnitType"
+        decimals:
+          $ref: "#/components/schemas/CustomMetricDecimals"
+    CustomMetricDecimals:
+      type: object
+      additionalProperties: false
+      description: >-
+        Number of decimal places reports show, from `min` to `max`. `min` must not be greater than `max`.
+      required:
+        - min
+        - max
+      properties:
+        min:
+          type: integer
+          minimum: 0
+          maximum: 5
+          description: Fewest decimal places shown. Not greater than `max`.
+          example: 0
+        max:
+          type: integer
+          minimum: 0
+          maximum: 5
+          description: Most decimal places shown. Not less than `min`.
+          example: 2
+    CustomMetricFormula:
+      type: string
+      minLength: 1
+      pattern: ^[A-E0-9+*/(). -]+$
+      description: |
+        Arithmetic over the variable letters. Allowed: the letters of the
+        defined variables (`A` to `E`), numbers such as `100` or `0.5`, the
+        operators `+`, `-`, `*` and `/`, parentheses and spaces. Spaces are
+        ignored when the formula is checked and evaluated, but the formula is
+        stored and returned exactly as sent: `A / B` stays `A / B`. A minus
+        can be unary (`-A`, `A*-B`).
+
+        Rejected with `issue: invalid_formula`: a formula that starts with
+        `+`, `*` or `/`, ends with an operator, has two binary operators in a
+        row, has empty or unbalanced parentheses, or divides by a literal
+        `0`. Rejected with `issue: unknown_variable`: a letter with no
+        variable, such as `C` when there are two variables. A variable that
+        the formula does not use is allowed.
+      example: A/B
+    CustomMetricName:
+      type: string
+      minLength: 1
+      pattern: \S
+      description: >-
+        Name of the metric. It must contain a character other than a space. It is stored and returned exactly as sent, without trimming.
+      example: Cost per ride
+    CustomMetricUnitType:
+      type: string
+      enum:
+        - number
+        - percentage
+        - currency
+      default: number
+      description: >-
+        How reports show the value: a plain `number`, a `percentage`, or a `currency` amount in the customer's currency.
+      example: number
+    CustomMetricUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: >-
+        Request body to update a metric (JSON Merge Patch). Send at least one field. Only `decimals` accepts `null`.
+      properties:
+        name:
+          $ref: "#/components/schemas/CustomMetricName"
+        description:
+          type: string
+          description: Description of the metric. Send `""` to clear it.
+          example: Total cost divided by completed rides
+        variables:
+          $ref: "#/components/schemas/CustomMetricVariableInputList"
+        formula:
+          $ref: "#/components/schemas/CustomMetricFormula"
+        unitType:
+          $ref: "#/components/schemas/CustomMetricUnitType"
+        decimals:
+          description: >-
+            New display precision, with both bounds. `null` removes it.
+          allOf:
+            - $ref: "#/components/schemas/CustomMetricDecimals"
+          nullable: true
+          example: {min: 0, max: 3}
+    CustomMetricVariable:
+      type: object
+      additionalProperties: false
+      description: One variable of a metric, as returned.
+      required:
+        - letter
+        - metric
+        - allocationId
+      properties:
+        letter:
+          type: string
+          readOnly: true
+          pattern: ^[A-E]$
+          description: >-
+            Letter of the variable in the formula, from its position: `A` for the first, up to `E`.
+          example: A
+        metric:
+          $ref: "#/components/schemas/CustomMetricVariableMetric"
+        allocationId:
+          type: string
+          description: Identifier of the single allocation the variable measures.
+          example: aL1oC9tR2iDe5Kq7Zw3x
+    CustomMetricVariableInput:
+      type: object
+      additionalProperties: false
+      description: One variable of a metric, as sent.
+      required:
+        - metric
+        - allocationId
+      properties:
+        metric:
+          $ref: "#/components/schemas/CustomMetricVariableMetric"
+        allocationId:
+          type: string
+          pattern: ^[A-Za-z0-9_-]{1,128}$
+          description: >-
+            Identifier of a single allocation (`allocationType: single` in `GET /analytics/v1/allocations`). A group allocation is rejected. A preset allocation needs the preset allocations entitlement.
+          example: aL1oC9tR2iDe5Kq7Zw3x
+    CustomMetricVariableInputList:
+      type: array
+      description: >-
+        The variables. Their order sets their letters: the first is `A`, the second `B`, up to `E`. Do not send `letter`.
+      minItems: 1
+      maxItems: 5
+      items:
+        $ref: "#/components/schemas/CustomMetricVariableInput"
+      example:
+        - metric: {type: basic, value: cost}
+          allocationId: aL1oC9tR2iDe5Kq7Zw3x
+        - metric: {type: basic, value: usage}
+          allocationId: bU4sG6eR8iDe0Mn2Jp5y
+    CustomMetricVariableMetric:
+      type: object
+      additionalProperties: false
+      description: >-
+        The metric a variable measures, the same in requests and responses. Same shape as a report's `metric`, without `custom`: a custom metric cannot be a variable of another.
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - basic
+            - extended
+          description: >-
+            `basic` for a cost, usage or savings metric. `extended` for an extended metric, such as a DataHub or GenAI metric.
+          example: basic
+        value:
+          type: string
+          minLength: 1
+          description: >-
+            For `basic`: `cost`, `usage` or `savings` (any other value returns `issue: value_not_in_enum`). For `extended`: the `key` of an item that `GET /analytics/v1/extended-metrics?filter=dataSource:billing,billing-datahub` lists, the same key a report uses in `metric: {type: extended, value: <key>}`. Any other key returns `issue: extended_metric_not_found`.
+          example: cost
     CustomTheme:
       required:
         - id
@@ -20140,6 +20929,78 @@ components:
             instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
             code: composer-api.allocation_not_found
             retryable: false
+    MethodNotAllowed:
+      description: |
+        `405 Method Not Allowed`. The HTTP method is not supported on this
+        resource. Ships the `Allow` header with the comma-separated list of
+        supported methods so clients can discover the allowed set without
+        re-consulting docs.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+        Allow:
+          $ref: "#/components/headers/Allow"
+        X-RateLimit-Limit:
+          $ref: "#/components/headers/XRateLimitLimit"
+        X-RateLimit-Remaining:
+          $ref: "#/components/headers/XRateLimitRemaining"
+        X-RateLimit-Reset:
+          $ref: "#/components/headers/XRateLimitReset"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/method_not_allowed
+            title: Method not allowed
+            status: 405
+            detail: This method is not supported on this resource
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: method_not_allowed
+            retryable: false
+    RateLimited:
+      description: |
+        `429 Too Many Requests`. The caller exceeded the request rate for this
+        operation. Discriminated on the `code` field:
+
+        - `rate_limited` — soft throttling; requests are arriving faster than the
+          per-window limit permits. `retryable: true` — retry with backoff, but
+          only after the `Retry-After` value (or the window reset in
+          `X-RateLimit-Reset`) elapses; retrying immediately just re-triggers the
+          limit
+        - `quota_exceeded` — hard cap on the caller's plan reached; not a
+          same-window recovery — the caller must either upgrade or wait for the
+          monthly/daily quota to roll over. `retryable: false`
+
+        Always ships `Retry-After` (delay-seconds) and the three `X-RateLimit-*`
+        headers so clients can budget precisely.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+        X-RateLimit-Limit:
+          $ref: "#/components/headers/XRateLimitLimit"
+        X-RateLimit-Remaining:
+          $ref: "#/components/headers/XRateLimitRemaining"
+        X-RateLimit-Reset:
+          $ref: "#/components/headers/XRateLimitReset"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/rate_limited
+            title: Too many requests
+            status: 429
+            detail: Too many requests; retry after the Retry-After delay
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: rate_limited
+            retryable: true
   parameters:
     policyId:
       name: policyId
@@ -20506,6 +21367,15 @@ components:
       schema:
         type: string
         example: status:active|region:us-east-1,us-west-2
+    CustomMetricId:
+      name: id
+      in: path
+      required: true
+      description: Identifier of the custom metric, as returned in `id`.
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9_-]{1,128}$
+        example: m8Tq2LxV4cRn7YpB1sKd
   securitySchemes:
     api_key:
       type: apiKey
@@ -20548,6 +21418,89 @@ components:
         type: string
         enum:
           - en
+    Allow:
+      description: |
+        Comma-separated list of HTTP methods supported by the resource, per
+        RFC 9110 §10.2.1. Returned on `405 Method Not Allowed` so clients
+        discover the actual set of allowed methods for the resource without
+        needing to re-consult docs.
+      schema:
+        type: string
+        example: GET, PATCH, DELETE
+    Location:
+      description: |
+        URI of the resource created by a `201 Created` response, or the operation
+        resource returned by a `202 Accepted` response (long-running action;
+        clients poll this URI for completion), per RFC 9110 §10.2.2. Absolute or
+        root-relative.
+      schema:
+        type: string
+        format: uri-reference
+        example: /cloudflow/v1/flows/01H5X8Z2AB3CDEFGHJKMNP0QRS
+    RetryAfter:
+      description: |
+        Retry-After header per RFC 7231 §7.1.3. **Delay-seconds form only** —
+        DoiT APIs never emit the HTTP-date form. Present on `429 Too Many Requests`
+        and `503 Service Unavailable` responses; overrides the client's local
+        backoff schedule for the immediate next attempt.
+      schema:
+        type: integer
+        minimum: 1
+        example: 30
+    XRateLimitLimit:
+      description: |
+        Total quota for the caller's rate-limit window. Present on responses from
+        rate-limited endpoints — including successful (2xx) responses, not just
+        429s — so clients can budget preemptively. Absent on endpoints not subject
+        to rate limiting.
+      schema:
+        type: integer
+        minimum: 0
+        example: 1000
+    XRateLimitRemaining:
+      description: |
+        Requests remaining in the caller's current rate-limit window. Present on
+        responses from rate-limited endpoints, absent on endpoints not subject to
+        rate limiting. Reaches 0 at the moment the next request would be rejected
+        with `429 rate_limited`.
+      schema:
+        type: integer
+        minimum: 0
+        example: 847
+    XRateLimitReset:
+      description: |
+        Seconds until the rate-limit window resets (i.e. when `X-RateLimit-Remaining`
+        will replenish to `X-RateLimit-Limit`). Delay-seconds form for consistency
+        with `Retry-After`; DoiT APIs never emit HTTP-date form.
+
+        Present on responses from rate-limited endpoints, absent on endpoints not
+        subject to rate limiting.
+      schema:
+        type: integer
+        minimum: 0
+        example: 42
+  examples:
+    CostPerRide:
+      summary: A cost per ride metric
+      description: Cost of one allocation divided by usage of another, shown with up to two decimals.
+      value:
+        id: m8Tq2LxV4cRn7YpB1sKd
+        etag: '"9f2c4e1a7b3d"'
+        name: Cost per ride
+        description: Total cost divided by reported rides
+        owner: finops@example.com
+        variables:
+          - letter: A
+            metric: {type: basic, value: cost}
+            allocationId: aL1oC9tR2iDe5Kq7Zw3x
+          - letter: B
+            metric: {type: basic, value: usage}
+            allocationId: bU4sG6eR8iDe0Mn2Jp5y
+        formula: A/B
+        unitType: number
+        decimals: {min: 0, max: 2}
+        createTime: "2026-10-12T09:30:00Z"
+        updateTime: "2026-10-12T09:30:00Z"
 x-samples-languages:
   - curl
   - go

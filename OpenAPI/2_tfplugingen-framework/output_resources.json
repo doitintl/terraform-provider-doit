@@ -1823,6 +1823,292 @@
 			}
 		},
 		{
+			"name": "custom_metric",
+			"schema": {
+				"attributes": [
+					{
+						"name": "decimals",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "max",
+									"int64": {
+										"computed_optional_required": "required",
+										"description": "Most decimal places shown. Not less than `min`.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+														}
+													],
+													"schema_definition": "int64validator.Between(0, 5)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "min",
+									"int64": {
+										"computed_optional_required": "required",
+										"description": "Fewest decimal places shown. Not greater than `max`.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+														}
+													],
+													"schema_definition": "int64validator.Between(0, 5)"
+												}
+											}
+										]
+									}
+								}
+							],
+							"description": "Number of decimal places reports show, from `min` to `max`. `min` must not be greater than `max`."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": ""
+							},
+							"description": "Description of the metric."
+						}
+					},
+					{
+						"name": "formula",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Arithmetic over the variable letters. Allowed: the letters of the\ndefined variables (`A` to `E`), numbers such as `100` or `0.5`, the\noperators `+`, `-`, `*` and `/`, parentheses and spaces. Spaces are\nignored when the formula is checked and evaluated, but the formula is\nstored and returned exactly as sent: `A / B` stays `A / B`. A minus\ncan be unary (`-A`, `A*-B`).\n\nRejected with `issue: invalid_formula`: a formula that starts with\n`+`, `*` or `/`, ends with an operator, has two binary operators in a\nrow, has empty or unbalanced parentheses, or divides by a literal\n`0`. Rejected with `issue: unknown_variable`: a letter with no\nvariable, such as `C` when there are two variables. A variable that\nthe formula does not use is allowed.\n",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								},
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-E0-9+*/(). -]+$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Name of the metric. It must contain a character other than a space. It is stored and returned exactly as sent, without trimming.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								},
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"\\\\S\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "unit_type",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": "number"
+							},
+							"description": "How reports show the value: a plain `number`, a `percentage`, or a `currency` amount in the customer's currency.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"number\",\n\"percentage\",\n\"currency\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "variables",
+						"list_nested": {
+							"computed_optional_required": "required",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "allocation_id",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "Identifier of a single allocation (`allocationType: single` in `GET /analytics/v1/allocations`). A group allocation is rejected. A preset allocation needs the preset allocations entitlement.",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "regexp"
+															},
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Za-z0-9_-]{1,128}$\"), \"\")"
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "metric",
+										"single_nested": {
+											"computed_optional_required": "required",
+											"attributes": [
+												{
+													"name": "type",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "`basic` for a cost, usage or savings metric. `extended` for an extended metric, such as a DataHub or GenAI metric.",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"basic\",\n\"extended\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "value",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "For `basic`: `cost`, `usage` or `savings` (any other value returns `issue: value_not_in_enum`). For `extended`: the `key` of an item that `GET /analytics/v1/extended-metrics?filter=dataSource:billing,billing-datahub` lists, the same key a report uses in `metric: {type: extended, value: \u003ckey\u003e}`. Any other key returns `issue: extended_metric_not_found`.",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.LengthAtLeast(1)"
+																}
+															}
+														]
+													}
+												}
+											],
+											"description": "The metric a variable measures, the same in requests and responses. Same shape as a report's `metric`, without `custom`: a custom metric cannot be a variable of another."
+										}
+									},
+									{
+										"name": "letter",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Letter of the variable in the formula, from its position: `A` for the first, up to `E`."
+										}
+									}
+								]
+							},
+							"description": "The variables. Their order sets their letters: the first is `A`, the second `B`, up to `E`. Do not send `letter`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+											}
+										],
+										"schema_definition": "listvalidator.SizeBetween(1, 5)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the metric was created (RFC 3339, UTC)."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Strong entity tag, the same value as the `ETag` header. It changes on every update. Send it in `If-Match`."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Identifier of the metric. Reports use it in `metric: {type: custom, value: \u003cid\u003e}`."
+						}
+					},
+					{
+						"name": "owner",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Email of the owner."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the metric was last changed (RFC 3339, UTC)."
+						}
+					}
+				],
+				"description": "Custom metrics, computed by a formula over allocation costs, usage and savings.",
+				"markdown_description": "Custom metrics, computed by a formula over allocation costs, usage and savings."
+			}
+		},
+		{
 			"name": "custom_theme",
 			"schema": {
 				"attributes": [
