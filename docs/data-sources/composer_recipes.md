@@ -56,10 +56,8 @@ Errors:
 - An unknown key returns `400 filter_key_not_supported` when it's the only problem, otherwise `400 validation_failed`.
 - A value outside the allowed list, a non-boolean `has_active_results`, more than one `has_active_results` value, more than 10 distinct allocation IDs, an invalid allocation ID (blank, longer than 256 characters, or containing `/`, whitespace or control characters), a malformed expression or an unsupported operator returns `400 validation_failed`.
 - An allocation that doesn't exist or that you can't view returns `404 composer-api.allocation_not_found`.
-- `max_results` (Number) Maximum number of items to return on one page, from 1 to 500. Defaults to 50. A value outside that range returns `400 validation_failed`.
-- `page_token` (String) Continuation token from the `pageToken` of the previous response. Omit it on the first request; a response without `pageToken` is the last page.
-
-The token records the position, the sort and the `allocation` filter IDs. Changing `sortBy`, `sortOrder` or the allocation IDs while paginating returns `400 pagination_token_invalid`. Keep the other `filter` keys and `maxResults` unchanged while paginating. Tokens expire 5 minutes after they are issued; an expired token returns `400 pagination_token_expired`. In both cases, restart from the first page.
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page.
+- `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read. A `page_token` works only with the `sort_by`, `sort_order`, `filter` and `max_results` it was returned for, and expires 5 minutes after it was issued. An invalid or expired one fails the read; read again without `page_token` to start over.
 - `sort_by` (String) Field to sort recipes by. Defaults to `severity`. Ties break by title (case-insensitive, ascending), then by `id` (ascending), whatever the `sortOrder`.
 Possible values: `severity`, `title`, `detection_time`, `active_results_count`, `total_results_count`
 - `sort_order` (String) Sort direction for `sortBy`. Defaults to `desc`.
@@ -69,7 +67,7 @@ Possible values: `asc`, `desc`
 ### Read-Only
 
 - `items` (Attributes List) Recipes on this page. (see [below for nested schema](#nestedatt--items))
-- `row_count` (Number) Total number of recipes across all pages.
+- `row_count` (Number) The number of items across all pages, as reported by the API. It is the same whatever `max_results` and `page_token` are, so with either set it can be larger than the number of items returned. If the API reports no count, `row_count` is the number of items this read returned instead.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

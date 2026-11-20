@@ -236,11 +236,13 @@ func TestPs4cCommitmentPoliciesRead_ManualPagination_PageTokenOnly(t *testing.T)
 					}
 				],
 				"pageToken": "end-token",
-				"rowCount": 2
+				"rowCount": 3
 			}`)
 			return
 		}
 
+		// rowCount is the total across all pages, including the page before
+		// start-token.
 		_, _ = fmt.Fprint(w, `{
 			"items": [
 				{
@@ -254,7 +256,7 @@ func TestPs4cCommitmentPoliciesRead_ManualPagination_PageTokenOnly(t *testing.T)
 				}
 			],
 			"pageToken": null,
-			"rowCount": 2
+			"rowCount": 3
 		}`)
 	}))
 
@@ -282,6 +284,10 @@ func TestPs4cCommitmentPoliciesRead_ManualPagination_PageTokenOnly(t *testing.T)
 
 	if got := len(state.Items.Elements()); got != 2 {
 		t.Errorf("items count = %d, want 2", got)
+	}
+	// row_count is the API's total, not the number of items read from the token on.
+	if got := state.RowCount.ValueInt64(); got != 3 {
+		t.Errorf("row_count = %d, want 3", got)
 	}
 	if !state.PageToken.IsNull() {
 		t.Errorf("page_token should be null after auto-pagination completes, got %q", state.PageToken.ValueString())

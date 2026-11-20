@@ -138,6 +138,7 @@ When writing unit tests that mock DoiT API responses (e.g. `*_internal_test.go`,
 3. **`NewTestServer` starts lazily, so call `server.Client()` in its own statement before reading `server.URL`.** Startup — and the assignment of `server.URL` — happens on the first `server.Client()` call; read the field before that and you get `""`, silently. The inline form `models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))` happens to work under `gc` today, but it is **not guaranteed**: Go orders calls relative to each other, not relative to an ordinary field read in the same argument list (the spec's own example is `[]int{a, f()}`, which "may be [1, 2] or [2, 2]"). Existing inline call sites are safe enough in practice because they assert on real responses and would fail loudly — but hoist it in new code, and *never* rely on it for an assertion that something did **not** happen, where broken plumbing and a genuine pass look identical.
 4. **Only a client built from `server.Client()` can reach the server.** `NewClient` constructs its own `&http.Client` on the default transport, so a request it made would leave for the real network — a counter on the test server can never observe it, and "no request was made" is then unfalsifiable no matter how real `server.URL` is. Assert no-I/O through `newClientWithHTTPClient` with `server.Client()` injected; assert `NewClient`'s own wiring by inspecting the client it returns.
 5. **Timeout, retry, and polling tests must use `testing/synctest`** — see below. A test that waits in real wall-clock time does not belong in the unit suite.
+6. **Test non-2xx handling through the retry client.** A plain `models.NewClientWithResponses(..., models.WithHTTPClient(server.Client()))` returns a 400 as a response. The provider's client, built by `newClientWithHTTPClient(server.URL, ..., server.Client())` (`client.go`), returns it as an error (`non-retryable error: 400, body: ...`); only 2xx, 3xx, 404, 412 and 425 come back as responses. A hint behind `StatusCode() == 400` passes a test on the plain client and never fires in the provider. Build the client with `newClientWithHTTPClient` for any test of an error status, alone or next to the plain client.
 
 ### Virtual Time with `testing/synctest`
 
@@ -298,6 +299,32 @@ When an API bug causes legitimate drift, skip the drift step with a TODO:
 ```go
 // TODO(TICKET-ID): Enable drift verification once API returns field X.
 ```
+
+---
+
+## List Data Sources
+
+### Shared pagination tests
+
+`list_data_source_pagination_internal_test.go` tests every paged list data source from one table, `listDataSourceCases`. A new data source with `max_results` and `page_token` gets an entry there (`TestListDataSourcePaginationCoverage` fails without one). The entry holds the constructor, the list path, the JSON key and the attribute of the items, a minimal item, the required inputs and the [row-count kind](../implement-datasource/SKILL.md#row-count). The rows:
+
+- **Unknown guard**: `max_results` omitted, known and unknown, × `page_token` omitted and known, with `timeouts` unknown. No request is made; every computed-only attribute and `page_token` are unknown; every input is as configured.
+- **Auto mode**: pages of 2, 1 and 1 items with `rowCount` omitted, null, and present. The present value differs from the number of items served (10 against 4), so a test can tell an API total from a fetched count. One row starts from a configured `page_token`, and one row serves empty, empty, then non-empty pages.
+- **Single page**: the next token and the row count; the last page returns no token; and a page without `rowCount`.
+
+The shared rows check pagination only. Mapping, filters and anything specific to one data source stay in its own `_internal_test.go`.
+
+### Acceptance tests
+
+The live tenant hides branches: an endpoint whose `rowCount` is optional may send it on every request, so the fallback never runs live.
+
+- A helper that sizes the fixture (to skip a pagination test on a small tenant) requests the threshold it needs as `maxResults` and reports whether the count came from the API. One item with a `len(items)` fallback can never reach a threshold of 2. Test the helper against a fake server, with and without `rowCount`.
+- An assertion on `row_count` depends on the kind. With an API total, every read reports the same total. Without one, each read reports its own item count, so a `max_results = 1` read and a read from its `page_token` differ. Put the check in a function and cover both branches with a table test. `extended_metrics_row_count_probe_test.go` and `TestExtendedMetricsDataSourceRowCountFallbackDiffersBetweenReads` show the pattern.
+- A chained read in a test config is safe only when the test skips on a tenant whose first page is also its last; see [Examples that chain `page_token`](../implement-datasource/SKILL.md#examples-that-chain-page_token).
+
+### Measuring a cached endpoint
+
+Some list endpoints cache upstream results for a few minutes, so a crawl right after another probe measures the cache. One Slack channel crawl took 5 s with a warm cache and 19 s after the 5-minute TTL had passed. Before you remove a rate-limit or duration `t.Skip`, or decide to keep it, probe cold: wait out the TTL, then measure. If the skip stays, put the measured numbers in its reason.
 
 ---
 
@@ -562,3 +589,7 @@ func getAlertCount(t *testing.T) int {
 - [ ] Set attributes: change one element of two and assert the other keeps its computed values
 - [ ] Use unique resource names
 - [ ] Cache expensive helpers with `sync.Once`
+- [ ] Error-status handling: test through `newClientWithHTTPClient`, not only a plain generated client
+- [ ] New paged list data source: add it to `listDataSourceCases` with its measured row-count kind
+- [ ] `row_count` assertions in acceptance tests: one branch per kind, covered by a table test
+- [ ] Before changing a rate-limit `t.Skip`, measure the endpoint cold

@@ -333,9 +333,9 @@ output "costliest_anomaly_explanation" {
 Available filter keys: **serviceName**, **billingAccount**, **platform**, **severityLevel**. `severityLevel` values must be lowercase: `information`, `warning`, `critical`. An unrecognised key, or a segment that is not `key:value`, is rejected with `400` rather than ignored.
 - `include_notifications` (Boolean) Include anomaly notifications from the subcollection. Defaults to false.
 - `max_creation_time` (Number) Inclusive upper bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.
-- `max_results` (Number) The maximum number of results to return in a single page. If omitted, all anomalies matching the filters and time window are returned in a single page.
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page.
 - `min_creation_time` (Number) Inclusive lower bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.
-- `page_token` (String) Page token, returned by a previous call, to request the next page of results
+- `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read.
 - `sort_by` (String) A field by which the results will be sorted. Defaults to `startTime`.
 Possible values: `startTime`, `severityLevel`, `costOfAnomaly`
 - `sort_order` (String) Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
@@ -346,7 +346,7 @@ Possible values: `asc`, `desc`
 
 - `anomalies` (Attributes List) Anomalies in this page. Always an array; empty (`[]`) when there are no matching anomalies. (see [below for nested schema](#nestedatt--anomalies))
 - `anomaly_summary` (Attributes) Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete filtered result set across all pages, not the returned page. Anomalies whose severity cannot be determined (legacy documents) are counted in `totalCount` and `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so the three values can sum to less than `totalCount`. Computed as of this request; under concurrent writes, values may differ between pages fetched during the same pagination sequence. (see [below for nested schema](#nestedatt--anomaly_summary))
-- `row_count` (Number) Number of items in this page (`anomalies.length`). This is not the total count across all pages; the total across the full filtered result set is `totalCount`.
+- `row_count` (Number) The number of items this read returned: with `max_results` set, the items of that page; without it, the items of every page fetched.
 - `total_count` (Number) Total number of anomalies matching the filters and time window, across all pages. This is a per-request snapshot: under concurrent writes, the value can differ between pages fetched during the same pagination sequence.
 - `total_count_exact` (Boolean) Whether `totalCount` is exact. Always `true` for this operation, because `totalCount` is computed over the fully materialised filtered result set.
 - `truncated` (Boolean) `true` when filtered anomalies remain beyond this page. Derived from the same "rows remain after the last returned row" check as `pageToken`, so the two are never contradictory: `pageToken` is present if and only if `truncated` is `true`.

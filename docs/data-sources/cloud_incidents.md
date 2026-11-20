@@ -72,15 +72,15 @@ output "gcp_incidents_by_product" {
 - `filter` (String) An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 - `max_creation_time` (String) Max value for the cloud incident creation time, in milliseconds since the POSIX epoch. If set, only cloud incidents created before or at this
 timestamp are returned.
-- `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+- `max_results` (Number) The maximum number of items to return. A single page is read whether or not it is set; without it, the API's default page size applies.
 - `min_creation_time` (String) Min value for the cloud incident creation time, in milliseconds since the POSIX epoch. If set, only cloud incidents created after or at this timestamp are returned.
-- `page_token` (String) Page token, returned by a previous call, to request the next page of results
+- `page_token` (String) Token of the page to read. After the read, `page_token` holds the token of the next page, which is null after the last page.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `incidents` (Attributes List) Array of cloud incidents (see [below for nested schema](#nestedatt--incidents))
-- `row_count` (Number) Cloud incidents rows count
+- `row_count` (Number) The number of items this read returned, which is the items of one page.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

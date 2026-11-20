@@ -17,6 +17,14 @@
 //  3. If the schema has any Required or Optional input attributes, verify the
 //     Read() body contains IsUnknown() or IsFullyKnown() checks
 //  4. Data sources with only Computed attributes are excluded (no user inputs to check)
+//
+// List data sources (max_results, page_token and row_count in the schema) get
+// one stricter check, because their fallback is fully determined: a read
+// replaces page_token with the next page's token or null in every mode, and
+// row_count is a result. Their Read() must guard with IsFullyKnown(), and the
+// guard's body must assign PageToken = types.StringUnknown() and
+// RowCount = types.Int64Unknown() as top-level statements, not under a
+// condition such as "only when page_token is null".
 package unknownguard
 
 import (
@@ -49,12 +57,18 @@ func run(pass *analysis.Pass) (any, error) {
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Build a map of data source schema names → whether they have user inputs.
+	// Build a map of data source schema names → whether they have user inputs,
+	// and which of them are paged list data sources.
 	dsHasInputs := map[string]bool{}
+	dsIsList := map[string]bool{}
 	for name, info := range schemaFacts.Schemas {
 		if !strings.HasSuffix(name, "DataSourceSchema") {
 			continue
 		}
+		_, hasMaxResults := info.Attrs["max_results"]
+		_, hasPageToken := info.Attrs["page_token"]
+		_, hasRowCount := info.Attrs["row_count"]
+		dsIsList[name] = hasMaxResults && hasPageToken && hasRowCount
 		for _, attr := range info.Attrs {
 			if attr.Class == schemaparser.Required ||
 				attr.Class == schemaparser.Optional ||
@@ -121,6 +135,11 @@ func run(pass *analysis.Pass) (any, error) {
 
 		// Skip data sources with no user inputs.
 		if !dsHasInputs[schemaName] {
+			return
+		}
+
+		if dsIsList[schemaName] {
+			checkListGuard(pass, fn)
 			return
 		}
 
@@ -224,4 +243,78 @@ func hasUnknownGuard(body *ast.BlockStmt) bool {
 		return true
 	})
 	return found
+}
+
+// checkListGuard reports a list data source Read() whose guard is not an
+// IsFullyKnown() check that sets PageToken and RowCount unknown unconditionally.
+func checkListGuard(pass *analysis.Pass, fn *ast.FuncDecl) {
+	var guard *ast.IfStmt
+	ast.Inspect(fn.Body, func(n ast.Node) bool {
+		if guard != nil {
+			return false
+		}
+		ifStmt, ok := n.(*ast.IfStmt)
+		if ok && callsMethod(ifStmt.Cond, "IsFullyKnown") {
+			guard = ifStmt
+			return false
+		}
+		return true
+	})
+	if guard == nil {
+		pass.Reportf(fn.Name.Pos(),
+			"list data source Read() must guard unknown protocol configuration with req.Config.Raw.IsFullyKnown()")
+		return
+	}
+
+	var setsPageToken, setsRowCount bool
+	for _, stmt := range guard.Body.List {
+		assign, ok := stmt.(*ast.AssignStmt)
+		if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			continue
+		}
+		field, ok := assign.Lhs[0].(*ast.SelectorExpr)
+		if !ok {
+			continue
+		}
+		switch {
+		case field.Sel.Name == "PageToken" && isCallTo(assign.Rhs[0], "StringUnknown"):
+			setsPageToken = true
+		case field.Sel.Name == "RowCount" && isCallTo(assign.Rhs[0], "Int64Unknown"):
+			setsRowCount = true
+		}
+	}
+	if !setsPageToken || !setsRowCount {
+		pass.Reportf(guard.Pos(),
+			"list data source unknown guard must set PageToken = types.StringUnknown() and RowCount = types.Int64Unknown() "+
+				"unconditionally: a read replaces page_token in every mode")
+	}
+}
+
+// callsMethod reports whether expr contains a call of a method named name.
+func callsMethod(expr ast.Expr, name string) bool {
+	found := false
+	ast.Inspect(expr, func(n ast.Node) bool {
+		if call, ok := n.(*ast.CallExpr); ok {
+			if sel, ok := call.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == name {
+				found = true
+			}
+		}
+		return !found
+	})
+	return found
+}
+
+// isCallTo reports whether expr is a call of a function or method named name.
+func isCallTo(expr ast.Expr, name string) bool {
+	call, ok := expr.(*ast.CallExpr)
+	if !ok {
+		return false
+	}
+	switch f := call.Fun.(type) {
+	case *ast.SelectorExpr:
+		return f.Sel.Name == name
+	case *ast.Ident:
+		return f.Name == name
+	}
+	return false
 }

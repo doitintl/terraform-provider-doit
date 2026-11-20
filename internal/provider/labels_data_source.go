@@ -35,6 +35,7 @@ func (d *labelsDataSource) Metadata(ctx context.Context, req datasource.Metadata
 func (d *labelsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_labels.LabelsDataSourceSchema(ctx)
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountPage, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -73,9 +74,13 @@ func (d *labelsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If any filter/pagination input is unknown, return unknown list
-	if data.Filter.IsUnknown() || data.NameContains.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
+	if !req.Config.Raw.IsFullyKnown() {
 		data.Labels = types.ListUnknown(datasource_labels.LabelsValue{}.Type(ctx))
+		data.RowCount = types.Int64Unknown()
+		data.PageToken = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -130,11 +135,7 @@ func (d *labelsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 		// Preserve API's page_token for user to fetch next page
 		data.PageToken = types.StringPointerValue(result.PageToken)
-		if result.RowCount != nil {
-			data.RowCount = types.Int64Value(int64(*result.RowCount))
-		} else {
-			data.RowCount = types.Int64Value(int64(len(allLabels)))
-		}
+		data.RowCount = listRowCount(result.RowCount, len(allLabels))
 		// max_results is already set by user, no change needed
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
@@ -170,10 +171,11 @@ func (d *labelsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			params.PageToken = result.PageToken
 		}
 
-		// Auto mode: set counts based on what we fetched
+		// rowCount counts the items of one page, so row_count counts every page fetched.
 		data.RowCount = types.Int64Value(int64(len(allLabels)))
 		data.PageToken = types.StringNull()
-		// max_results was not set; preserve null
+		// max_results was not set by user; normalize to null
+		data.MaxResults = types.Int64Null()
 	}
 
 	// Map labels list

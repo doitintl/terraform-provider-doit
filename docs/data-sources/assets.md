@@ -38,14 +38,14 @@ is `key:[<value>]`. e.g: "type:g-suite". Multiple filters can be
 connected using a pipe |. Note that using different keys in the same
 filter results in “AND,” while using the same key multiple times in
 the same filter results in “OR”.
-- `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
-- `page_token` (String) Page token, returned by a previous call, to request the next page of results
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page.
+- `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `assets` (Attributes List) Array of Assets (see [below for nested schema](#nestedatt--assets))
-- `row_count` (Number) Assets rows count
+- `row_count` (Number) The number of items this read returned: with `max_results` set, the items of that page; without it, the items of every page fetched.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

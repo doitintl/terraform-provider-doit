@@ -170,7 +170,7 @@ func TestCustomMetricsDataSource_Pagination(t *testing.T) {
 			wantNames:     []string{"three", "four"},
 			wantTokens:    []string{"t2", "t3"},
 			wantRowCount:  4,
-			wantPageToken: types.StringValue("t2"),
+			wantPageToken: types.StringNull(),
 			wantMaxResult: types.Int64Null(),
 		},
 		{
@@ -398,8 +398,9 @@ func TestCustomMetricsDataSource_APIError(t *testing.T) {
 // protocol-level fallback directly. Terraform Core normally defers a data
 // source with unknown configuration, but protocol v6 permits clients to send
 // unknown configuration to ReadDataSource. The fallback must make no API call
-// and leave the results unknown; configured inputs keep their value and
-// omitted ones become unknown.
+// and leave the results unknown, page_token included: a read replaces it with
+// the next page's token or null in every mode. The other inputs stay as
+// configured, so an omitted one stays null.
 func TestCustomMetricsDataSource_UnknownConfigDefensiveFallback(t *testing.T) {
 	t.Parallel()
 
@@ -470,46 +471,48 @@ func TestCustomMetricsDataSource_UnknownConfigDefensiveFallback(t *testing.T) {
 				t.Errorf("row_count = %s, want unknown", data.RowCount)
 			}
 
-			// An input is unknown when it was unknown or omitted, and keeps its
-			// value when it was configured.
+			// An input keeps its configured value: known, unknown or null.
 			wantString := func(attrName string, got types.String) {
 				t.Helper()
-				if override, ok := tc.overrides[attrName]; ok {
-					if override.IsKnown() {
-						var want string
-						if err := override.As(&want); err != nil {
-							t.Fatal(err)
-						}
-						if !got.Equal(types.StringValue(want)) {
-							t.Errorf("%s = %s, want %q", attrName, got, want)
-						}
-						return
+				override, ok := tc.overrides[attrName]
+				switch {
+				case !ok:
+					if !got.IsNull() {
+						t.Errorf("%s = %s, want null", attrName, got)
 					}
-				}
-				if !got.IsUnknown() {
-					t.Errorf("%s = %s, want unknown", attrName, got)
+				case !override.IsKnown():
+					if !got.IsUnknown() {
+						t.Errorf("%s = %s, want unknown", attrName, got)
+					}
+				default:
+					var want string
+					if err := override.As(&want); err != nil {
+						t.Fatal(err)
+					}
+					if !got.Equal(types.StringValue(want)) {
+						t.Errorf("%s = %s, want %q", attrName, got, want)
+					}
 				}
 			}
 			wantString("name_contains", data.NameContains)
 			wantString("filter", data.Filter)
 			wantString("sort_by", data.SortBy)
 			wantString("sort_order", data.SortOrder)
-			// With max_results set (or unknown) page_token is the next page's
-			// token, which is not known without the call; without max_results a
-			// configured page_token is only the starting point and stays.
-			if _, manual := tc.overrides["max_results"]; manual {
-				if !data.PageToken.IsUnknown() {
-					t.Errorf("page_token = %s, want unknown in single-page mode", data.PageToken)
-				}
-			} else {
-				wantString("page_token", data.PageToken)
+			if !data.PageToken.IsUnknown() {
+				t.Errorf("page_token = %s, want unknown", data.PageToken)
 			}
-			if override, ok := tc.overrides["max_results"]; ok && override.IsKnown() {
-				if !data.MaxResults.Equal(types.Int64Value(2)) {
-					t.Errorf("max_results = %s, want the configured 2", data.MaxResults)
+			override, ok := tc.overrides["max_results"]
+			switch {
+			case !ok:
+				if !data.MaxResults.IsNull() {
+					t.Errorf("max_results = %s, want null", data.MaxResults)
 				}
-			} else if !data.MaxResults.IsUnknown() {
-				t.Errorf("max_results = %s, want unknown", data.MaxResults)
+			case !override.IsKnown():
+				if !data.MaxResults.IsUnknown() {
+					t.Errorf("max_results = %s, want unknown", data.MaxResults)
+				}
+			case !data.MaxResults.Equal(types.Int64Value(2)):
+				t.Errorf("max_results = %s, want the configured 2", data.MaxResults)
 			}
 		})
 	}

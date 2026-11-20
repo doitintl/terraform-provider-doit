@@ -63,9 +63,9 @@ Any other key returns `400 filter_key_not_supported`. For
 example `owner:finops%40example.com`. Use `nameContains` for a
 substring match on the name. Percent-encode
 `,`, `|`, `:` and spaces inside values.
-- `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page.
 - `name_contains` (String) Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
-- `page_token` (String) Page token, returned by a previous call, to request the next page of results
+- `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read.
 - `sort_by` (String) Field to sort by. Ties break by `id`, so paging never repeats or skips a metric.
 Possible values: `name`, `create_time`, `update_time`
 - `sort_order` (String) Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
@@ -75,11 +75,7 @@ Possible values: `asc`, `desc`
 ### Read-Only
 
 - `items` (Attributes List) (see [below for nested schema](#nestedatt--items))
-- `row_count` (Number) Optional best-effort total-count hint. Servers include this when
-computing it is cheap (indexed count) and MAY return `null` or omit it
-for expensive-to-count endpoints. Clients MUST NOT assume this field
-is present or non-null. When present, it is the total across all
-pages, not just the current page.
+- `row_count` (Number) The number of items across all pages, as reported by the API. It is the same whatever `max_results` and `page_token` are, so with either set it can be larger than the number of items returned. If the API reports no count, `row_count` is the number of items this read returned instead.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

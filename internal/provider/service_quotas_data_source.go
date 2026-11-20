@@ -63,6 +63,7 @@ func (d *serviceQuotasDataSource) Schema(ctx context.Context, _ datasource.Schem
 		s.Attributes["min_utilization_percent"] = minUtilAttr
 	}
 
+	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountTotal, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s
 }
@@ -82,7 +83,9 @@ func (d *serviceQuotasDataSource) Read(ctx context.Context, req datasource.ReadR
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// Composite inputs (config as a whole) require IsFullyKnown to catch unknown elements.
+	// The results are not yet known. page_token is one of them in every mode:
+	// a read replaces it with the next page's token, or null. The inputs stay
+	// as configured.
 	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_service_quotas.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
@@ -133,14 +136,18 @@ func (d *serviceQuotasDataSource) Read(ctx context.Context, req datasource.ReadR
 
 		// Preserve API's page_token for the user to fetch the next page
 		data.PageToken = types.StringPointerValue(result.PageToken)
-		data.RowCount = types.Int64Value(result.RowCount)
+		data.RowCount = listRowCount(&result.RowCount, len(allQuotas))
 		// max_results is already set by the user, no change needed
 	} else {
 		// Auto mode: fetch all pages, honoring a user-provided page_token as the starting point
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
 		}
-		for {
+		// rowCount is the total across all pages, the same on every page, so it
+		// is taken from the first page even when a page_token starts the read
+		// after the first item.
+		var apiRowCount *int64
+		for first := true; ; first = false {
 			apiResp, err := d.client.ListServiceQuotasWithResponse(ctx, params)
 			if err != nil {
 				resp.Diagnostics.AddError(
@@ -158,6 +165,9 @@ func (d *serviceQuotasDataSource) Read(ctx context.Context, req datasource.ReadR
 			}
 
 			result := apiResp.JSON200
+			if first {
+				apiRowCount = &result.RowCount
+			}
 			allQuotas = append(allQuotas, result.Items...)
 
 			if result.PageToken == nil || *result.PageToken == "" {
@@ -166,8 +176,8 @@ func (d *serviceQuotasDataSource) Read(ctx context.Context, req datasource.ReadR
 			params.PageToken = result.PageToken
 		}
 
-		// Auto mode: set counts based on what was fetched; no more pages remain
-		data.RowCount = types.Int64Value(int64(len(allQuotas)))
+		// No more pages remain.
+		data.RowCount = listRowCount(apiRowCount, len(allQuotas))
 		data.PageToken = types.StringNull()
 		// max_results was not set by the user; normalize to null
 		data.MaxResults = types.Int64Null()

@@ -49,15 +49,15 @@ output "invoice_summary" {
 
 - `filter` (String) Supported keys: platform (an invoice platform), dueDate (milliseconds since the POSIX epoch), and status (OPEN, PAST DUE, PAID, or CANCELED). Only one status value is applied per request. Cancelled invoices and credit memos are returned only with status:CANCELED, and every other request excludes them.
 - `max_creation_time` (Number) Max value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created before or at this timestamp are returned.
-- `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page.
 - `min_creation_time` (Number) Min value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created after or at this timestamp are returned.
-- `page_token` (String) Page token, returned by a previous call, to request the next page of results
+- `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `invoices` (Attributes List) Array of Invoices (see [below for nested schema](#nestedatt--invoices))
-- `row_count` (Number) Invoice rows count
+- `row_count` (Number) The number of items this read returned: with `max_results` set, the items of that page; without it, the items of every page fetched.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

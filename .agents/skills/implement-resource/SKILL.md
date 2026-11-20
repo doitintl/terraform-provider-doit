@@ -87,7 +87,7 @@ Add to `provider.go` in the `Resources()` method.
 - Test file: `internal/provider/<name>_resource_test.go`; its import test needs the `GenerateConfig` step (see [testing](../testing/SKILL.md#generated-import-configuration))
 - Example: `examples/resources/doit_<name>/resource.tf`
 - Add test env vars to `.envrc.local`
-- **Always `terraform apply` every example at least once** to verify the config is accepted
+- **Always `terraform apply` every example at least once** to verify the config is accepted (recipe: [Applying an example](../implement-datasource/SKILL.md#applying-an-example); destroy afterwards)
 
 ## Step 7: Generate Docs
 

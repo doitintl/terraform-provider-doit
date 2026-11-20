@@ -315,7 +315,7 @@ func TestComposerRecipesDataSource_Read(t *testing.T) {
 		}
 	})
 
-	t.Run("page_token-only auto-pagination sets row_count to fetched item count", func(t *testing.T) {
+	t.Run("page_token-only auto-pagination sets row_count to the API total", func(t *testing.T) {
 		var calls atomic.Int32
 		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -380,10 +380,10 @@ func TestComposerRecipesDataSource_Read(t *testing.T) {
 		if diags := resp.State.Get(t.Context(), &state); diags.HasError() {
 			t.Fatal(diags)
 		}
-		// Per provider-wide auto-pagination convention, row_count equals len(allItems) (2 remaining items),
-		// not the upstream pre-pagination total (3).
-		if state.RowCount.ValueInt64() != 2 {
-			t.Errorf("row_count = %d, want 2 (len(allItems))", state.RowCount.ValueInt64())
+		// row_count is the API's total across all pages (3), not the number of
+		// items read from the token on (2).
+		if state.RowCount.ValueInt64() != 3 {
+			t.Errorf("row_count = %d, want 3 (the API total)", state.RowCount.ValueInt64())
 		}
 		if !state.PageToken.IsNull() {
 			t.Errorf("expected null page_token after auto-pagination, got %v", state.PageToken)

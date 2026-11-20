@@ -8,6 +8,8 @@
 
 ### FEATURES
 
+- **data-source/doit_custom_metrics**: New list data source for the customer's custom metrics, each with its name, formula, variables, unit type and owner. Preset metrics are not listed. `name_contains`, `filter`, `sort_by` and `sort_order` narrow and order the list; a `page_token` works only with the values it was returned for. Without `max_results` every page is fetched ([#504](https://github.com/doitintl/terraform-provider-doit/pull/504))
+
 - **data-source/doit_extended_metrics**: New list data source for the extended metrics available to the customer (global extended metrics and the customer's DataHub metrics), each with `key`, `label` and `data_source`. An item's `key` is the `value` of `metric = { type = "extended", value = <key> }` in `doit_custom_metric` variables, reports and alerts. A custom metric variable accepts only `billing` and `billing-datahub` keys (`filter = "dataSource:billing,billing-datahub"`); a report or alert takes keys of its own data source, and a key appears once per data source. Without `max_results` every page is fetched; a `page_token` is bound to the `filter` it was returned for ([#501](https://github.com/doitintl/terraform-provider-doit/issues/501), [doiteng/omni#72530](https://github.com/doiteng/omni/pull/72530))
 - **resource/doit_custom_metric**: New resource to manage custom metrics: a formula over the cost, usage, savings or extended metrics (`billing` and `billing-datahub` keys) of up to five single allocations, with a unit type and an optional display precision (`decimals`; removing the block clears it). The order of `variables` sets the letters (`A` to `E`) used in `formula`; the letters are known at plan time. Reports use a custom metric with `metric = { type = "custom", value = doit_custom_metric.<name>.id }`. Requires the calculated metrics entitlement; only the owner can delete a custom metric, and one that a report, an alert or an allocation uses cannot be deleted ([#502](https://github.com/doitintl/terraform-provider-doit/pull/502), [doiteng/omni#72530](https://github.com/doiteng/omni/pull/72530))
 
@@ -29,6 +31,20 @@
 - **resource/doit_allocation, resource/doit_alert, resource/doit_customer_subscription**: An update that only removed an attribute from the configuration (such as `anomaly_detection` or `config.scopes[].mode`) planned `update_time` (allocation, alert), `last_alerted` (alert) and `name` (subscription) with their stored values, so state kept the old values until the next refresh. They are now planned unknown on every update
 
 - **resource/doit_datahub_dataset**: An update that only removed `description`, `display_name` or `logo_name` from the configuration planned `records`, `updated_by` and `last_updated` with their stored values, so the apply could fail with "Provider produced inconsistent result" when the API returned new ones (for example when another user or service account had last updated the dataset). They are now planned unknown on every update
+
+- **data-source/doit_commitments**: A `page_token` without `max_results` is now where the read starts. It was ignored, and every page from the first one was fetched ([#507](https://github.com/doitintl/terraform-provider-doit/issues/507))
+
+- **data-source/doit_composer_recipes, data-source/doit_composer_recipe_results, data-source/doit_ps4c_aws_organizations, data-source/doit_ps4c_commitment_policies, data-source/doit_ps4c_gcp_billing_accounts, data-source/doit_ps4c_gcp_resource_cuds, data-source/doit_ps4c_gcp_spend_cuds, data-source/doit_service_quotas**: With `page_token` set and `max_results` omitted, `row_count` is now the API's total across all pages, the same as for every other read. It was the number of items read from the token on. `doit_ps4c_commitment_policies` also took the count from the last page and replaced a count of 0 with the number of items ([#507](https://github.com/doitintl/terraform-provider-doit/issues/507))
+
+- **data-source/doit_customer_subscriptions**: With `page_token` set and `max_results` omitted, `page_token` is now null after the read, as the Pagination Guide describes and every other list data source does. The configured token was kept ([#507](https://github.com/doitintl/terraform-provider-doit/issues/507))
+
+### DOCUMENTATION
+
+- **all paged list data sources**: The `max_results`, `page_token` and `row_count` descriptions now say what the data source does: omitting `max_results` fetches every page, `page_token` is where the read starts and then holds the next page's token (null after the last page, and after reading every page), and `row_count` is either the API's total across all pages or the number of items the read returned. `doit_cloud_incidents` is described as reading a single page. The generated texts described the API's paging, for example "Use the page tokens to iterate through the entire collection" or a count that "MAY return `null`" ([#507](https://github.com/doitintl/terraform-provider-doit/issues/507))
+
+- **data-source/doit_budgets**: The example's `budget_risks` output is keyed by budget ID instead of name, so it no longer fails with "Duplicate object key" when two budgets share a name ([#507](https://github.com/doitintl/terraform-provider-doit/issues/507))
+
+- **guide/pagination**: Lists every paged data source and what its `row_count` counts, guards the chained-page example with `count` (an unguarded second read starts over at the first page once the first read reached the last one), and explains that a page can be empty while `page_token` is set ([#507](https://github.com/doitintl/terraform-provider-doit/issues/507))
 
 ## v1.12.0 (2026-11-06)
 
