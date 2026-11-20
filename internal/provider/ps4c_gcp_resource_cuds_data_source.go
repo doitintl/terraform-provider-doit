@@ -52,7 +52,7 @@ func (d *ps4cGcpResourceCudsDataSource) Schema(ctx context.Context, _ datasource
 	s.MarkdownDescription = "List resource-based commitments (CUDs) for a GCP billing account tracked by PerfectScale for Commitments (PS4C)."
 	s.Description = "List resource-based commitments (CUDs) for a GCP billing account tracked by PerfectScale for Commitments (PS4C)."
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountTotal, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s

@@ -21,13 +21,14 @@
 // List data sources (max_results, page_token and row_count in the schema) get
 // one stricter check, because their fallback is fully determined: a read
 // replaces page_token with the next page's token or null in every mode, and
-// row_count is a result. Their Read() must guard with a condition that holds
+// row_count is a result. Their Read() must guard, in a statement of the Read()
+// body itself rather than inside another branch, with a condition that holds
 // for every configuration that is not fully known (!x.IsFullyKnown(), alone or
 // ORed with other conditions; an inverted or ANDed check lets unknown
 // configuration reach the API), and the guard's body must assign
 // PageToken = types.StringUnknown() and
 // RowCount = types.Int64Unknown() as top-level statements, not under a
-// condition such as "only when page_token is null".
+// condition such as "only when page_token is null", and end with return.
 package unknownguard
 
 import (
@@ -250,20 +251,18 @@ func hasUnknownGuard(body *ast.BlockStmt) bool {
 }
 
 // checkListGuard reports a list data source Read() whose guard is not an
-// IsFullyKnown() check that sets PageToken and RowCount unknown unconditionally.
+// IsFullyKnown() check, directly in the Read() body, that sets PageToken and
+// RowCount unknown unconditionally and returns.
 func checkListGuard(pass *analysis.Pass, fn *ast.FuncDecl) {
+	// Only a statement of the Read() body itself runs for every configuration;
+	// a guard nested in another branch is skipped whenever that branch is.
 	var guard *ast.IfStmt
-	ast.Inspect(fn.Body, func(n ast.Node) bool {
-		if guard != nil {
-			return false
-		}
-		ifStmt, ok := n.(*ast.IfStmt)
-		if ok && coversNotFullyKnown(ifStmt.Cond) {
+	for _, stmt := range fn.Body.List {
+		if ifStmt, ok := stmt.(*ast.IfStmt); ok && coversNotFullyKnown(ifStmt.Cond) {
 			guard = ifStmt
-			return false
+			break
 		}
-		return true
-	})
+	}
 	if guard == nil {
 		pass.Reportf(fn.Name.Pos(),
 			"list data source Read() must guard unknown protocol configuration with req.Config.Raw.IsFullyKnown()")
@@ -291,6 +290,13 @@ func checkListGuard(pass *analysis.Pass, fn *ast.FuncDecl) {
 		pass.Reportf(guard.Pos(),
 			"list data source unknown guard must set PageToken = types.StringUnknown() and RowCount = types.Int64Unknown() "+
 				"unconditionally: a read replaces page_token in every mode")
+	}
+
+	// Without the return, the read goes on to the API with unknown configuration.
+	if n := len(guard.Body.List); n == 0 {
+		pass.Reportf(guard.Pos(), "list data source unknown guard must end with return")
+	} else if _, ok := guard.Body.List[n-1].(*ast.ReturnStmt); !ok {
+		pass.Reportf(guard.Pos(), "list data source unknown guard must end with return")
 	}
 }
 

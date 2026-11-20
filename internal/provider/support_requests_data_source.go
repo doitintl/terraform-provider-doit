@@ -36,7 +36,7 @@ func (d *supportRequestsDataSource) Metadata(ctx context.Context, req datasource
 func (d *supportRequestsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_support_requests.SupportRequestsDataSourceSchema(ctx)
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountPage, "")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountPage, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s

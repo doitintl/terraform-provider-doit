@@ -280,8 +280,12 @@ func TestListDataSourceSchemaDescriptions(t *testing.T) {
 	for name, c := range listDataSourceCases {
 		t.Run(name, func(t *testing.T) {
 			s := listDataSourceSchema(t.Context(), t, c.newDataSource())
+			generatedMaxResults, ok := s.Attributes["max_results"].(schema.Int64Attribute)
+			if !ok {
+				t.Fatal("max_results is not a number attribute")
+			}
 			want := schema.Schema{Attributes: map[string]schema.Attribute{
-				"max_results": schema.Int64Attribute{},
+				"max_results": schema.Int64Attribute{Validators: generatedMaxResults.Validators},
 				"page_token":  schema.StringAttribute{},
 				"row_count":   schema.Int64Attribute{},
 			}}
@@ -289,8 +293,15 @@ func TestListDataSourceSchemaDescriptions(t *testing.T) {
 			if c.singlePageOnly {
 				setDescriptions = setSinglePageListPaginationDescriptions
 			}
-			if diags := setDescriptions(&want, c.kind, ""); diags.HasError() {
+			if diags := setDescriptions(t.Context(), &want, c.kind, ""); diags.HasError() {
 				t.Fatal(diags)
+			}
+			// The generated description was the only documentation of the
+			// range, so the replacement must state what the validators enforce.
+			for _, v := range generatedMaxResults.Validators {
+				if d := v.Description(t.Context()); !strings.Contains(strings.ToLower(generatedMaxResults.GetDescription()), d) {
+					t.Errorf("max_results description %q does not state %q", generatedMaxResults.GetDescription(), d)
+				}
 			}
 			for _, attribute := range []string{"max_results", "page_token", "row_count"} {
 				// A page_token note for one endpoint may follow the shared text.

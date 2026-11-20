@@ -103,7 +103,7 @@ If the defensive fallback writes state, it must predict what a real read of the 
 
 Decide each attribute from what this data source's own read writes, not from its schema class. `Optional+Computed` covers both cases: a filter is an input the read keeps, while `page_token` in a list data source is a result, because every read replaces it (see [Unknown guard](#unknown-guard)).
 
-> **Linter:** `unknownguard` — flags data source `Read` methods missing a defensive unknown-configuration guard. For list data sources (`max_results`, `page_token` and `row_count`) it also requires a `!req.Config.Raw.IsFullyKnown()` guard (alone or ORed with other conditions; an ANDed or inverted check lets unknown configuration through) that sets `PageToken` and `RowCount` unknown unconditionally. Otherwise it checks guard presence only.
+> **Linter:** `unknownguard` — flags data source `Read` methods missing a defensive unknown-configuration guard. For list data sources (`max_results`, `page_token` and `row_count`) it also requires a `!req.Config.Raw.IsFullyKnown()` guard (alone or ORed with other conditions; an ANDed or inverted check lets unknown configuration through) as a statement of the `Read` body itself, not nested in another branch, that sets `PageToken` and `RowCount` unknown unconditionally and ends with `return`. Otherwise it checks guard presence only.
 
 ### API Response Validation
 
@@ -299,10 +299,10 @@ The generated `max_results`, `page_token` and `row_count` descriptions come from
 
 ```go
 s := datasource_things.ThingsDataSourceSchema(ctx)
-resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountTotal, "")...)
+resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "")...)
 ```
 
-The helper type-asserts the three attributes with checked assertions (`forcetypeassert` is enabled) and sets the text for the row-count kind. Its last argument is appended to the `page_token` description, for what only this endpoint's tokens do: a token that only works with the filters it was returned for, or one that expires (see `composer_recipes_data_source.go`). Don't drop such details from the generated text; move them into the note. Other endpoint details, such as a maximum page size, belong in the data source's description. A data source that never auto-paginates uses `setSinglePageListPaginationDescriptions`. Back each statement with a test.
+The helper type-asserts the three attributes with checked assertions (`forcetypeassert` is enabled) and sets the text for the row-count kind. The `max_results` text ends with what its validators enforce ("Value must be between 1 and 500."), since the generated text it replaces was often the only place the range was documented. A limit the spec only states in prose, without `minimum`/`maximum`, has no validator; state it in the data source's description (`extended_metrics`). Its last argument is appended to the `page_token` description, for what only this endpoint's tokens do: a token that only works with the filters it was returned for, or one that expires (see `composer_recipes_data_source.go`). Don't drop such details from the generated text; move them into the note. Other endpoint details, such as a maximum page size, belong in the data source's description. A data source that never auto-paginates uses `setSinglePageListPaginationDescriptions`. Back each statement with a test.
 
 ### Examples that chain `page_token`
 

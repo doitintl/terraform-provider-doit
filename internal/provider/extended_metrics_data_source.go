@@ -52,7 +52,7 @@ func (d *extendedMetricsDataSource) Schema(ctx context.Context, _ datasource.Sch
 		"(use `filter = \"dataSource:billing,billing-datahub\"` to list them), and a report or alert accepts the keys of its own data source. " +
 		"A key appears once per data source, so `key` alone is not unique across items. " +
 		"Items are sorted by `label`, then `key`, then `data_source`. " +
-		"Without `max_results` every page is fetched; with it, a single page is returned together with the `page_token` of the next one."
+		"Without `max_results` every page is fetched; with it, a single page of at most 500 items is returned together with the `page_token` of the next one."
 	s.MarkdownDescription = s.Description
 
 	filter, okFilter := s.Attributes["filter"].(schema.StringAttribute)
@@ -68,7 +68,7 @@ func (d *extendedMetricsDataSource) Schema(ctx context.Context, _ datasource.Sch
 	filter.MarkdownDescription = filter.Description
 	s.Attributes["filter"] = filter
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountTotal, "")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "")...)
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s

@@ -52,7 +52,7 @@ func (d *ps4cAwsOrganizationsDataSource) Schema(ctx context.Context, _ datasourc
 	s.MarkdownDescription = "List AWS Organizations tracked by PerfectScale for Commitments (PS4C)."
 	s.Description = "List AWS Organizations tracked by PerfectScale for Commitments (PS4C)."
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountTotal, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s

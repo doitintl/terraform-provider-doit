@@ -38,7 +38,7 @@ func (d *foldersDataSource) Schema(ctx context.Context, _ datasource.SchemaReque
 	s.MarkdownDescription = "List Cloud Analytics folders."
 	s.Description = "List Cloud Analytics folders."
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountPage, "")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountPage, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s

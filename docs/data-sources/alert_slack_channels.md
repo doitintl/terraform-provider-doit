@@ -85,7 +85,7 @@ output "channel_details" {
 
 ### Optional
 
-- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page.
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page. Value must be between 1 and 500.
 - `name_contains` (String) Case-insensitive substring of the channel display name.
 - `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))

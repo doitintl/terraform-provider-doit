@@ -36,7 +36,7 @@ func (d *budgetsDataSource) Metadata(ctx context.Context, req datasource.Metadat
 func (d *budgetsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_budgets.BudgetsDataSourceSchema(ctx)
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountPage, "")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountPage, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s

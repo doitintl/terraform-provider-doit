@@ -99,7 +99,7 @@ check "service_quota_headroom" {
 
 - `cloud_provider` (String) Filter results to a cloud provider. Omit to return all supported providers.
 Possible values: `aws`, `gcp`
-- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page.
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page. Value must be between 1 and 200.
 - `min_utilization_percent` (Number) Return quotas whose utilization percentage is greater than or equal to this value.
 - `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))

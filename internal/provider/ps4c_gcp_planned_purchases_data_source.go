@@ -53,7 +53,7 @@ func (d *ps4cGcpPlannedPurchasesDataSource) Schema(ctx context.Context, _ dataso
 	s.MarkdownDescription = "Retrieve planned commitment purchase projections for a GCP billing account tracked by PerfectScale for Commitments (PS4C)."
 	s.Description = "Retrieve planned commitment purchase projections for a GCP billing account tracked by PerfectScale for Commitments (PS4C)."
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountPage, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountPage, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s

@@ -160,3 +160,40 @@ func (d *widerListDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 }
+
+// BAD: the guard sets the results unknown but does not return, so the read
+// goes on to call the API with unknown configuration.
+type noReturnListDataSource struct{}
+
+func (d *noReturnListDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	s := datasource_list.ListDataSourceSchema(ctx)
+	resp.Schema = s
+}
+
+func (d *noReturnListDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data listModel
+	if !listConfig(req).Config.Raw.IsFullyKnown() { // want `list data source unknown guard must end with return`
+		data.RowCount = Int64Unknown()
+		data.PageToken = StringUnknown()
+	}
+}
+
+// BAD: the guard is nested in a branch, so unknown configuration with
+// max_results set skips it.
+type nestedListDataSource struct{}
+
+func (d *nestedListDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	s := datasource_list.ListDataSourceSchema(ctx)
+	resp.Schema = s
+}
+
+func (d *nestedListDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) { // want `list data source Read\(\) must guard unknown protocol configuration with req.Config.Raw.IsFullyKnown\(\)`
+	var data maxResultsModel
+	if data.MaxResults.IsNull() {
+		if !listConfig(req).Config.Raw.IsFullyKnown() {
+			data.RowCount = Int64Unknown()
+			data.PageToken = StringUnknown()
+			return
+		}
+	}
+}

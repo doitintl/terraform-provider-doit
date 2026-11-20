@@ -48,7 +48,7 @@ func (d *customerSubscriptionsDataSource) Schema(ctx context.Context, _ datasour
 	s.Description = "Organization-wide subscriptions visible to the caller. Alerts and budgets are listed too; their entries have type `alert` or `budget` and no schedule. Without `max_results` every page is fetched; with it, a single page is returned together with the `page_token` of the next one."
 	s.MarkdownDescription = s.Description
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountTotal, "")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s
 }

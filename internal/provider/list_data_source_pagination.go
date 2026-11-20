@@ -1,6 +1,9 @@
 package provider
 
 import (
+	"context"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -39,18 +42,19 @@ func listRowCount[T ~int | ~int64](apiCount *T, fetched int) types.Int64 {
 // max_results, page_token and row_count, which describe the API's paging, with
 // what the data source does. See the Pagination Guide for the contract.
 // pageTokenNote, if not empty, is appended to the page_token description for
-// what only this endpoint's tokens do, such as expiring.
-func setListPaginationDescriptions(s *schema.Schema, kind listRowCountKind, pageTokenNote string) diag.Diagnostics {
-	return setPaginationDescriptions(s, kind, false, pageTokenNote)
+// what only this endpoint's tokens do, such as expiring. The max_results
+// description ends with what its validators enforce, such as its range.
+func setListPaginationDescriptions(ctx context.Context, s *schema.Schema, kind listRowCountKind, pageTokenNote string) diag.Diagnostics {
+	return setPaginationDescriptions(ctx, s, kind, false, pageTokenNote)
 }
 
 // setSinglePageListPaginationDescriptions is setListPaginationDescriptions for a
 // data source that reads a single page even when max_results is omitted.
-func setSinglePageListPaginationDescriptions(s *schema.Schema, kind listRowCountKind, pageTokenNote string) diag.Diagnostics {
-	return setPaginationDescriptions(s, kind, true, pageTokenNote)
+func setSinglePageListPaginationDescriptions(ctx context.Context, s *schema.Schema, kind listRowCountKind, pageTokenNote string) diag.Diagnostics {
+	return setPaginationDescriptions(ctx, s, kind, true, pageTokenNote)
 }
 
-func setPaginationDescriptions(s *schema.Schema, kind listRowCountKind, singlePageOnly bool, pageTokenNote string) diag.Diagnostics {
+func setPaginationDescriptions(ctx context.Context, s *schema.Schema, kind listRowCountKind, singlePageOnly bool, pageTokenNote string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	maxResults, okMaxResults := s.Attributes["max_results"].(schema.Int64Attribute)
@@ -72,6 +76,13 @@ func setPaginationDescriptions(s *schema.Schema, kind listRowCountKind, singlePa
 		pageToken.Description = "Token of the page to start at. " +
 			"With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. " +
 			"Without `max_results`, every page from this token on is fetched and `page_token` is null after the read."
+	}
+	// The generated description was the only place that stated the range, and
+	// the validators are what the provider enforces.
+	for _, v := range maxResults.Validators {
+		if d := v.Description(ctx); d != "" {
+			maxResults.Description += " " + strings.ToUpper(d[:1]) + d[1:] + "."
+		}
 	}
 	if pageTokenNote != "" {
 		pageToken.Description += " " + pageTokenNote

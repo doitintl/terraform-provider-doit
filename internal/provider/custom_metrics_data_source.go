@@ -48,7 +48,7 @@ func (d *customMetricsDataSource) Schema(ctx context.Context, _ datasource.Schem
 	s.Description = "Custom metrics of the customer. Preset metrics are not listed. Without `max_results` every page is fetched; with it, a single page is returned together with the `page_token` of the next one. A `page_token` is bound to `name_contains`, `filter`, `sort_by` and `sort_order`: reuse it only with the same values."
 	s.MarkdownDescription = s.Description
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountTotal, "")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s
 }

@@ -37,7 +37,7 @@ func (d *composerRecipeResultsDataSource) Metadata(_ context.Context, req dataso
 
 func (d *composerRecipeResultsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_composer_recipe_results.ComposerRecipeResultsDataSourceSchema(ctx)
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountTotal,
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal,
 		"A `page_token` works only with the `sort_by`, `sort_order`, `filter` and `max_results` it was returned for, and expires 5 minutes after it was issued. "+
 			"An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)

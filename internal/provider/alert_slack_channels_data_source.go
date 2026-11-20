@@ -46,7 +46,7 @@ func (d *alertSlackChannelsDataSource) Schema(ctx context.Context, req datasourc
 		"`row_count` is then null as well, because the total is only known once every channel has been listed."
 	s.Description = description
 	s.MarkdownDescription = description
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountTotalUnlessPaged, "")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotalUnlessPaged, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s

@@ -56,7 +56,7 @@ Errors:
 - An unknown key returns `400 filter_key_not_supported` when it's the only problem, otherwise `400 validation_failed`.
 - A value outside the allowed list, a non-boolean `has_active_results`, more than one `has_active_results` value, more than 10 distinct allocation IDs, an invalid allocation ID (blank, longer than 256 characters, or containing `/`, whitespace or control characters), a malformed expression or an unsupported operator returns `400 validation_failed`.
 - An allocation that doesn't exist or that you can't view returns `404 composer-api.allocation_not_found`.
-- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page.
+- `max_results` (Number) The maximum number of items to return. Setting it reads a single page and returns the `page_token` of the next one; omit it to fetch every page. Value must be between 1 and 500.
 - `page_token` (String) Token of the page to start at. With `max_results` set, a single page is read and `page_token` then holds the token of the next page, which is null after the last page. Without `max_results`, every page from this token on is fetched and `page_token` is null after the read. A `page_token` works only with the `sort_by`, `sort_order`, `filter` and `max_results` it was returned for, and expires 5 minutes after it was issued. An invalid or expired one fails the read; read again without `page_token` to start over.
 - `sort_by` (String) Field to sort recipes by. Defaults to `severity`. Ties break by title (case-insensitive, ascending), then by `id` (ascending), whatever the `sortOrder`.
 Possible values: `severity`, `title`, `detection_time`, `active_results_count`, `total_results_count`

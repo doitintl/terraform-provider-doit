@@ -63,7 +63,7 @@ func (d *serviceQuotasDataSource) Schema(ctx context.Context, _ datasource.Schem
 		s.Attributes["min_utilization_percent"] = minUtilAttr
 	}
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountTotal, "")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s
 }

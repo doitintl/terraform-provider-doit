@@ -52,7 +52,7 @@ func (d *ps4cGcpSettingsDataSource) Schema(ctx context.Context, _ datasource.Sch
 	s.MarkdownDescription = "List PS4C commitment settings across all GCP billing accounts."
 	s.Description = "List PS4C commitment settings across all GCP billing accounts."
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountPage, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountPage, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s

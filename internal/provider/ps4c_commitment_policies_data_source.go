@@ -52,7 +52,7 @@ func (d *ps4cCommitmentPoliciesDataSource) Schema(ctx context.Context, _ datasou
 	s.MarkdownDescription = "List all PerfectScale for Commitments (PS4C) commitment policies available to the tenant."
 	s.Description = "List all PerfectScale for Commitments (PS4C) commitment policies available to the tenant."
 
-	resp.Diagnostics.Append(setListPaginationDescriptions(&s, listRowCountTotal, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
+	resp.Diagnostics.Append(setListPaginationDescriptions(ctx, &s, listRowCountTotal, "A `page_token` expires. An invalid or expired one fails the read; read again without `page_token` to start over.")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s

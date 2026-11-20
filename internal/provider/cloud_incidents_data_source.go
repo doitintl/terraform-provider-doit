@@ -35,7 +35,7 @@ func (d *cloudIncidentsDataSource) Metadata(ctx context.Context, req datasource.
 func (d *cloudIncidentsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_cloud_incidents.CloudIncidentsDataSourceSchema(ctx)
 
-	resp.Diagnostics.Append(setSinglePageListPaginationDescriptions(&s, listRowCountPage, "")...)
+	resp.Diagnostics.Append(setSinglePageListPaginationDescriptions(ctx, &s, listRowCountPage, "")...)
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
