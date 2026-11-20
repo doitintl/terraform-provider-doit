@@ -11162,6 +11162,232 @@
 			}
 		},
 		{
+			"name": "custom_metrics",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page of results"
+						}
+					},
+					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics."
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter as `key:value` pairs, `|` between keys. Keys, operand\ntypes and operators:\n\n- `name` — string; operator `eq`. Exact, case-sensitive match.\n  Comma-separated values for OR.\n- `owner` — owner email; operator `eq`. Exact match.\n  Comma-separated values for OR.\n\nAny other key returns `400 filter_key_not_supported`. For\nexample `owner:finops%40example.com`. Use `nameContains` for a\nsubstring match on the name. Percent-encode\n`,`, `|`, `:` and spaces inside values.\n"
+						}
+					},
+					{
+						"name": "sort_by",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Field to sort by. Ties break by `id`, so paging never repeats or skips a metric.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"name\",\n\"create_time\",\n\"update_time\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort_order",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "create_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the metric was created (RFC 3339, UTC)."
+										}
+									},
+									{
+										"name": "decimals",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "max",
+													"int64": {
+														"computed_optional_required": "computed",
+														"description": "Most decimal places shown. Not less than `min`."
+													}
+												},
+												{
+													"name": "min",
+													"int64": {
+														"computed_optional_required": "computed",
+														"description": "Fewest decimal places shown. Not greater than `max`."
+													}
+												}
+											],
+											"description": "Display precision, or `null` when the metric has none and reports use their default formatting. The server never fills in a value: a metric created without `decimals`, or updated with `decimals: null`, returns `null` from create, update and get alike."
+										}
+									},
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Description of the metric, exactly as sent. An empty string when there is none."
+										}
+									},
+									{
+										"name": "etag",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Strong entity tag, the same value as the `ETag` header. It changes on every update. Send it in `If-Match`."
+										}
+									},
+									{
+										"name": "formula",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Arithmetic over the variable letters. Allowed: the letters of the\ndefined variables (`A` to `E`), numbers such as `100` or `0.5`, the\noperators `+`, `-`, `*` and `/`, parentheses and spaces. Spaces are\nignored when the formula is checked and evaluated, but the formula is\nstored and returned exactly as sent: `A / B` stays `A / B`. A minus\ncan be unary (`-A`, `A*-B`).\n\nRejected with `issue: invalid_formula`: a formula that starts with\n`+`, `*` or `/`, ends with an operator, has two binary operators in a\nrow, has empty or unbalanced parentheses, or divides by a literal\n`0`. Rejected with `issue: unknown_variable`: a letter with no\nvariable, such as `C` when there are two variables. A variable that\nthe formula does not use is allowed.\n"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Identifier of the metric. Reports use it in `metric: {type: custom, value: \u003cid\u003e}`."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Name of the metric, exactly as sent. It is not trimmed."
+										}
+									},
+									{
+										"name": "owner",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Email of the owner."
+										}
+									},
+									{
+										"name": "unit_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "How reports show the value: a plain `number`, a `percentage`, or a `currency` amount in the customer's currency."
+										}
+									},
+									{
+										"name": "update_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the metric was last changed (RFC 3339, UTC)."
+										}
+									},
+									{
+										"name": "variables",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "allocation_id",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Identifier of the single allocation the variable measures."
+														}
+													},
+													{
+														"name": "letter",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Letter of the variable in the formula, from its position: `A` for the first, up to `E`."
+														}
+													},
+													{
+														"name": "metric",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "type",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "`basic` for a cost, usage or savings metric. `extended` for an extended metric, such as a DataHub or GenAI metric."
+																	}
+																},
+																{
+																	"name": "value",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "For `basic`: `cost`, `usage` or `savings` (any other value returns `issue: value_not_in_enum`). For `extended`: the `key` of an item that `GET /analytics/v1/extended-metrics?filter=dataSource:billing,billing-datahub` lists, the same key a report uses in `metric: {type: extended, value: \u003ckey\u003e}`. Any other key returns `issue: extended_metric_not_found`."
+																	}
+																}
+															],
+															"description": "The metric a variable measures, the same in requests and responses. Same shape as a report's `metric`, without `custom`: a custom metric cannot be a variable of another."
+														}
+													}
+												]
+											},
+											"description": "The variables, in letter order. The first is `A`."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Optional best-effort total-count hint. Servers include this when\ncomputing it is cheap (indexed count) and MAY return `null` or omit it\nfor expensive-to-count endpoints. Clients MUST NOT assume this field\nis present or non-null. When present, it is the total across all\npages, not just the current page.\n"
+						}
+					}
+				],
+				"description": "Custom metrics, computed by a formula over allocation costs, usage and savings.",
+				"markdown_description": "Custom metrics, computed by a formula over allocation costs, usage and savings."
+			}
+		},
+		{
 			"name": "custom_theme",
 			"schema": {
 				"attributes": [

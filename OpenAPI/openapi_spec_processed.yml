@@ -1741,6 +1741,103 @@ paths:
         "404":
           $ref: "#/components/responses/404"
   /analytics/v1/custom-metrics:
+    get:
+      operationId: listCustomMetrics
+      tags:
+        - Custom Metrics
+      summary: List custom metrics
+      description: |
+        Returns a page of the customer's custom metrics. Preset metrics are
+        not included. Requires the `analytics:calculatedMetrics` entitlement
+        and a metrics read permission.
+
+        `rowCount` is the exact number of metrics that match `nameContains`
+        and `filter`, across all pages. The page token is opaque and bound
+        to `nameContains`, `filter`, `sortBy` and `sortOrder`: reusing it
+        with different values gets `400 pagination_token_invalid`.
+
+        Errors (RFC 9457 Problem Details, `code` field):
+
+        - `400 validation_failed`: a bad parameter, such as `maxResults`
+          over 500 or an unknown `sortBy` value.
+        - `400 filter_key_not_supported`: a `filter` key other than `name`
+          or `owner`. The `details` entry lists the supported keys in
+          `supportedKeys`.
+        - `400 pagination_token_invalid`: see above.
+        - `400 tenant_id_required`: a caller with access to more than one
+          customer sent no `X-Tenant-Id`.
+        - `403 analytics.feature_not_entitled`: the customer does not have
+          the calculated metrics entitlement.
+        - `403 forbidden`: no metrics read permission, or an `X-Tenant-Id`
+          that the credential cannot access.
+
+        `maxResults` is at most 500. A larger value returns `400 validation_failed`.
+
+        `sortOrder` defaults to `desc`.
+      parameters:
+        - $ref: "#/components/parameters/maxResults"
+        - $ref: "#/components/parameters/pageToken"
+        - $ref: "#/components/parameters/nameContains"
+        - $ref: "#/components/parameters/CustomMetricFilter"
+        - $ref: "#/components/parameters/CustomMetricSortBy"
+        - $ref: "#/components/parameters/sortOrder"
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: A page of custom metrics, most recently updated first by default.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomMetricListResponse"
+              examples:
+                page:
+                  summary: A first page with more results
+                  value:
+                    items:
+                      - id: m8Tq2LxV4cRn7YpB1sKd
+                        etag: '"9f2c4e1a7b3d"'
+                        name: Cost per ride
+                        description: Total cost divided by reported rides
+                        owner: finops@example.com
+                        variables:
+                          - letter: A
+                            metric: {type: basic, value: cost}
+                            allocationId: aL1oC9tR2iDe5Kq7Zw3x
+                          - letter: B
+                            metric: {type: basic, value: usage}
+                            allocationId: bU4sG6eR8iDe0Mn2Jp5y
+                        formula: A/B
+                        unitType: number
+                        decimals: {min: 0, max: 2}
+                        createTime: "2026-10-12T09:30:00Z"
+                        updateTime: "2026-10-12T09:30:00Z"
+                    pageToken: example-token-for-the-next-page
+                    rowCount: 2
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
     post:
       operationId: createCustomMetric
       tags:
@@ -13628,6 +13725,36 @@ components:
         variable, such as `C` when there are two variables. A variable that
         the formula does not use is allowed.
       example: A/B
+    CustomMetricListResponse:
+      description: A page of custom metrics.
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomMetric"
+        pageToken:
+          description: |
+            Opaque continuation token. Present only when more results are available;
+            absent on the final page. Clients pass this back verbatim as the
+            `pageToken` query parameter to fetch the next page.
+          type: string
+          example: eyJvZmZzZXQiOjUwLCJzb3J0IjoiY3JlYXRlVGltZSJ9
+        rowCount:
+          description: |
+            Optional best-effort total-count hint. Servers include this when
+            computing it is cheap (indexed count) and MAY return `null` or omit it
+            for expensive-to-count endpoints. Clients MUST NOT assume this field
+            is present or non-null. When present, it is the total across all
+            pages, not just the current page.
+          type: integer
+          nullable: true
+          format: int64
+          minimum: 0
+          example: 137
+      additionalProperties: false
     CustomMetricName:
       type: string
       minLength: 1
@@ -21538,6 +21665,39 @@ components:
         type: string
         pattern: ^[A-Za-z0-9_-]{1,128}$
         example: m8Tq2LxV4cRn7YpB1sKd
+    CustomMetricSortBy:
+      name: sortBy
+      in: query
+      required: false
+      description: >-
+        Field to sort by. Ties break by `id`, so paging never repeats or skips a metric.
+      schema:
+        type: string
+        enum:
+          - name
+          - create_time
+          - update_time
+        default: update_time
+        example: update_time
+    CustomMetricFilter:
+      name: filter
+      in: query
+      description: |
+        Filter as `key:value` pairs, `|` between keys. Keys, operand
+        types and operators:
+
+        - `name` — string; operator `eq`. Exact, case-sensitive match.
+          Comma-separated values for OR.
+        - `owner` — owner email; operator `eq`. Exact match.
+          Comma-separated values for OR.
+
+        Any other key returns `400 filter_key_not_supported`. For
+        example `owner:finops%40example.com`. Use `nameContains` for a
+        substring match on the name. Percent-encode
+        `,`, `|`, `:` and spaces inside values.
+      schema:
+        type: string
+        example: owner:finops%40example.com
     ExtendedMetricFilter:
       name: filter
       in: query
