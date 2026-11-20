@@ -77,3 +77,73 @@ func use(r *response) {
 	_ = r.JSON5xx                   // want `field JSON5xx is never seen by resource code`
 	_ = r.ApplicationproblemJSON500 // want `field ApplicationproblemJSON500 is never seen by resource code`
 }
+
+func hint(status int) string {
+	if status == http.StatusBadRequest { // want `status 400 is never seen by resource code`
+		return "bad request"
+	}
+	if status == http.StatusNotFound { // passed through
+		return "not found"
+	}
+	return ""
+}
+
+func hintSwitch(status int) {
+	switch status {
+	case http.StatusNotFound:
+	case http.StatusForbidden: // want `status 403 is never seen by resource code`
+	}
+}
+
+func outer(status int) { inner(status) }
+
+func inner(code int) {
+	_ = code == http.StatusConflict // want `status 409 is never seen by resource code`
+}
+
+// unfed is never called with a status, so its comparison is not flagged.
+func unfed(n int) bool { return n == http.StatusBadRequest }
+
+func plain(u *unrelated) { unfedToo(u.StatusCode()) }
+
+func unfedToo(n int) bool { return n == http.StatusBadRequest }
+
+func useParams(r *response) {
+	_ = hint(r.StatusCode())
+	_ = hint(r.StatusCode()) // second call site: the callee is still reported once
+	hintSwitch(r.StatusCode())
+	outer(r.StatusCode())
+
+	status := r.StatusCode()
+	_ = status == http.StatusForbidden // want `status 403 is never seen by resource code`
+	_ = hint(status)
+
+	var viaVar = r.StatusCode()
+	_ = viaVar != 502 // want `status 502 is never seen by resource code`
+
+	_ = unfed(200)
+}
+
+// Overwritten variables no longer hold the response status.
+func useOverwritten(r *response) {
+	status := r.StatusCode()
+	status = 400
+	_ = status == http.StatusBadRequest // reassigned: not a response status
+
+	_ = overwrittenParam(r.StatusCode())
+}
+
+func overwrittenParam(status int) bool {
+	status = 400
+	return status == http.StatusBadRequest // reassigned: not a response status
+}
+
+type helper struct{}
+
+func (h *helper) methodHint(status int) bool {
+	return status == http.StatusTeapot // want `status 418 is never seen by resource code`
+}
+
+func useMethodExpr(r *response, h *helper) {
+	_ = (*helper).methodHint(h, r.StatusCode())
+}

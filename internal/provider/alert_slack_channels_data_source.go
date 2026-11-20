@@ -92,7 +92,7 @@ func slackChannelsRequestError(err error, hadPageToken bool) string {
 
 func slackChannelsStatusError(status int, body []byte, hadPageToken bool) string {
 	return fmt.Sprintf("API returned status %d: %s", status, string(body)) +
-		slackChannelsRestartHint(status == http.StatusBadRequest, hadPageToken)
+		slackChannelsRestartHint(status == http.StatusBadRequest, hadPageToken) //nolint:retrystatus // plain-client fallback: the retry client reports a 400 as an error (see slackChannelsRequestError)
 }
 
 func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
