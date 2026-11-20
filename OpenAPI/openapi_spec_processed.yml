@@ -2341,6 +2341,98 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /analytics/v1/extended-metrics:
+    get:
+      operationId: listExtendedMetrics
+      tags:
+        - Extended Metrics
+      summary: List extended metrics
+      description: |
+        Returns a page of the extended metrics available to the customer:
+        the global extended metrics the customer's plan, tenant type, clouds,
+        integrations and data include, and the customer's DataHub metrics.
+        Use an item's `key` as `value` in `metric: {type: extended, value:
+        <key>}`.
+
+        Where a key is accepted depends on its `dataSource`: a custom metric
+        variable takes a `billing` or `billing-datahub` key (filter with
+        `dataSource:billing,billing-datahub`), and a report or alert takes a
+        key of its own data source. A key that is not listed here gets
+        `issue: extended_metric_not_found` from create and update custom
+        metric.
+
+        Items are sorted by `label`, then `key`, then `dataSource`. A key
+        appears once per data source. `rowCount` is the exact number of
+        items that match `filter`, across all pages. The page token is
+        opaque and bound to `filter`: reusing it with a different `filter`
+        gets `400 pagination_token_invalid`.
+
+        Errors (RFC 9457 Problem Details, `code` field):
+
+        - `400 validation_failed`: a bad parameter, such as `maxResults`
+          over 500, or a `dataSource` filter value outside the data sources
+          listed in `ExtendedMetric.dataSource` (`issue: value_not_in_enum`).
+        - `400 filter_key_not_supported`: a `filter` key other than
+          `dataSource`. The `details` entry lists the supported keys in
+          `supportedKeys`.
+        - `400 pagination_token_invalid`: see above.
+        - `400 tenant_id_required`: a caller with access to more than one
+          customer sent no `X-Tenant-Id`.
+        - `403 forbidden`: no metrics read permission, or an `X-Tenant-Id`
+          that the credential cannot access.
+        - `503 service_unavailable`: the extended metrics or the customer's
+          plan could not be read. Retry after `Retry-After` seconds.
+
+        `maxResults` is at most 500. A larger value returns `400 validation_failed`.
+      parameters:
+        - $ref: "#/components/parameters/maxResults"
+        - $ref: "#/components/parameters/pageToken"
+        - $ref: "#/components/parameters/ExtendedMetricFilter"
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: A page of extended metrics, sorted by label.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-RateLimit-Limit:
+              $ref: "#/components/headers/XRateLimitLimit"
+            X-RateLimit-Remaining:
+              $ref: "#/components/headers/XRateLimitRemaining"
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/XRateLimitReset"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtendedMetricListResponse"
+              examples:
+                customMetricVariableKeys:
+                  summary: The keys a custom metric variable accepts
+                  value:
+                    items:
+                      - key: amortized_cost
+                        label: Amortized cost
+                        dataSource: billing
+                      - key: completed_rides
+                        label: Completed rides
+                        dataSource: billing-datahub
+                    rowCount: 2
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /analytics/v1/reports:
     get:
       tags:
@@ -15040,6 +15132,76 @@ components:
         error:
           type: string
           description: Detailed error message.
+    ExtendedMetric:
+      type: object
+      additionalProperties: false
+      description: >-
+        An extended metric the customer can use: a global extended metric or one of the customer's DataHub metrics.
+      example:
+        key: completed_rides
+        label: Completed rides
+        dataSource: billing-datahub
+      required:
+        - key
+        - label
+        - dataSource
+      properties:
+        key:
+          type: string
+          minLength: 1
+          description: >-
+            Key of the metric. Send it as `value` in `metric: {type: extended, value: <key>}`.
+          x-doit-confidentiality: customer-data
+          example: completed_rides
+        label:
+          type: string
+          description: Name of the metric as the DoiT console shows it.
+          x-doit-confidentiality: customer-data
+          example: Completed rides
+        dataSource:
+          $ref: "#/components/schemas/ExtendedMetricDataSource"
+    ExtendedMetricDataSource:
+      type: string
+      enum:
+        - billing
+        - billing-datahub
+        - bqlens
+        - genai-collection
+        - kubernetes-utilization
+        - tokenomics
+      description: >-
+        Data source the metric reads. A custom metric variable accepts `billing` and `billing-datahub` keys. A report or alert accepts the keys of its own `dataSource`. The customer's DataHub metrics are `billing-datahub`.
+      example: billing
+    ExtendedMetricListResponse:
+      description: A page of extended metrics.
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExtendedMetric"
+        pageToken:
+          description: |
+            Opaque continuation token. Present only when more results are available;
+            absent on the final page. Clients pass this back verbatim as the
+            `pageToken` query parameter to fetch the next page.
+          type: string
+          example: eyJvZmZzZXQiOjUwLCJzb3J0IjoiY3JlYXRlVGltZSJ9
+        rowCount:
+          description: |
+            Optional best-effort total-count hint. Servers include this when
+            computing it is cheap (indexed count) and MAY return `null` or omit it
+            for expensive-to-count endpoints. Clients MUST NOT assume this field
+            is present or non-null. When present, it is the total across all
+            pages, not just the current page.
+          type: integer
+          nullable: true
+          format: int64
+          minimum: 0
+          example: 137
+      additionalProperties: false
     ExternalAPIGetValue:
       type: object
       description: Single value entry used by some dimension endpoints.
@@ -21536,6 +21698,24 @@ components:
       schema:
         type: string
         example: owner:finops%40example.com
+    ExtendedMetricFilter:
+      name: filter
+      in: query
+      description: |
+        Filter as `key:value` pairs, `|` between keys. Keys, operand
+        types and operators:
+
+        - `dataSource` — one of `billing`, `billing-datahub`, `bqlens`,
+          `genai-collection`, `kubernetes-utilization` and
+          `tokenomics`; operator `eq`. Comma-separated values for OR.
+
+        Any other key returns `400 filter_key_not_supported`. For
+        example `dataSource:billing,billing-datahub` lists the keys a
+        custom metric variable accepts. Percent-encode
+        `,`, `|`, `:` and spaces inside values.
+      schema:
+        type: string
+        example: dataSource:billing,billing-datahub
   securitySchemes:
     api_key:
       type: apiKey

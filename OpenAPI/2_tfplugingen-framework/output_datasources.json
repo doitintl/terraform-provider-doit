@@ -13401,6 +13401,74 @@
 			}
 		},
 		{
+			"name": "extended_metrics",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page of results"
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter as `key:value` pairs, `|` between keys. Keys, operand\ntypes and operators:\n\n- `dataSource` — one of `billing`, `billing-datahub`, `bqlens`,\n  `genai-collection`, `kubernetes-utilization` and\n  `tokenomics`; operator `eq`. Comma-separated values for OR.\n\nAny other key returns `400 filter_key_not_supported`. For\nexample `dataSource:billing,billing-datahub` lists the keys a\ncustom metric variable accepts. Percent-encode\n`,`, `|`, `:` and spaces inside values.\n"
+						}
+					},
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "data_source",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Data source the metric reads. A custom metric variable accepts `billing` and `billing-datahub` keys. A report or alert accepts the keys of its own `dataSource`. The customer's DataHub metrics are `billing-datahub`."
+										}
+									},
+									{
+										"name": "key",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Key of the metric. Send it as `value` in `metric: {type: extended, value: \u003ckey\u003e}`."
+										}
+									},
+									{
+										"name": "label",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Name of the metric as the DoiT console shows it."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Optional best-effort total-count hint. Servers include this when\ncomputing it is cheap (indexed count) and MAY return `null` or omit it\nfor expensive-to-count endpoints. Clients MUST NOT assume this field\nis present or non-null. When present, it is the total across all\npages, not just the current page.\n"
+						}
+					}
+				],
+				"description": "The extended metric keys a customer can use in custom metric variables, reports and alerts.",
+				"markdown_description": "The extended metric keys a customer can use in custom metric variables, reports and alerts."
+			}
+		},
+		{
 			"name": "folder",
 			"schema": {
 				"attributes": [
