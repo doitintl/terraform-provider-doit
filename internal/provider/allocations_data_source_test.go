@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -217,6 +219,80 @@ data "doit_allocations" "empty" {
   name_contains = "nonexistent-allocation-xyz-99999"
 }
 `
+}
+
+// TestAccAllocationsDataSource_SortByAndSortOrder tests that sort_by and
+// sort_order reach the API: createTime is numeric, so the order is unambiguous.
+func TestAccAllocationsDataSource_SortByAndSortOrder(t *testing.T) {
+	if getAllocationCount(t) < 2 {
+		t.Skip("Need at least 2 allocations to test sorting")
+	}
+
+	config := testAccAllocationsDataSourceSortConfig()
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckAllocationsCreateTimeOrder("data.doit_allocations.asc", true),
+					testAccCheckAllocationsCreateTimeOrder("data.doit_allocations.desc", false),
+				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationsDataSourceSortConfig() string {
+	return `
+data "doit_allocations" "asc" {
+  sort_by    = "createTime"
+  sort_order = "asc"
+}
+
+data "doit_allocations" "desc" {
+  sort_by    = "createTime"
+  sort_order = "desc"
+}
+`
+}
+
+// testAccCheckAllocationsCreateTimeOrder checks that the allocations of the data
+// source are ordered by create_time, ascending or descending.
+func testAccCheckAllocationsCreateTimeOrder(addr string, ascending bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[addr]
+		if !ok {
+			return fmt.Errorf("%s not found in state", addr)
+		}
+		n, err := strconv.Atoi(rs.Primary.Attributes["allocations.#"])
+		if err != nil {
+			return fmt.Errorf("%s: invalid allocations.#: %w", addr, err)
+		}
+		var prev int64
+		for i := range n {
+			cur, err := strconv.ParseInt(rs.Primary.Attributes[fmt.Sprintf("allocations.%d.create_time", i)], 10, 64)
+			if err != nil {
+				return fmt.Errorf("%s: invalid allocations.%d.create_time: %w", addr, i, err)
+			}
+			if i > 0 && ((ascending && cur < prev) || (!ascending && cur > prev)) {
+				return fmt.Errorf("%s: allocations.%d.create_time %d breaks the order after %d (ascending=%t)", addr, i, cur, prev, ascending)
+			}
+			prev = cur
+		}
+		return nil
+	}
 }
 
 // Helper functions

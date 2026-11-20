@@ -92,6 +92,12 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if !data.NameContains.IsNull() {
 		params.NameContains = new(data.NameContains.ValueString())
 	}
+	if !data.SortBy.IsNull() {
+		params.SortBy = new(models.ListAllocationsParamsSortBy(data.SortBy.ValueString()))
+	}
+	if !data.SortOrder.IsNull() {
+		params.SortOrder = new(models.ListAllocationsParamsSortOrder(data.SortOrder.ValueString()))
+	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
 	userControlsPagination := !data.MaxResults.IsNull()
