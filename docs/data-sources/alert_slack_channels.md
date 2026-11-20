@@ -3,12 +3,12 @@
 page_title: "doit_alert_slack_channels Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Retrieves Slack channels eligible for Alert notifications. When max_results is omitted, the provider fetches all pages using the API's maximum page size of 500; set max_results to control the page size yourself and fetch a single page.
+  Retrieves Slack channels eligible for Alert notifications. When max_results is omitted, the provider fetches all pages using the API's maximum page size of 500; set max_results to control the page size yourself and fetch a single page. Channels are returned in workspace order (the shared channel, then public, then private channels), not sorted by name or ID. With max_results a page can hold fewer channels than requested, even none, while page_token is set because name_contains filtered out most of the scanned channels; keep following page_token until it is null. row_count is then null as well, because the total is only known once every channel has been listed.
 ---
 
 # doit_alert_slack_channels (Data Source)
 
-Retrieves Slack channels eligible for Alert notifications. When `max_results` is omitted, the provider fetches all pages using the API's maximum page size of 500; set `max_results` to control the page size yourself and fetch a single page.
+Retrieves Slack channels eligible for Alert notifications. When `max_results` is omitted, the provider fetches all pages using the API's maximum page size of 500; set `max_results` to control the page size yourself and fetch a single page. Channels are returned in workspace order (the shared channel, then public, then private channels), not sorted by name or ID. With `max_results` a page can hold fewer channels than requested, even none, while `page_token` is set because `name_contains` filtered out most of the scanned channels; keep following `page_token` until it is null. `row_count` is then null as well, because the total is only known once every channel has been listed.
 
 ## Example Usage
 
@@ -21,9 +21,25 @@ data "doit_alert_slack_channels" "production" {
   name_contains = "production"
 }
 
-# Paginate Slack channels
+# Read a single page of Slack channels. Channels come in workspace order (shared,
+# public, then private), a page can be shorter than max_results or even empty
+# while page_token is set, and row_count is null until the whole list is returned.
 data "doit_alert_slack_channels" "limited" {
   max_results = 10
+}
+
+# Continue with the next page, but only while there is one: with a null page_token
+# this read would start over at the first page.
+data "doit_alert_slack_channels" "limited_next" {
+  count = data.doit_alert_slack_channels.limited.page_token != null ? 1 : 0
+
+  max_results = 10
+  page_token  = data.doit_alert_slack_channels.limited.page_token
+}
+
+# Null when the first page was the last one, or when the second page is.
+output "next_page_token" {
+  value = one(data.doit_alert_slack_channels.limited_next[*].page_token)
 }
 
 # Output Slack channel summary
@@ -39,11 +55,16 @@ output "is_workspace_connected" {
   value = data.doit_alert_slack_channels.all.is_workspace_connected
 }
 
-# False when Slack rate limited or transiently failed the lookup; the list may be partial.
+# False when the list may be missing channels: Slack rate limited or failed the lookup,
+# the private-channel scope is missing, or the caller is a service account (private
+# channels are never listed for service accounts). It does not mean more pages remain.
 output "channels_complete" {
   value = data.doit_alert_slack_channels.all.channels_complete
 }
 
+# The shared channel can also be listed as a public channel, so an id may appear
+# twice (the two entries differ in shared and workspace). Key a for_each on
+# id and workspace, or deduplicate with distinct(), instead of on id alone.
 output "channel_names" {
   value = [for c in data.doit_alert_slack_channels.all.items : c.name]
 }
@@ -71,11 +92,11 @@ output "channel_details" {
 
 ### Read-Only
 
-- `channels_complete` (Boolean) Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.
+- `channels_complete` (Boolean) Whether the channels returned by this request are complete. False when the list may be missing channels: a transient Slack failure, a missing private-channel scope, or a service-account caller (private channels are never listed for service accounts). It does not signal more pages; use pageToken for that. Callers that validate channel availability should not treat a partial list as authoritative.
 - `has_shared_channel` (Boolean)
 - `is_workspace_connected` (Boolean)
 - `items` (Attributes List) (see [below for nested schema](#nestedatt--items))
-- `row_count` (Number) Total eligible channels after filtering and before pagination.
+- `row_count` (Number) Total eligible channels after filtering. Present only when the whole list was returned by a single request without a pageToken; omitted otherwise, because the total is not known until every channel has been listed.
 - `workspace_status` (String) Integration status. Reconnect for inactive; grant private-channel scopes for missing_private_scope. None means no usable workspace was found; a shared channel may still be available.
 
 <a id="nestedatt--timeouts"></a>

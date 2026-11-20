@@ -373,7 +373,7 @@
 						"name": "channels_complete",
 						"bool": {
 							"computed_optional_required": "computed",
-							"description": "Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative."
+							"description": "Whether the channels returned by this request are complete. False when the list may be missing channels: a transient Slack failure, a missing private-channel scope, or a service-account caller (private channels are never listed for service accounts). It does not signal more pages; use pageToken for that. Callers that validate channel availability should not treat a partial list as authoritative."
 						}
 					},
 					{
@@ -441,7 +441,7 @@
 						"name": "row_count",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "Total eligible channels after filtering and before pagination."
+							"description": "Total eligible channels after filtering. Present only when the whole list was returned by a single request without a pageToken; omitted otherwise, because the total is not known until every channel has been listed."
 						}
 					},
 					{
