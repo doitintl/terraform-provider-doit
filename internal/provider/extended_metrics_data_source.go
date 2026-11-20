@@ -55,17 +55,38 @@ func (d *extendedMetricsDataSource) Schema(ctx context.Context, _ datasource.Sch
 		"Without `max_results` every page is fetched; with it, a single page is returned together with the `page_token` of the next one."
 	s.MarkdownDescription = s.Description
 
-	filter, ok := s.Attributes["filter"].(schema.StringAttribute)
-	if !ok {
-		resp.Diagnostics.AddError("Unexpected Schema", fmt.Sprintf("Expected the filter attribute to be a string attribute, got: %T", s.Attributes["filter"]))
+	filter, okFilter := s.Attributes["filter"].(schema.StringAttribute)
+	maxResults, okMaxResults := s.Attributes["max_results"].(schema.Int64Attribute)
+	pageToken, okPageToken := s.Attributes["page_token"].(schema.StringAttribute)
+	rowCount, okRowCount := s.Attributes["row_count"].(schema.Int64Attribute)
+	if !okFilter || !okMaxResults || !okPageToken || !okRowCount {
+		resp.Diagnostics.AddError("Unexpected Schema", "Expected filter and page_token to be string attributes and max_results and row_count to be number attributes.")
 		return
 	}
+
 	filter.Description = "Restricts the result by data source, as `dataSource:<value>[,<value>...]`. " +
 		"The only supported key is `dataSource`; its values are `billing`, `billing-datahub`, `bqlens`, `genai-collection`, `kubernetes-utilization` and `tokenomics`. " +
 		"For example `dataSource:billing,billing-datahub` lists the keys a custom metric variable accepts. " +
 		"A `page_token` is bound to the `filter` it was returned for; reusing it with another `filter` fails."
 	filter.MarkdownDescription = filter.Description
 	s.Attributes["filter"] = filter
+
+	maxResults.Description = "The maximum number of items to return, at most 500. " +
+		"Setting it returns a single page together with the `page_token` of the next page; omit it to fetch every page."
+	maxResults.MarkdownDescription = maxResults.Description
+	s.Attributes["max_results"] = maxResults
+
+	pageToken.Description = "Token of the page to start at. " +
+		"With `max_results` set, the page is read once and `page_token` holds the token of the next page, which is null after the last page. " +
+		"Without `max_results`, every page from this token on is fetched and the configured token is kept."
+	pageToken.MarkdownDescription = pageToken.Description
+	s.Attributes["page_token"] = pageToken
+
+	rowCount.Description = "The number of extended metrics that match `filter`, across all pages, as reported by the API. " +
+		"It is the same for every read, whatever `max_results` and `page_token` are, so with either set it is larger than the number of `items`. " +
+		"If the API reports no count, `row_count` is instead the number of items this read fetched, which is a partial count when `max_results` or `page_token` is set."
+	rowCount.MarkdownDescription = rowCount.Description
+	s.Attributes["row_count"] = rowCount
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s
@@ -89,14 +110,19 @@ func (d *extendedMetricsDataSource) Read(ctx context.Context, req datasource.Rea
 	if !req.Config.Raw.IsFullyKnown() {
 		data.Items = types.ListUnknown(datasource_extended_metrics.ItemsValue{}.Type(ctx))
 		data.RowCount = types.Int64Unknown()
-		// filter, max_results and page_token are inputs: a known one stays as configured.
+		// The inputs are Optional+Computed: a configured value stays as
+		// configured, an omitted one is not yet determined.
 		if data.Filter.IsNull() {
 			data.Filter = types.StringUnknown()
 		}
+		// With max_results set, or not yet known, page_token is the next page's
+		// token. Only in auto-pagination mode (max_results omitted) is a
+		// configured one just the starting point, which stays as configured.
+		autoPagination := data.MaxResults.IsNull()
 		if data.MaxResults.IsNull() {
 			data.MaxResults = types.Int64Unknown()
 		}
-		if data.PageToken.IsNull() {
+		if !autoPagination || data.PageToken.IsNull() {
 			data.PageToken = types.StringUnknown()
 		}
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

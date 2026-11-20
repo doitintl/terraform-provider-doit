@@ -297,25 +297,82 @@ func TestExtendedMetricsDataSourceEmpty(t *testing.T) {
 	}
 }
 
+// With unknown configuration the read makes no request and writes a state in
+// which every output is unknown. Each input keeps its configured value; an
+// omitted or unknown one is not yet determined. page_token is the exception: it
+// is the next page's token whenever max_results is set or not yet known, and
+// only in auto-pagination mode (max_results omitted) is a configured one a
+// starting point that stays as configured.
 func TestExtendedMetricsDataSourceUnknownConfig(t *testing.T) {
+	unknownString := tftypes.NewValue(tftypes.String, tftypes.UnknownValue)
+	unknownNumber := tftypes.NewValue(tftypes.Number, tftypes.UnknownValue)
+	str := func(v string) tftypes.Value { return tftypes.NewValue(tftypes.String, v) }
+	num := func(v int) tftypes.Value { return tftypes.NewValue(tftypes.Number, v) }
+
+	const (
+		unknown = "<unknown>"
+	)
+
 	for _, tc := range []struct {
 		name   string
 		config map[string]tftypes.Value
+		// Expected state of the inputs, as types.*.String() renders them.
+		wantFilter, wantMaxResults, wantPageToken string
 	}{
-		{"filter", map[string]tftypes.Value{"filter": tftypes.NewValue(tftypes.String, tftypes.UnknownValue)}},
-		{"max_results", map[string]tftypes.Value{"max_results": tftypes.NewValue(tftypes.Number, tftypes.UnknownValue)}},
-		{"page_token", map[string]tftypes.Value{"page_token": tftypes.NewValue(tftypes.String, tftypes.UnknownValue)}},
+		{
+			name:       "unknown filter",
+			config:     map[string]tftypes.Value{"filter": unknownString},
+			wantFilter: unknown, wantMaxResults: unknown, wantPageToken: unknown,
+		},
+		{
+			name:       "unknown max_results",
+			config:     map[string]tftypes.Value{"max_results": unknownNumber},
+			wantFilter: unknown, wantMaxResults: unknown, wantPageToken: unknown,
+		},
+		{
+			name:       "unknown page_token",
+			config:     map[string]tftypes.Value{"page_token": unknownString},
+			wantFilter: unknown, wantMaxResults: unknown, wantPageToken: unknown,
+		},
+		{
+			name: "max_results and a starting page_token next to an unknown filter",
+			config: map[string]tftypes.Value{
+				"max_results": num(1), "page_token": str("p2"), "filter": unknownString,
+			},
+			wantFilter: unknown, wantMaxResults: "1", wantPageToken: unknown,
+		},
+		{
+			name: "unknown max_results next to a known page_token",
+			config: map[string]tftypes.Value{
+				"max_results": unknownNumber, "page_token": str("p2"),
+			},
+			wantFilter: unknown, wantMaxResults: unknown, wantPageToken: unknown,
+		},
+		{
+			name: "a starting page_token in auto-pagination mode next to an unknown filter",
+			config: map[string]tftypes.Value{
+				"page_token": str("p2"), "filter": unknownString,
+			},
+			wantFilter: unknown, wantMaxResults: unknown, wantPageToken: `"p2"`,
+		},
+		{
+			name: "max_results without a page_token next to an unknown filter",
+			config: map[string]tftypes.Value{
+				"max_results": num(1), "filter": unknownString,
+			},
+			wantFilter: unknown, wantMaxResults: "1", wantPageToken: unknown,
+		},
+		{
+			name: "a known filter next to an unknown page_token",
+			config: map[string]tftypes.Value{
+				"filter": str("dataSource:billing"), "page_token": unknownString,
+			},
+			wantFilter: `"dataSource:billing"`, wantMaxResults: unknown, wantPageToken: unknown,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			server := newRecordingServer(t, extendedMetricsPagedHandler)
-			// A configured sibling stays as configured.
-			config := map[string]tftypes.Value{"filter": tftypes.NewValue(tftypes.String, "dataSource:billing")}
-			if tc.name == "filter" {
-				config = map[string]tftypes.Value{}
-			}
-			maps.Copy(config, tc.config)
-
-			data, resp := readExtendedMetricsForTest(t, server, config)
+			data, resp := readExtendedMetricsForTest(t, server, tc.config)
 			if resp.Diagnostics.HasError() {
 				t.Fatal(resp.Diagnostics)
 			}
@@ -323,10 +380,16 @@ func TestExtendedMetricsDataSourceUnknownConfig(t *testing.T) {
 				t.Fatalf("made %d API requests for unknown input", n)
 			}
 			if !data.Items.IsUnknown() || !data.RowCount.IsUnknown() {
-				t.Fatalf("outputs must remain unknown: %+v", data)
+				t.Errorf("outputs must remain unknown: items %s, row_count %s", data.Items, data.RowCount)
 			}
-			if tc.name != "filter" && data.Filter.ValueString() != "dataSource:billing" {
-				t.Errorf("configured filter must be kept, got %v", data.Filter)
+			if got := data.Filter.String(); got != tc.wantFilter {
+				t.Errorf("filter = %s, want %s", got, tc.wantFilter)
+			}
+			if got := data.MaxResults.String(); got != tc.wantMaxResults {
+				t.Errorf("max_results = %s, want %s", got, tc.wantMaxResults)
+			}
+			if got := data.PageToken.String(); got != tc.wantPageToken {
+				t.Errorf("page_token = %s, want %s", got, tc.wantPageToken)
 			}
 		})
 	}
