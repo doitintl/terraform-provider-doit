@@ -4972,6 +4972,27 @@ func (e WidgetKind) Valid() bool {
 	}
 }
 
+// Defines values for CustomMetricSortBy.
+const (
+	CustomMetricSortByCreateTime CustomMetricSortBy = "create_time"
+	CustomMetricSortByName       CustomMetricSortBy = "name"
+	CustomMetricSortByUpdateTime CustomMetricSortBy = "update_time"
+)
+
+// Valid indicates whether the value is a known member of the CustomMetricSortBy enum.
+func (e CustomMetricSortBy) Valid() bool {
+	switch e {
+	case CustomMetricSortByCreateTime:
+		return true
+	case CustomMetricSortByName:
+		return true
+	case CustomMetricSortByUpdateTime:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ComposerRecipeSortBy.
 const (
 	ComposerRecipeSortByActiveResultsCount ComposerRecipeSortBy = "active_results_count"
@@ -5320,6 +5341,45 @@ func (e ListCommitmentsParamsSortOrder) Valid() bool {
 	case ListCommitmentsParamsSortOrderAsc:
 		return true
 	case ListCommitmentsParamsSortOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListCustomMetricsParamsSortBy.
+const (
+	ListCustomMetricsParamsSortByCreateTime ListCustomMetricsParamsSortBy = "create_time"
+	ListCustomMetricsParamsSortByName       ListCustomMetricsParamsSortBy = "name"
+	ListCustomMetricsParamsSortByUpdateTime ListCustomMetricsParamsSortBy = "update_time"
+)
+
+// Valid indicates whether the value is a known member of the ListCustomMetricsParamsSortBy enum.
+func (e ListCustomMetricsParamsSortBy) Valid() bool {
+	switch e {
+	case ListCustomMetricsParamsSortByCreateTime:
+		return true
+	case ListCustomMetricsParamsSortByName:
+		return true
+	case ListCustomMetricsParamsSortByUpdateTime:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListCustomMetricsParamsSortOrder.
+const (
+	ListCustomMetricsParamsSortOrderAsc  ListCustomMetricsParamsSortOrder = "asc"
+	ListCustomMetricsParamsSortOrderDesc ListCustomMetricsParamsSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListCustomMetricsParamsSortOrder enum.
+func (e ListCustomMetricsParamsSortOrder) Valid() bool {
+	switch e {
+	case ListCustomMetricsParamsSortOrderAsc:
+		return true
+	case ListCustomMetricsParamsSortOrderDesc:
 		return true
 	default:
 		return false
@@ -9673,6 +9733,29 @@ type CustomMetricDecimals struct {
 //
 // Example: A/B
 type CustomMetricFormula = string
+
+// CustomMetricListResponse A page of custom metrics.
+type CustomMetricListResponse struct {
+	Items []CustomMetric `json:"items"`
+
+	// PageToken Opaque continuation token. Present only when more results are available;
+	// absent on the final page. Clients pass this back verbatim as the
+	// `pageToken` query parameter to fetch the next page.
+	//
+	//
+	// Example: eyJvZmZzZXQiOjUwLCJzb3J0IjoiY3JlYXRlVGltZSJ9
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Optional best-effort total-count hint. Servers include this when
+	// computing it is cheap (indexed count) and MAY return `null` or omit it
+	// for expensive-to-count endpoints. Clients MUST NOT assume this field
+	// is present or non-null. When present, it is the total across all
+	// pages, not just the current page.
+	//
+	//
+	// Example: 137
+	RowCount nullable.Nullable[int64] `json:"rowCount,omitempty"`
+}
 
 // CustomMetricName Name of the metric. It must contain a character other than a space. It is stored and returned exactly as sent, without trimming.
 //
@@ -14588,8 +14671,14 @@ type WidgetResult struct {
 	MonetaryMetric WidgetMonetaryMetric `json:"monetaryMetric"`
 }
 
+// CustomMetricFilter Example: owner:finops%40example.com
+type CustomMetricFilter = string
+
 // CustomMetricId Example: m8Tq2LxV4cRn7YpB1sKd
 type CustomMetricId = string
+
+// CustomMetricSortBy Example: update_time
+type CustomMetricSortBy string
 
 // BillingAccountId Example: 01D4A2-4E3F1B-9C72A0
 type BillingAccountId = string
@@ -14938,6 +15027,51 @@ type ListCommitmentsParamsSortBy string
 
 // ListCommitmentsParamsSortOrder defines parameters for ListCommitments.
 type ListCommitmentsParamsSortOrder string
+
+// ListCustomMetricsParams defines parameters for ListCustomMetrics.
+type ListCustomMetricsParams struct {
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results
+	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+	NameContains *NameContains `form:"nameContains,omitempty" json:"nameContains,omitempty"`
+
+	// Filter Filter as `key:value` pairs, `|` between keys. Keys, operand
+	// types and operators:
+	//
+	// - `name` — string; operator `eq`. Exact, case-sensitive match.
+	//   Comma-separated values for OR.
+	// - `owner` — owner email; operator `eq`. Exact match.
+	//   Comma-separated values for OR.
+	//
+	// Any other key returns `400 filter_key_not_supported`. For
+	// example `owner:finops%40example.com`. Use `nameContains` for a
+	// substring match on the name. Percent-encode
+	// `,`, `|`, `:` and spaces inside values.
+	Filter *CustomMetricFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// SortBy Field to sort by. Ties break by `id`, so paging never repeats or skips a metric.
+	SortBy *ListCustomMetricsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
+	SortOrder *ListCustomMetricsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListCustomMetricsParamsSortBy defines parameters for ListCustomMetrics.
+type ListCustomMetricsParamsSortBy string
+
+// ListCustomMetricsParamsSortOrder defines parameters for ListCustomMetrics.
+type ListCustomMetricsParamsSortOrder string
 
 // CreateCustomMetricParams defines parameters for CreateCustomMetric.
 type CreateCustomMetricParams struct {
@@ -17395,6 +17529,39 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /analytics/v1/commitment-manager/{id} (the `GetCommitment` operationId).
 	GetCommitment(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCustomMetrics List custom metrics
+	//
+	// Returns a page of the customer's custom metrics. Preset metrics are
+	// not included. Requires the `analytics:calculatedMetrics` entitlement
+	// and a metrics read permission.
+	//
+	// `rowCount` is the exact number of metrics that match `nameContains`
+	// and `filter`, across all pages. The page token is opaque and bound
+	// to `nameContains`, `filter`, `sortBy` and `sortOrder`: reusing it
+	// with different values gets `400 pagination_token_invalid`.
+	//
+	// Errors (RFC 9457 Problem Details, `code` field):
+	//
+	// - `400 validation_failed`: a bad parameter, such as `maxResults`
+	//   over 500 or an unknown `sortBy` value.
+	// - `400 filter_key_not_supported`: a `filter` key other than `name`
+	//   or `owner`. The `details` entry lists the supported keys in
+	//   `supportedKeys`.
+	// - `400 pagination_token_invalid`: see above.
+	// - `400 tenant_id_required`: a caller with access to more than one
+	//   customer sent no `X-Tenant-Id`.
+	// - `403 analytics.feature_not_entitled`: the customer does not have
+	//   the calculated metrics entitlement.
+	// - `403 forbidden`: no metrics read permission, or an `X-Tenant-Id`
+	//   that the credential cannot access.
+	//
+	// `maxResults` is at most 500. A larger value returns `400 validation_failed`.
+	//
+	// `sortOrder` defaults to `desc`.
+	//
+	// Corresponds with GET /analytics/v1/custom-metrics (the `ListCustomMetrics` operationId).
+	ListCustomMetrics(ctx context.Context, params *ListCustomMetricsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateCustomMetricWithBody Create a custom metric
 	//
@@ -20017,6 +20184,49 @@ func (c *Client) ListCommitments(ctx context.Context, params *ListCommitmentsPar
 // Corresponds with GET /analytics/v1/commitment-manager/{id} (the `GetCommitment` operationId).
 func (c *Client) GetCommitment(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetCommitmentRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListCustomMetrics List custom metrics
+//
+// Returns a page of the customer's custom metrics. Preset metrics are
+// not included. Requires the `analytics:calculatedMetrics` entitlement
+// and a metrics read permission.
+//
+// `rowCount` is the exact number of metrics that match `nameContains`
+// and `filter`, across all pages. The page token is opaque and bound
+// to `nameContains`, `filter`, `sortBy` and `sortOrder`: reusing it
+// with different values gets `400 pagination_token_invalid`.
+//
+// Errors (RFC 9457 Problem Details, `code` field):
+//
+//   - `400 validation_failed`: a bad parameter, such as `maxResults`
+//     over 500 or an unknown `sortBy` value.
+//   - `400 filter_key_not_supported`: a `filter` key other than `name`
+//     or `owner`. The `details` entry lists the supported keys in
+//     `supportedKeys`.
+//   - `400 pagination_token_invalid`: see above.
+//   - `400 tenant_id_required`: a caller with access to more than one
+//     customer sent no `X-Tenant-Id`.
+//   - `403 analytics.feature_not_entitled`: the customer does not have
+//     the calculated metrics entitlement.
+//   - `403 forbidden`: no metrics read permission, or an `X-Tenant-Id`
+//     that the credential cannot access.
+//
+// `maxResults` is at most 500. A larger value returns `400 validation_failed`.
+//
+// `sortOrder` defaults to `desc`.
+//
+// Corresponds with GET /analytics/v1/custom-metrics (the `ListCustomMetrics` operationId).
+func (c *Client) ListCustomMetrics(ctx context.Context, params *ListCustomMetricsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCustomMetricsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -25154,6 +25364,135 @@ func NewGetCommitmentRequest(server string, id string) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListCustomMetricsRequest constructs an http.Request for the ListCustomMetrics method
+func NewListCustomMetricsRequest(server string, params *ListCustomMetricsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/custom-metrics")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortBy", *params.SortBy, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortOrder", *params.SortOrder, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
 	}
 
 	return req, nil
@@ -33647,6 +33986,41 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /analytics/v1/commitment-manager/{id} (the `GetCommitment` operationId).
 	GetCommitmentWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCommitmentResp, error)
 
+	// ListCustomMetricsWithResponse List custom metrics
+	//
+	// Returns a page of the customer's custom metrics. Preset metrics are
+	// not included. Requires the `analytics:calculatedMetrics` entitlement
+	// and a metrics read permission.
+	//
+	// `rowCount` is the exact number of metrics that match `nameContains`
+	// and `filter`, across all pages. The page token is opaque and bound
+	// to `nameContains`, `filter`, `sortBy` and `sortOrder`: reusing it
+	// with different values gets `400 pagination_token_invalid`.
+	//
+	// Errors (RFC 9457 Problem Details, `code` field):
+	//
+	// - `400 validation_failed`: a bad parameter, such as `maxResults`
+	//   over 500 or an unknown `sortBy` value.
+	// - `400 filter_key_not_supported`: a `filter` key other than `name`
+	//   or `owner`. The `details` entry lists the supported keys in
+	//   `supportedKeys`.
+	// - `400 pagination_token_invalid`: see above.
+	// - `400 tenant_id_required`: a caller with access to more than one
+	//   customer sent no `X-Tenant-Id`.
+	// - `403 analytics.feature_not_entitled`: the customer does not have
+	//   the calculated metrics entitlement.
+	// - `403 forbidden`: no metrics read permission, or an `X-Tenant-Id`
+	//   that the credential cannot access.
+	//
+	// `maxResults` is at most 500. A larger value returns `400 validation_failed`.
+	//
+	// `sortOrder` defaults to `desc`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /analytics/v1/custom-metrics (the `ListCustomMetrics` operationId).
+	ListCustomMetricsWithResponse(ctx context.Context, params *ListCustomMetricsParams, reqEditors ...RequestEditorFn) (*ListCustomMetricsResp, error)
+
 	// CreateCustomMetricWithBodyWithResponse Create a custom metric
 	//
 	// Creates a custom metric owned by the caller. Requires the
@@ -37530,6 +37904,173 @@ func (r GetCommitmentResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetCommitmentResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListCustomMetricsResp200Headers the declared response headers of an HTTP 200 response for ListCustomMetrics
+type ListCustomMetricsResp200Headers struct {
+	ContentLanguage     *string
+	RequestId           *string
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ListCustomMetricsResp400Headers the declared response headers of an HTTP 400 response for ListCustomMetrics
+type ListCustomMetricsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCustomMetricsResp401Headers the declared response headers of an HTTP 401 response for ListCustomMetrics
+type ListCustomMetricsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListCustomMetricsResp403Headers the declared response headers of an HTTP 403 response for ListCustomMetrics
+type ListCustomMetricsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCustomMetricsResp405Headers the declared response headers of an HTTP 405 response for ListCustomMetrics
+type ListCustomMetricsResp405Headers struct {
+	Allow               *string
+	ContentLanguage     *string
+	RequestId           *string
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ListCustomMetricsResp429Headers the declared response headers of an HTTP 429 response for ListCustomMetrics
+type ListCustomMetricsResp429Headers struct {
+	ContentLanguage     *string
+	RequestId           *string
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ListCustomMetricsResp500Headers the declared response headers of an HTTP 500 response for ListCustomMetrics
+type ListCustomMetricsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCustomMetricsResp503Headers the declared response headers of an HTTP 503 response for ListCustomMetrics
+type ListCustomMetricsResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListCustomMetricsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CustomMetricListResponse
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON405 the response for an HTTP 405 `application/problem+json` response
+	ApplicationproblemJSON405 *MethodNotAllowed
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListCustomMetricsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListCustomMetricsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListCustomMetricsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListCustomMetricsResp403Headers
+	// Headers405 the parsed response headers for an HTTP 405 response
+	Headers405 *ListCustomMetricsResp405Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListCustomMetricsResp429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListCustomMetricsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListCustomMetricsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListCustomMetricsResp) GetJSON200() *CustomMetricListResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListCustomMetricsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListCustomMetricsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListCustomMetricsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON405 returns the response for an HTTP 405 `application/problem+json` response
+func (r ListCustomMetricsResp) GetApplicationproblemJSON405() *MethodNotAllowed {
+	return r.ApplicationproblemJSON405
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListCustomMetricsResp) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListCustomMetricsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListCustomMetricsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListCustomMetricsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCustomMetricsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCustomMetricsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCustomMetricsResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -51162,6 +51703,47 @@ func (c *ClientWithResponses) GetCommitmentWithResponse(ctx context.Context, id 
 	return ParseGetCommitmentResp(rsp)
 }
 
+// ListCustomMetricsWithResponse List custom metrics
+//
+// Returns a page of the customer's custom metrics. Preset metrics are
+// not included. Requires the `analytics:calculatedMetrics` entitlement
+// and a metrics read permission.
+//
+// `rowCount` is the exact number of metrics that match `nameContains`
+// and `filter`, across all pages. The page token is opaque and bound
+// to `nameContains`, `filter`, `sortBy` and `sortOrder`: reusing it
+// with different values gets `400 pagination_token_invalid`.
+//
+// Errors (RFC 9457 Problem Details, `code` field):
+//
+//   - `400 validation_failed`: a bad parameter, such as `maxResults`
+//     over 500 or an unknown `sortBy` value.
+//   - `400 filter_key_not_supported`: a `filter` key other than `name`
+//     or `owner`. The `details` entry lists the supported keys in
+//     `supportedKeys`.
+//   - `400 pagination_token_invalid`: see above.
+//   - `400 tenant_id_required`: a caller with access to more than one
+//     customer sent no `X-Tenant-Id`.
+//   - `403 analytics.feature_not_entitled`: the customer does not have
+//     the calculated metrics entitlement.
+//   - `403 forbidden`: no metrics read permission, or an `X-Tenant-Id`
+//     that the credential cannot access.
+//
+// `maxResults` is at most 500. A larger value returns `400 validation_failed`.
+//
+// `sortOrder` defaults to `desc`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /analytics/v1/custom-metrics (the `ListCustomMetrics` operationId).
+func (c *ClientWithResponses) ListCustomMetricsWithResponse(ctx context.Context, params *ListCustomMetricsParams, reqEditors ...RequestEditorFn) (*ListCustomMetricsResp, error) {
+	rsp, err := c.ListCustomMetrics(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCustomMetricsResp(rsp)
+}
+
 // CreateCustomMetricWithBodyWithResponse Create a custom metric
 //
 // Creates a custom metric owned by the caller. Requires the
@@ -55768,6 +56350,311 @@ func ParseGetCommitmentResp(rsp *http.Response) (*GetCommitmentResp, error) {
 		}
 		response.JSON404 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseListCustomMetricsResp parses an HTTP response from a ListCustomMetricsWithResponse call
+func ParseListCustomMetricsResp(rsp *http.Response) (*ListCustomMetricsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCustomMetricsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomMetricListResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 405:
+		var dest MethodNotAllowed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON405 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListCustomMetricsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListCustomMetricsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListCustomMetricsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListCustomMetricsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 405:
+		var headers ListCustomMetricsResp405Headers
+		if values := rsp.Header.Values("Allow"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Allow", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Allow = &value
+		}
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers405 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListCustomMetricsResp429Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListCustomMetricsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListCustomMetricsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil
