@@ -6,6 +6,9 @@ generate:
   client: true
 compatibility:
   always-prefix-enum-values: true
+  # Pinned explicitly: v3 becomes oapi-codegen's default in v2.10.0. The output is
+  # identical to v2 for our specs (extract-inline-schemas flattens multi-member allOf first).
+  schema-merging-behavior: v3
 output-options:
   response-type-suffix: Resp
   nullable-type: true
