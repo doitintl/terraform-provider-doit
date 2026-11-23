@@ -25,6 +25,20 @@ data "doit_invoices" "canceled" {
   filter = "status:CANCELED"
 }
 
+# Warn on every plan while an invoice is past due. A check block reports a
+# warning and never blocks an apply. Only one status value is applied per
+# request.
+check "no_past_due_invoices" {
+  data "doit_invoices" "past_due" {
+    filter = "status:PAST DUE"
+  }
+
+  assert {
+    condition     = data.doit_invoices.past_due.row_count == 0
+    error_message = "Past due invoices: ${join(", ", [for inv in data.doit_invoices.past_due.invoices : inv.id])}"
+  }
+}
+
 # Output invoice totals
 output "total_invoices" {
   value = data.doit_invoices.all.row_count

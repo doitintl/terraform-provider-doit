@@ -282,3 +282,54 @@ resource "doit_allocation" "by_team" {
     id     = team.id
   }]
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Time-bound rules (validity_periods)
+# ─────────────────────────────────────────────────────────────────────────────
+# validity_periods limits the dates on which a single allocation's rule
+# applies. Dates are UTC and inclusive, so a handover between two allocations
+# needs a one-day gap: the first one ends on the last day, the second one
+# starts on the next day. Use it to follow a move on its date without rewriting
+# history: here, Payments moves to a new project on 2027-01-01.
+resource "doit_allocation" "payments_old_project" {
+  name        = "Payments (old project)"
+  description = "Payments costs until the move"
+  rule = {
+    formula = "A"
+    components = [{
+      mode   = "is"
+      type   = "fixed"
+      key    = "project_id"
+      values = ["payments-legacy"]
+    }]
+    validity_periods = [{ end_date = "2026-12-31" }]
+  }
+}
+
+resource "doit_allocation" "payments_new_project" {
+  name        = "Payments (new project)"
+  description = "Payments costs after the move"
+  rule = {
+    formula = "A"
+    components = [{
+      mode   = "is"
+      type   = "fixed"
+      key    = "project_id"
+      values = ["payments"]
+    }]
+    validity_periods = [{ start_date = "2027-01-01" }]
+  }
+}
+
+# A group that selects both reports Payments across the handover. The validity
+# belongs to the single allocation's own rule: a "select" rule in the group
+# can't set validity_periods.
+resource "doit_allocation" "payments" {
+  name              = "Payments"
+  description       = "Payments costs before and after the move"
+  unallocated_costs = "Other"
+  rules = [
+    { action = "select", id = doit_allocation.payments_old_project.id },
+    { action = "select", id = doit_allocation.payments_new_project.id },
+  ]
+}
