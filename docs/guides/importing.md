@@ -143,7 +143,11 @@ The generated configuration goes through the same validation as configuration yo
 - a budget without `scopes`, with a `start_period` of `0`, with empty `recipients`, or with two owners
 - a report with `forecast_settings` while forecasting is switched off
 
-Either leave the object where it is, by deleting its `import` block, or fix the generated resource. A fix is an edit of the object, so the next apply sends it to DoiT. This is also why you should adopt in batches: a batch of one team fails for one reason at a time, and a whole tenant fails for dozens.
+Either leave the object where it is, or fix the generated resource. A fix is an edit of the object, so the next apply sends it to DoiT.
+
+To leave an object out, delete its `import` block **and** its generated resource. With only the `import` block gone, the resource stays in the configuration, and Terraform plans to create a second copy of the object. If you haven't edited `generated.tf` yet, it's easier to delete the `import` block and `generated.tf` and run `terraform plan -generate-config-out=generated.tf` again, because Terraform doesn't overwrite an existing file.
+
+This is also why you should adopt in batches: a batch of one team fails for one reason at a time, and a whole tenant fails for dozens.
 
 The plan can also show `to change` for an imported object. On the same tenant, a few reports planned an in-place update that only filled in computed values, such as fields of `display_settings`. Read the diff of every such object before you apply, because an apply performs the update as well as the import.
 
