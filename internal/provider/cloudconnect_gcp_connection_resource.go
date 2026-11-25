@@ -161,7 +161,7 @@ func (r *cloudconnectGcpConnectionResource) Schema(ctx context.Context, _ resour
 
 	s.Description = "Registers a Google Cloud organization, project or BigQuery dataset with DoiT Cloud Connect, so DoiT can read it through a customer service account it impersonates.\n\n" +
 		"Use `doit_cloudconnect_gcp_requirements` to find the service account placement, the IAM permissions and the feature IDs for the scope. " +
-		"While IAM changes propagate (usually 2 to 7 minutes), the API refuses the registration; the provider retries until the create or update timeout ends, so raise `timeouts` if propagation takes longer.\n\n" +
+		"The API refuses the registration until IAM changes have propagated, which Google documents as typically 2 minutes and sometimes 7 or more, so wait after granting access in the same apply, for example with `time_sleep`.\n\n" +
 		"~> **Note:** One Google Cloud service account can hold only one connection. A second connection with the same service account fails with `409 onboarding.connection_exists`.\n\n" +
 		"Destroying the resource removes DoiT's record only; the service account and its IAM bindings stay in place."
 	s.MarkdownDescription = s.Description
@@ -219,17 +219,10 @@ func (r *cloudconnectGcpConnectionResource) Create(ctx context.Context, req reso
 		return
 	}
 
-	// IAM changes made in the same apply take minutes to propagate; the API
-	// marks the gate failures they cause as retryable.
-	var createResp *modelsv2.CreateGcpCloudConnectConnectionResp
-	err := retryOnboardingRequest(ctx, []string{registrationGateFailedCode}, func() error {
-		params := &modelsv2.CreateGcpCloudConnectConnectionParams{
-			IdempotencyKey: uuid.NewV4().String(),
-		}
-		var callErr error
-		createResp, callErr = r.client.CreateGcpCloudConnectConnectionWithResponse(ctx, params, apiReq)
-		return callErr
-	})
+	params := &modelsv2.CreateGcpCloudConnectConnectionParams{
+		IdempotencyKey: uuid.NewV4().String(),
+	}
+	createResp, err := r.client.CreateGcpCloudConnectConnectionWithResponse(ctx, params, apiReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating GCP Cloud Connect Connection",
@@ -325,17 +318,11 @@ func (r *cloudconnectGcpConnectionResource) Update(ctx context.Context, req reso
 		return
 	}
 
-	// Enabling a feature can need IAM permissions granted in the same apply.
-	var updateResp *modelsv2.UpdateGcpCloudConnectConnectionResp
-	err := retryOnboardingRequest(ctx, []string{registrationGateFailedCode}, func() error {
-		params := &modelsv2.UpdateGcpCloudConnectConnectionParams{
-			IfMatch:        state.Etag.ValueString(),
-			IdempotencyKey: uuid.NewV4().String(),
-		}
-		var callErr error
-		updateResp, callErr = r.client.UpdateGcpCloudConnectConnectionWithApplicationMergePatchPlusJSONBodyWithResponse(ctx, state.Id.ValueString(), params, apiReq)
-		return callErr
-	})
+	params := &modelsv2.UpdateGcpCloudConnectConnectionParams{
+		IfMatch:        state.Etag.ValueString(),
+		IdempotencyKey: uuid.NewV4().String(),
+	}
+	updateResp, err := r.client.UpdateGcpCloudConnectConnectionWithApplicationMergePatchPlusJSONBodyWithResponse(ctx, state.Id.ValueString(), params, apiReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating GCP Cloud Connect Connection",

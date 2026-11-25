@@ -91,30 +91,22 @@ func gcpConnectionTestPlan(t *testing.T, featureIDs []string, featureInputs attr
 	})}
 }
 
-func TestCloudconnectGcpConnectionCreate_RetriesRetryableGateFailure(t *testing.T) {
+func TestCloudconnectGcpConnectionCreate_StoresTheRegisteredConnection(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		server, recorder := newBillingTestServer(t, map[string][]func(http.ResponseWriter){
-			http.MethodPost: {
-				problemResponse(http.StatusUnprocessableEntity, registrationGateFailedCode, true),
-				jsonResponse(http.StatusCreated, testGcpConnectionJSON),
-			},
+			http.MethodPost: {jsonResponse(http.StatusCreated, testGcpConnectionJSON)},
 		})
 
 		r := &cloudconnectGcpConnectionResource{client: newTestV2Client(t, server, "")}
 		plan := gcpConnectionTestPlan(t, []string{"core", "bigquery-finops"}, gcpFeatureInputsValue(t, "EU"))
 		resp := &resource.CreateResponse{State: tfsdk.State{Schema: plan.Schema, Raw: tftypes.NewValue(plan.Raw.Type(), nil)}}
 
-		start := time.Now()
 		r.Create(t.Context(), resource.CreateRequest{Plan: plan}, resp)
-		elapsed := time.Since(start)
 
 		if resp.Diagnostics.HasError() {
 			t.Fatalf("unexpected errors: %v", resp.Diagnostics)
 		}
-		assertDistinctKeys(t, recorder.requestKeys(http.MethodPost), 2)
-		if elapsed != onboardingRetryInterval {
-			t.Errorf("elapsed = %v, want %v", elapsed, onboardingRetryInterval)
-		}
+		assertDistinctKeys(t, recorder.requestKeys(http.MethodPost), 1)
 
 		warnings := resp.Diagnostics.Warnings()
 		if len(warnings) != 1 || warnings[0].Summary() != "GCP Cloud Connect Follow-Up Step Failed" {
@@ -150,10 +142,10 @@ func TestCloudconnectGcpConnectionCreate_RetriesRetryableGateFailure(t *testing.
 	})
 }
 
-func TestCloudconnectGcpConnectionCreate_DoesNotRetryStructuralGateFailure(t *testing.T) {
+func TestCloudconnectGcpConnectionCreate_DoesNotRetryAGateFailure(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		server, recorder := newBillingTestServer(t, map[string][]func(http.ResponseWriter){
-			http.MethodPost: {problemResponse(http.StatusUnprocessableEntity, registrationGateFailedCode, false)},
+			http.MethodPost: {problemResponse(http.StatusUnprocessableEntity, "onboarding.registration_gate_failed", false)},
 		})
 
 		r := &cloudconnectGcpConnectionResource{client: newTestV2Client(t, server, "")}

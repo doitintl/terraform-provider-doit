@@ -13,11 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// registrationGateFailedCode is the error the onboarding API returns when a
-// cloud access check fails before a connection is registered or changed. It is
-// retryable when every failed check depends on access that propagates.
-const registrationGateFailedCode = "onboarding.registration_gate_failed"
-
 type cloudconnectGcpConnectionResourceModel struct {
 	resource_cloudconnect_gcp_connection.CloudconnectGcpConnectionModel
 	Timeouts timeouts.Value `tfsdk:"timeouts"`

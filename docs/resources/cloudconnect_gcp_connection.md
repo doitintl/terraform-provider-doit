@@ -4,7 +4,7 @@ page_title: "doit_cloudconnect_gcp_connection Resource - terraform-provider-doit
 subcategory: ""
 description: |-
   Registers a Google Cloud organization, project or BigQuery dataset with DoiT Cloud Connect, so DoiT can read it through a customer service account it impersonates.
-  Use doit_cloudconnect_gcp_requirements to find the service account placement, the IAM permissions and the feature IDs for the scope. While IAM changes propagate (usually 2 to 7 minutes), the API refuses the registration; the provider retries until the create or update timeout ends, so raise timeouts if propagation takes longer.
+  Use doit_cloudconnect_gcp_requirements to find the service account placement, the IAM permissions and the feature IDs for the scope. The API refuses the registration until IAM changes have propagated, which Google documents as typically 2 minutes and sometimes 7 or more, so wait after granting access in the same apply, for example with time_sleep.
   ~> Note: One Google Cloud service account can hold only one connection. A second connection with the same service account fails with 409 onboarding.connection_exists.
   Destroying the resource removes DoiT's record only; the service account and its IAM bindings stay in place.
 ---
@@ -13,7 +13,7 @@ description: |-
 
 Registers a Google Cloud organization, project or BigQuery dataset with DoiT Cloud Connect, so DoiT can read it through a customer service account it impersonates.
 
-Use `doit_cloudconnect_gcp_requirements` to find the service account placement, the IAM permissions and the feature IDs for the scope. While IAM changes propagate (usually 2 to 7 minutes), the API refuses the registration; the provider retries until the create or update timeout ends, so raise `timeouts` if propagation takes longer.
+Use `doit_cloudconnect_gcp_requirements` to find the service account placement, the IAM permissions and the feature IDs for the scope. The API refuses the registration until IAM changes have propagated, which Google documents as typically 2 minutes and sometimes 7 or more, so wait after granting access in the same apply, for example with `time_sleep`.
 
 ~> **Note:** One Google Cloud service account can hold only one connection. A second connection with the same service account fails with `409 onboarding.connection_exists`.
 
