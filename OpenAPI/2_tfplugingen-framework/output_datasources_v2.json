@@ -1,0 +1,838 @@
+{
+	"datasources": [
+		{
+			"name": "billing_gcp_requirements",
+			"schema": {
+				"attributes": [
+					{
+						"name": "grants",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "role",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Google Cloud IAM role to grant."
+										}
+									},
+									{
+										"name": "target",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Where to grant the role. `billing_account` is the billing account being connected; `export_dataset` is the BigQuery dataset holding its detailed usage cost export."
+										}
+									}
+								]
+							},
+							"description": "IAM roles to grant to `serviceAccountEmail` before connecting, always in this order."
+						}
+					},
+					{
+						"name": "prerequisites",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Setup steps Google offers no API for, to complete before connecting."
+						}
+					},
+					{
+						"name": "service_account_email",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "DoiT service account that reads the billing account and its export."
+						}
+					}
+				],
+				"description": "Resolve prerequisites and manage Google Cloud billing account connections.",
+				"markdown_description": "Resolve prerequisites and manage Google Cloud billing account connections."
+			}
+		},
+		{
+			"name": "cloudconnect_gcp_requirements",
+			"schema": {
+				"attributes": [
+					{
+						"name": "artifacts",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "artifact_id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "changes",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "action",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "member",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "resource",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "role",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "values",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															}
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"name": "entrypoint",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "files",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "path",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "sha256",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "url",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"name": "findings",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "code",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "feature_id",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "field",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "message",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "missing_inputs",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															}
+														}
+													},
+													{
+														"name": "missing_permissions",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															}
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"name": "inline_content",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "kind",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "parameters",
+										"string": {
+											"computed_optional_required": "computed",
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "Resolved artifact parameters keyed by parameter name. Value is JSON-encoded."
+										}
+									},
+									{
+										"name": "registration",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "registration_handoff",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "connection_id",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "descriptor_file",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "endpoint_path",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "form_fields",
+													"map": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Optional additional registration form fields such as BigQuery location or dataset ID."
+													}
+												},
+												{
+													"name": "method",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												}
+											],
+											"description": "Registration step to call after manual or shell artifact deployment."
+										}
+									},
+									{
+										"name": "required_tools",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											}
+										}
+									},
+									{
+										"name": "requirements_satisfied",
+										"bool": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "source",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "template_url",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "trust_statements",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "external_id",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "principal",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													}
+												]
+											},
+											"description": "Cross-account trust statements required by the artifact when declared separately."
+										}
+									},
+									{
+										"name": "version",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "catalog_version",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "dataset_id",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "features",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "additional_scopes",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "permissions",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															}
+														}
+													},
+													{
+														"name": "phase",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "recipient",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "scope_kind",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"name": "findings",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "code",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "feature_id",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "field",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "message",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "missing_inputs",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															}
+														}
+													},
+													{
+														"name": "missing_permissions",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															}
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"name": "health_checks",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Health-check kinds evaluated for this feature."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "managed_policies",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Accepted cloud managed policies for this feature."
+										}
+									},
+									{
+										"name": "permissions",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											}
+										}
+									},
+									{
+										"name": "required_inputs",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "allowed_values",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															}
+														}
+													},
+													{
+														"name": "default",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "description",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "name",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "required",
+														"bool": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "type",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"name": "requirements_satisfied",
+										"bool": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "resolved_inputs",
+										"map": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Resolved per-input values including catalog defaults."
+										}
+									},
+									{
+										"name": "roles",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "name",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "role_definition_id",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "follow_ups",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "executor",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "kind",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "required_for",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											}
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "identity",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "application_id",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "DoiT multi-tenant Microsoft Entra application UUID for Azure Cloud Connect."
+									}
+								},
+								{
+									"name": "customer_binding",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Required Azure role assignment description marker (`doit-cloud-connect:\u003csha256\u003e`)."
+									}
+								},
+								{
+									"name": "external_id",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Customer External ID for AWS IAM trust policy."
+									}
+								},
+								{
+									"name": "findings",
+									"list_nested": {
+										"computed_optional_required": "computed",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "code",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "feature_id",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "field",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "message",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "missing_inputs",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														}
+													}
+												},
+												{
+													"name": "missing_permissions",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														}
+													}
+												}
+											]
+										}
+									}
+								},
+								{
+									"name": "impersonation_principal",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "impersonation_role",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "kind",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "role_name",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "service_account_email",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "service_account_id",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "service_account_project_id",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "status",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "trusted_principals",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										}
+									}
+								}
+							],
+							"description": "Resolved identity details required to grant Cloud Connect access."
+						}
+					},
+					{
+						"name": "organization_id",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "preconditions",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "findings",
+									"list_nested": {
+										"computed_optional_required": "computed",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "code",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "feature_id",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "field",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "message",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "missing_inputs",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														}
+													}
+												},
+												{
+													"name": "missing_permissions",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														}
+													}
+												}
+											]
+										}
+									}
+								},
+								{
+									"name": "status",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								}
+							],
+							"description": "Precondition evaluation summary for the target scope."
+						}
+					},
+					{
+						"name": "project_id",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "scope_kind",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					}
+				],
+				"description": "Resolve prerequisites and manage Google Cloud organization, project, and dataset Cloud Connect access.",
+				"markdown_description": "Resolve prerequisites and manage Google Cloud organization, project, and dataset Cloud Connect access."
+			}
+		}
+	],
+	"provider": {
+		"name": "doit"
+	},
+	"version": "0.1"
+}

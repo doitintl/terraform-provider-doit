@@ -4,4 +4,18 @@
 # while this file has no entries.
 provider:
   name: doit
-data_sources: {}
+data_sources:
+  cloudconnect_gcp_requirements:
+    read:
+      path: /onboarding/v2/cloud-connect/gcp/requirements
+      method: POST
+    schema:
+      ignores:
+        - dryRun
+  billing_gcp_requirements:
+    read:
+      path: /onboarding/v2/billing/gcp/requirements
+      method: POST
+    schema:
+      ignores:
+        - dryRun
