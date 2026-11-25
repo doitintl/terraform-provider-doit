@@ -224,8 +224,8 @@ resource "doit_budget" "team" {
 
 # A different amount for each month, in calendar order (January to December).
 # A seasonal budget has no amount: current_period_amount shows the amount of
-# the current month. Seasonal amounts cannot be combined with growth, rollover
-# or use_prev_spend.
+# the current month. Seasonal amounts cannot be combined with growth (leave
+# growth_per_period at 0), rollover or use_prev_spend.
 resource "doit_budget" "seasonal" {
   name             = "Seasonal Budget"
   currency         = "USD"
@@ -246,7 +246,9 @@ resource "doit_budget" "seasonal" {
 
 # Grow the amount by 2% each month and carry unspent budget of up to three
 # previous months into the current one. amount stays the configured value;
-# current_period_amount is the amount after growth and rollover.
+# current_period_amount is the amount after growth and rollover. Growth and
+# rollover are for recurring budgets: a fixed budget (type = "fixed") cannot
+# have either, and use_prev_spend cannot be combined with rollover.
 resource "doit_budget" "growing" {
   name              = "Growing Budget"
   currency          = "USD"
