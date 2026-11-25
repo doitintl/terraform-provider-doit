@@ -77,6 +77,7 @@ var (
 	errAmount        = wantBudgetDiag{path.Root("amount"), "Invalid Attribute Combination"}
 	errUsePrevSpend  = wantBudgetDiag{path.Root("use_prev_spend"), "Invalid Attribute Combination"}
 	errAllowGrowth   = wantBudgetDiag{path.Root("allow_growth"), "Invalid Attribute Combination"}
+	errGrowthRate    = wantBudgetDiag{path.Root("growth_per_period"), "Invalid Attribute Combination"}
 	errRolloverOn    = wantBudgetDiag{path.Root("rollover").AtName("enabled"), "Invalid Attribute Combination"}
 	errSeasonal      = wantBudgetDiag{path.Root("seasonal_amounts"), "Invalid Seasonal Amounts"}
 	errRolloverLimit = wantBudgetDiag{path.Root("rollover").AtName("limit"), "Invalid Rollover Limit"}
@@ -223,7 +224,7 @@ func TestBudgetModifyPlanSeasonalChecks(t *testing.T) {
 		want         []wantBudgetDiag
 	}{
 		// Create: growth_per_period above 0 turns growth on unless allow_growth is set.
-		{"create, rate above 0", createRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12), "growth_per_period": types.Float64Value(5)}, nil, []wantBudgetDiag{errAllowGrowth}},
+		{"create, rate above 0", createRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12), "growth_per_period": types.Float64Value(5)}, nil, []wantBudgetDiag{errGrowthRate}},
 		{"create, rate 0", createRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12), "growth_per_period": types.Float64Value(0)}, nil, nil},
 		{"create, rate omitted (default 0)", createRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12)}, nil, nil},
 		{"create, rate unknown", createRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12), "growth_per_period": types.Float64Unknown()}, nil, nil},
@@ -233,11 +234,19 @@ func TestBudgetModifyPlanSeasonalChecks(t *testing.T) {
 		{"create, rate above 0, seasonal empty", createRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalList(), "growth_per_period": types.Float64Value(5)}, nil, nil},
 		{"create, rate above 0, seasonal unknown", createRow, false, map[string]attr.Value{"seasonal_amounts": types.ListUnknown(types.Float64Type), "growth_per_period": types.Float64Value(5)}, nil, nil},
 
-		// Update: the stored allow_growth decides, whatever the rate.
+		// Update: a stored allow_growth = true is kept, and a rate above 0 turns
+		// growth on when allow_growth is omitted (the request builder sends it),
+		// so both conflict with seasonal amounts.
 		{"update, growth stored", updateRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12)}, map[string]attr.Value{"allow_growth": types.BoolValue(true)}, []wantBudgetDiag{errAllowGrowth}},
 		{"update, growth stored, plan holds it", updateRow, true, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12)}, map[string]attr.Value{"allow_growth": types.BoolValue(true)}, []wantBudgetDiag{errAllowGrowth}},
 		{"update, growth stored, allow_growth false", updateRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12), "allow_growth": types.BoolValue(false)}, map[string]attr.Value{"allow_growth": types.BoolValue(true)}, nil},
-		{"update, no growth stored, rate above 0", updateRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12), "growth_per_period": types.Float64Value(5)}, map[string]attr.Value{"allow_growth": types.BoolValue(false)}, nil},
+		{"update, no growth stored, rate above 0", updateRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12), "growth_per_period": types.Float64Value(5)}, map[string]attr.Value{"allow_growth": types.BoolValue(false)}, []wantBudgetDiag{errGrowthRate}},
+		{"update, no growth stored, rate above 0, plan holds allow_growth", updateRow, true, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12), "growth_per_period": types.Float64Value(5)}, map[string]attr.Value{"allow_growth": types.BoolValue(false)}, []wantBudgetDiag{errGrowthRate}},
+		{"update, growth stored, rate above 0", updateRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12), "growth_per_period": types.Float64Value(5)}, map[string]attr.Value{"allow_growth": types.BoolValue(true)}, []wantBudgetDiag{errGrowthRate, errAllowGrowth}},
+		// A configured allow_growth is the config validators' job.
+		{"update, rate above 0, allow_growth false", updateRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12), "growth_per_period": types.Float64Value(5), "allow_growth": types.BoolValue(false)}, map[string]attr.Value{"allow_growth": types.BoolValue(false)}, nil},
+		{"update, rate above 0, seasonal empty", updateRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalList(), "growth_per_period": types.Float64Value(5)}, map[string]attr.Value{"allow_growth": types.BoolValue(false)}, nil},
+		{"update, rate unknown", updateRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12), "growth_per_period": types.Float64Unknown()}, map[string]attr.Value{"allow_growth": types.BoolValue(false)}, nil},
 		{"update, growth stored, seasonal empty", updateRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalList()}, map[string]attr.Value{"allow_growth": types.BoolValue(true)}, nil},
 		{"update, stored allow_growth null", updateRow, false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12)}, map[string]attr.Value{"allow_growth": types.BoolNull()}, nil},
 

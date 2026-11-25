@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### BREAKING CHANGES
+
+- **resource/doit_budget**: The API now rejects more budget combinations with a 400, and the provider checks them at plan time instead. A `growth_per_period` other than 0 requires `allow_growth` to be true, so `allow_growth = false` together with a rate, and a negative rate, are rejected; to turn growth off, set `allow_growth = false` and `growth_per_period = 0` (or omit the rate). A fixed budget (`type = "fixed"`) cannot have `allow_growth`, a `growth_per_period` other than 0, an enabled `rollover` or `use_prev_spend = true`, and `use_prev_spend = true` cannot be combined with an enabled `rollover`. Turning `use_prev_spend` off on an update now needs `amount` (or `seasonal_amounts`) in the same configuration, because the stored amount of a previous-spend budget is last period's spend. Switching a budget with `seasonal_amounts` from growth also needs `growth_per_period = 0` now, since a rate next to `allow_growth = false` is rejected ([doiteng/omni#72672](https://github.com/doiteng/omni/pull/72672), [doiteng/omni#73048](https://github.com/doiteng/omni/pull/73048), [doiteng/omni#73073](https://github.com/doiteng/omni/pull/73073))
+
+### BUG FIXES
+
+- **resource/doit_budget**: Setting `growth_per_period` above 0 on an update while `allow_growth` is omitted now turns growth on, as it does on create. The API does not infer it on an update and rejected the request (`growthPerPeriod must be 0 when allowGrowth is false`), for example when a fixed budget became a recurring one with a growth rate. Switching a recurring budget with growth and rollover to `type = "fixed"` (with neither in the configuration) now turns growth off in the same request instead of failing
+
 ## v1.13.0 (2026-11-20)
 
 ### BREAKING CHANGES

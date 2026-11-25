@@ -191,6 +191,9 @@ func (r *budgetResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		budgetSlackChannelsValidator{},
 		budgetSeasonalAmountsValidator{},
 		budgetRolloverValidator{},
+		budgetGrowthValidator{},
+		budgetFixedValidator{},
+		budgetUsePrevSpendValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in scope values.
 		budgetScopeNAValidator{},
 	}
@@ -218,6 +221,7 @@ func (r *budgetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	if !isCreate {
 		validateBudgetPlanAgainstStoredInterval(ctx, req, resp)
 		validateBudgetSeasonalRemoval(ctx, req, resp)
+		validateBudgetUsePrevSpendRemoval(ctx, req, resp)
 	}
 
 	// Optional+Computed values may be omitted on update and carried forward from

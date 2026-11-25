@@ -52,14 +52,14 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"allow_growth": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`.",
-				MarkdownDescription: "Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`.",
+				Description:         "Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Must be true when `growthPerPeriod` is not 0. Cannot be true together with `seasonalAmounts`. Not allowed for fixed budgets.",
+				MarkdownDescription: "Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Must be true when `growthPerPeriod` is not 0. Cannot be true together with `seasonalAmounts`. Not allowed for fixed budgets.",
 			},
 			"amount": schema.Float64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set.",
-				MarkdownDescription: "Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set.",
+				Description:         "Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set. Not used when `usePrevSpend` is true.",
+				MarkdownDescription: "Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set. Not used when `usePrevSpend` is true.",
 			},
 			"collaborators": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -168,8 +168,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"growth_per_period": schema.Float64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true.",
-				MarkdownDescription: "Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true.",
+				Description:         "Growth percentage per period, applied when `allowGrowth` is true. Must not be negative. If `allowGrowth` is omitted, a value above 0 sets it to true. A value other than 0 with `allowGrowth` false is rejected. Must be 0 for fixed budgets.",
+				MarkdownDescription: "Growth percentage per period, applied when `allowGrowth` is true. Must not be negative. If `allowGrowth` is omitted, a value above 0 sets it to true. A value other than 0 with `allowGrowth` false is rejected. Must be 0 for fixed budgets.",
 				Default:             float64default.StaticFloat64(0),
 			},
 			"id": schema.StringAttribute{
@@ -276,8 +276,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				},
 				Optional:            true,
 				Computed:            true,
-				Description:         "Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.",
-				MarkdownDescription: "Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.",
+				Description:         "Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`.",
+				MarkdownDescription: "Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`.",
 			},
 			"scopes": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -396,8 +396,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"use_prev_spend": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.",
-				MarkdownDescription: "Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.",
+				Description:         "Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`.",
+				MarkdownDescription: "Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`.",
 				Default:             booldefault.StaticBool(false),
 			},
 		},
