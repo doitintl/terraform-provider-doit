@@ -134,6 +134,58 @@ func AllocationDataSourceSchema(ctx context.Context) schema.Schema {
 						Description:         "Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.",
 						MarkdownDescription: "Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.",
 					},
+					"value_extraction": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"fallback": schema.StringAttribute{
+								Computed:            true,
+								Description:         "Literal emitted when every source is missing. Required with onMissing \"useFallback\" (the default); not allowed with onMissing \"nextRule\".",
+								MarkdownDescription: "Literal emitted when every source is missing. Required with onMissing \"useFallback\" (the default); not allowed with onMissing \"nextRule\".",
+							},
+							"on_missing": schema.StringAttribute{
+								Computed:            true,
+								Description:         "What happens when every source is missing or empty on a matching row. \"useFallback\" (default) emits the fallback value, which is required in that mode; \"nextRule\" lets the row fall through to the next rule in the group.",
+								MarkdownDescription: "What happens when every source is missing or empty on a matching row. \"useFallback\" (default) emits the fallback value, which is required in that mode; \"nextRule\" lets the row fall through to the next rule in the group.",
+							},
+							"sources": schema.ListNestedAttribute{
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"key": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The label/tag key, or the fixed dimension ID, whose value is extracted.",
+											MarkdownDescription: "The label/tag key, or the fixed dimension ID, whose value is extracted.",
+										},
+										"providers": schema.ListAttribute{
+											ElementType:         types.StringType,
+											Computed:            true,
+											Description:         "Optional cloud providers this source applies to.",
+											MarkdownDescription: "Optional cloud providers this source applies to.",
+										},
+										"type": schema.StringAttribute{
+											Computed:            true,
+											Description:         "The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; \"fixed\" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.",
+											MarkdownDescription: "The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; \"fixed\" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.",
+										},
+									},
+									CustomType: SourcesType{
+										ObjectType: types.ObjectType{
+											AttrTypes: SourcesValue{}.AttributeTypes(ctx),
+										},
+									},
+								},
+								Computed:            true,
+								Description:         "Ordered extraction sources; the first non-empty value wins.",
+								MarkdownDescription: "Ordered extraction sources; the first non-empty value wins.",
+							},
+						},
+						CustomType: ValueExtractionType{
+							ObjectType: types.ObjectType{
+								AttrTypes: ValueExtractionValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "When updating, omit it to keep the stored value, send null to clear it, or send an object to replace it.",
+						MarkdownDescription: "When updating, omit it to keep the stored value, send null to clear it, or send an object to replace it.",
+					},
 				},
 				CustomType: RuleType{
 					ObjectType: types.ObjectType{
@@ -430,6 +482,50 @@ func (t RuleType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 			fmt.Sprintf(`validity_periods expected to be basetypes.ListValue, was: %T`, validityPeriodsAttribute))
 	}
 
+	valueExtractionAttribute, ok := attributes["value_extraction"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value_extraction is missing from object`)
+
+		return nil, diags
+	}
+
+	valueExtractionValuable, ok := valueExtractionAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value_extraction expected to be basetypes.ObjectValuable, was: %T`, valueExtractionAttribute))
+
+		return nil, diags
+	}
+
+	valueExtractionObjVal, valueExtractionObjValDiags := valueExtractionValuable.ToObjectValue(ctx)
+	diags.Append(valueExtractionObjValDiags...)
+
+	valueExtractionTypable, ok := t.AttrTypes["value_extraction"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value_extraction expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["value_extraction"]))
+
+		return nil, diags
+	}
+
+	valueExtractionConverted, valueExtractionConvertedDiags := valueExtractionTypable.ValueFromObject(ctx, valueExtractionObjVal)
+	diags.Append(valueExtractionConvertedDiags...)
+
+	valueExtractionVal, ok := valueExtractionConverted.(ValueExtractionValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value_extraction expected to be ValueExtractionValue, was: %T`, valueExtractionConverted))
+	}
+
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -438,6 +534,7 @@ func (t RuleType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue)
 		Components:      componentsVal,
 		Formula:         formulaVal,
 		ValidityPeriods: validityPeriodsVal,
+		ValueExtraction: valueExtractionVal,
 		state:           attr.ValueStateKnown,
 	}, diags
 }
@@ -559,6 +656,24 @@ func NewRuleValue(attributeTypes map[string]attr.Type, attributes map[string]att
 			fmt.Sprintf(`validity_periods expected to be basetypes.ListValue, was: %T`, validityPeriodsAttribute))
 	}
 
+	valueExtractionAttribute, ok := attributes["value_extraction"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value_extraction is missing from object`)
+
+		return NewRuleValueUnknown(), diags
+	}
+
+	valueExtractionVal, ok := valueExtractionAttribute.(ValueExtractionValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value_extraction expected to be ValueExtractionValue, was: %T`, valueExtractionAttribute))
+	}
+
 	if diags.HasError() {
 		return NewRuleValueUnknown(), diags
 	}
@@ -567,6 +682,7 @@ func NewRuleValue(attributeTypes map[string]attr.Type, attributes map[string]att
 		Components:      componentsVal,
 		Formula:         formulaVal,
 		ValidityPeriods: validityPeriodsVal,
+		ValueExtraction: valueExtractionVal,
 		state:           attr.ValueStateKnown,
 	}, diags
 }
@@ -642,11 +758,12 @@ type RuleValue struct {
 	Components      basetypes.ListValue   `tfsdk:"components"`
 	Formula         basetypes.StringValue `tfsdk:"formula"`
 	ValidityPeriods basetypes.ListValue   `tfsdk:"validity_periods"`
+	ValueExtraction ValueExtractionValue  `tfsdk:"value_extraction"`
 	state           attr.ValueState
 }
 
 func (v RuleValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 3)
+	attrTypes := make(map[string]tftypes.Type, 4)
 
 	var val tftypes.Value
 	var err error
@@ -658,12 +775,17 @@ func (v RuleValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) 
 	attrTypes["validity_periods"] = basetypes.ListType{
 		ElemType: ValidityPeriodsValue{}.Type(ctx),
 	}.TerraformType(ctx)
+	attrTypes["value_extraction"] = ValueExtractionType{
+		basetypes.ObjectType{
+			AttrTypes: ValueExtractionValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 3)
+		vals := make(map[string]tftypes.Value, 4)
 
 		val, err = v.Components.ToTerraformValue(ctx)
 
@@ -688,6 +810,14 @@ func (v RuleValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) 
 		}
 
 		vals["validity_periods"] = val
+
+		val, err = v.ValueExtraction.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["value_extraction"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -730,6 +860,12 @@ func (v RuleValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 		validityPeriods = v.ValidityPeriods
 	}
 
+	var valueExtraction attr.Value
+
+	{
+		valueExtraction = v.ValueExtraction
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"components": basetypes.ListType{
 			ElemType: ComponentsValue{}.Type(ctx),
@@ -737,6 +873,11 @@ func (v RuleValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 		"formula": basetypes.StringType{},
 		"validity_periods": basetypes.ListType{
 			ElemType: ValidityPeriodsValue{}.Type(ctx),
+		},
+		"value_extraction": ValueExtractionType{
+			basetypes.ObjectType{
+				AttrTypes: ValueExtractionValue{}.AttributeTypes(ctx),
+			},
 		},
 	}
 
@@ -754,6 +895,7 @@ func (v RuleValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, di
 			"components":       components,
 			"formula":          v.Formula,
 			"validity_periods": validityPeriods,
+			"value_extraction": valueExtraction,
 		})
 
 	return objVal, diags
@@ -786,6 +928,10 @@ func (v RuleValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.ValueExtraction.Equal(other.ValueExtraction) {
+		return false
+	}
+
 	return true
 }
 
@@ -805,6 +951,11 @@ func (v RuleValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"formula": basetypes.StringType{},
 		"validity_periods": basetypes.ListType{
 			ElemType: ValidityPeriodsValue{}.Type(ctx),
+		},
+		"value_extraction": ValueExtractionType{
+			basetypes.ObjectType{
+				AttrTypes: ValueExtractionValue{}.AttributeTypes(ctx),
+			},
 		},
 	}
 }
@@ -1890,791 +2041,6 @@ func (v ValidityPeriodsValue) AttributeTypes(ctx context.Context) map[string]att
 	}
 }
 
-var _ basetypes.ObjectTypable = RulesType{}
-
-type RulesType struct {
-	basetypes.ObjectType
-}
-
-func (t RulesType) Equal(o attr.Type) bool {
-	other, ok := o.(RulesType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t RulesType) String() string {
-	return "RulesType"
-}
-
-func (t RulesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if in.IsNull() {
-		return NewRulesValueNull(), diags
-	}
-
-	if in.IsUnknown() {
-		return NewRulesValueUnknown(), diags
-	}
-
-	attributes := in.Attributes()
-
-	actionAttribute, ok := attributes["action"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`action is missing from object`)
-
-		return nil, diags
-	}
-
-	actionVal, ok := actionAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`action expected to be basetypes.StringValue, was: %T`, actionAttribute))
-	}
-
-	componentsAttribute, ok := attributes["components"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`components is missing from object`)
-
-		return nil, diags
-	}
-
-	componentsVal, ok := componentsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`components expected to be basetypes.ListValue, was: %T`, componentsAttribute))
-	}
-
-	descriptionAttribute, ok := attributes["description"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`description is missing from object`)
-
-		return nil, diags
-	}
-
-	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
-	}
-
-	formulaAttribute, ok := attributes["formula"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`formula is missing from object`)
-
-		return nil, diags
-	}
-
-	formulaVal, ok := formulaAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`formula expected to be basetypes.StringValue, was: %T`, formulaAttribute))
-	}
-
-	idAttribute, ok := attributes["id"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`id is missing from object`)
-
-		return nil, diags
-	}
-
-	idVal, ok := idAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
-	}
-
-	nameAttribute, ok := attributes["name"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`name is missing from object`)
-
-		return nil, diags
-	}
-
-	nameVal, ok := nameAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
-	}
-
-	validityPeriodsAttribute, ok := attributes["validity_periods"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`validity_periods is missing from object`)
-
-		return nil, diags
-	}
-
-	validityPeriodsVal, ok := validityPeriodsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`validity_periods expected to be basetypes.ListValue, was: %T`, validityPeriodsAttribute))
-	}
-
-	valueExtractionAttribute, ok := attributes["value_extraction"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`value_extraction is missing from object`)
-
-		return nil, diags
-	}
-
-	valueExtractionValuable, ok := valueExtractionAttribute.(basetypes.ObjectValuable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`value_extraction expected to be basetypes.ObjectValuable, was: %T`, valueExtractionAttribute))
-
-		return nil, diags
-	}
-
-	valueExtractionObjVal, valueExtractionObjValDiags := valueExtractionValuable.ToObjectValue(ctx)
-	diags.Append(valueExtractionObjValDiags...)
-
-	valueExtractionTypable, ok := t.AttrTypes["value_extraction"].(basetypes.ObjectTypable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`value_extraction expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["value_extraction"]))
-
-		return nil, diags
-	}
-
-	valueExtractionConverted, valueExtractionConvertedDiags := valueExtractionTypable.ValueFromObject(ctx, valueExtractionObjVal)
-	diags.Append(valueExtractionConvertedDiags...)
-
-	valueExtractionVal, ok := valueExtractionConverted.(ValueExtractionValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`value_extraction expected to be ValueExtractionValue, was: %T`, valueExtractionConverted))
-	}
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return RulesValue{
-		Action:          actionVal,
-		Components:      componentsVal,
-		Description:     descriptionVal,
-		Formula:         formulaVal,
-		Id:              idVal,
-		Name:            nameVal,
-		ValidityPeriods: validityPeriodsVal,
-		ValueExtraction: valueExtractionVal,
-		state:           attr.ValueStateKnown,
-	}, diags
-}
-
-func NewRulesValueNull() RulesValue {
-	return RulesValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewRulesValueUnknown() RulesValue {
-	return RulesValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewRulesValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (RulesValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing RulesValue Attribute Value",
-				"While creating a RulesValue value, a missing attribute value was detected. "+
-					"A RulesValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("RulesValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid RulesValue Attribute Type",
-				"While creating a RulesValue value, an invalid attribute value was detected. "+
-					"A RulesValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("RulesValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("RulesValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra RulesValue Attribute Value",
-				"While creating a RulesValue value, an extra attribute value was detected. "+
-					"A RulesValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra RulesValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewRulesValueUnknown(), diags
-	}
-
-	actionAttribute, ok := attributes["action"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`action is missing from object`)
-
-		return NewRulesValueUnknown(), diags
-	}
-
-	actionVal, ok := actionAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`action expected to be basetypes.StringValue, was: %T`, actionAttribute))
-	}
-
-	componentsAttribute, ok := attributes["components"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`components is missing from object`)
-
-		return NewRulesValueUnknown(), diags
-	}
-
-	componentsVal, ok := componentsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`components expected to be basetypes.ListValue, was: %T`, componentsAttribute))
-	}
-
-	descriptionAttribute, ok := attributes["description"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`description is missing from object`)
-
-		return NewRulesValueUnknown(), diags
-	}
-
-	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
-	}
-
-	formulaAttribute, ok := attributes["formula"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`formula is missing from object`)
-
-		return NewRulesValueUnknown(), diags
-	}
-
-	formulaVal, ok := formulaAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`formula expected to be basetypes.StringValue, was: %T`, formulaAttribute))
-	}
-
-	idAttribute, ok := attributes["id"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`id is missing from object`)
-
-		return NewRulesValueUnknown(), diags
-	}
-
-	idVal, ok := idAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
-	}
-
-	nameAttribute, ok := attributes["name"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`name is missing from object`)
-
-		return NewRulesValueUnknown(), diags
-	}
-
-	nameVal, ok := nameAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
-	}
-
-	validityPeriodsAttribute, ok := attributes["validity_periods"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`validity_periods is missing from object`)
-
-		return NewRulesValueUnknown(), diags
-	}
-
-	validityPeriodsVal, ok := validityPeriodsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`validity_periods expected to be basetypes.ListValue, was: %T`, validityPeriodsAttribute))
-	}
-
-	valueExtractionAttribute, ok := attributes["value_extraction"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`value_extraction is missing from object`)
-
-		return NewRulesValueUnknown(), diags
-	}
-
-	valueExtractionVal, ok := valueExtractionAttribute.(ValueExtractionValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`value_extraction expected to be ValueExtractionValue, was: %T`, valueExtractionAttribute))
-	}
-
-	if diags.HasError() {
-		return NewRulesValueUnknown(), diags
-	}
-
-	return RulesValue{
-		Action:          actionVal,
-		Components:      componentsVal,
-		Description:     descriptionVal,
-		Formula:         formulaVal,
-		Id:              idVal,
-		Name:            nameVal,
-		ValidityPeriods: validityPeriodsVal,
-		ValueExtraction: valueExtractionVal,
-		state:           attr.ValueStateKnown,
-	}, diags
-}
-
-func NewRulesValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) RulesValue {
-	object, diags := NewRulesValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewRulesValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t RulesType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewRulesValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewRulesValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewRulesValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewRulesValueMust(RulesValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t RulesType) ValueType(ctx context.Context) attr.Value {
-	return RulesValue{}
-}
-
-var _ basetypes.ObjectValuable = RulesValue{}
-
-type RulesValue struct {
-	Action          basetypes.StringValue `tfsdk:"action"`
-	Components      basetypes.ListValue   `tfsdk:"components"`
-	Description     basetypes.StringValue `tfsdk:"description"`
-	Formula         basetypes.StringValue `tfsdk:"formula"`
-	Id              basetypes.StringValue `tfsdk:"id"`
-	Name            basetypes.StringValue `tfsdk:"name"`
-	ValidityPeriods basetypes.ListValue   `tfsdk:"validity_periods"`
-	ValueExtraction ValueExtractionValue  `tfsdk:"value_extraction"`
-	state           attr.ValueState
-}
-
-func (v RulesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 8)
-
-	var val tftypes.Value
-	var err error
-
-	attrTypes["action"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["components"] = basetypes.ListType{
-		ElemType: ComponentsValue{}.Type(ctx),
-	}.TerraformType(ctx)
-	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["formula"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["validity_periods"] = basetypes.ListType{
-		ElemType: ValidityPeriodsValue{}.Type(ctx),
-	}.TerraformType(ctx)
-	attrTypes["value_extraction"] = ValueExtractionType{
-		basetypes.ObjectType{
-			AttrTypes: ValueExtractionValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 8)
-
-		val, err = v.Action.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["action"] = val
-
-		val, err = v.Components.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["components"] = val
-
-		val, err = v.Description.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["description"] = val
-
-		val, err = v.Formula.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["formula"] = val
-
-		val, err = v.Id.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["id"] = val
-
-		val, err = v.Name.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["name"] = val
-
-		val, err = v.ValidityPeriods.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["validity_periods"] = val
-
-		val, err = v.ValueExtraction.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["value_extraction"] = val
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v RulesValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v RulesValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v RulesValue) String() string {
-	return "RulesValue"
-}
-
-func (v RulesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var components attr.Value
-
-	{
-		components = v.Components
-	}
-
-	var validityPeriods attr.Value
-
-	{
-		validityPeriods = v.ValidityPeriods
-	}
-
-	var valueExtraction attr.Value
-
-	{
-		valueExtraction = v.ValueExtraction
-	}
-
-	attributeTypes := map[string]attr.Type{
-		"action": basetypes.StringType{},
-		"components": basetypes.ListType{
-			ElemType: ComponentsValue{}.Type(ctx),
-		},
-		"description": basetypes.StringType{},
-		"formula":     basetypes.StringType{},
-		"id":          basetypes.StringType{},
-		"name":        basetypes.StringType{},
-		"validity_periods": basetypes.ListType{
-			ElemType: ValidityPeriodsValue{}.Type(ctx),
-		},
-		"value_extraction": ValueExtractionType{
-			basetypes.ObjectType{
-				AttrTypes: ValueExtractionValue{}.AttributeTypes(ctx),
-			},
-		},
-	}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{
-			"action":           v.Action,
-			"components":       components,
-			"description":      v.Description,
-			"formula":          v.Formula,
-			"id":               v.Id,
-			"name":             v.Name,
-			"validity_periods": validityPeriods,
-			"value_extraction": valueExtraction,
-		})
-
-	return objVal, diags
-}
-
-func (v RulesValue) Equal(o attr.Value) bool {
-	other, ok := o.(RulesValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	if !v.Action.Equal(other.Action) {
-		return false
-	}
-
-	if !v.Components.Equal(other.Components) {
-		return false
-	}
-
-	if !v.Description.Equal(other.Description) {
-		return false
-	}
-
-	if !v.Formula.Equal(other.Formula) {
-		return false
-	}
-
-	if !v.Id.Equal(other.Id) {
-		return false
-	}
-
-	if !v.Name.Equal(other.Name) {
-		return false
-	}
-
-	if !v.ValidityPeriods.Equal(other.ValidityPeriods) {
-		return false
-	}
-
-	if !v.ValueExtraction.Equal(other.ValueExtraction) {
-		return false
-	}
-
-	return true
-}
-
-func (v RulesValue) Type(ctx context.Context) attr.Type {
-	return RulesType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v RulesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"action": basetypes.StringType{},
-		"components": basetypes.ListType{
-			ElemType: ComponentsValue{}.Type(ctx),
-		},
-		"description": basetypes.StringType{},
-		"formula":     basetypes.StringType{},
-		"id":          basetypes.StringType{},
-		"name":        basetypes.StringType{},
-		"validity_periods": basetypes.ListType{
-			ElemType: ValidityPeriodsValue{}.Type(ctx),
-		},
-		"value_extraction": ValueExtractionType{
-			basetypes.ObjectType{
-				AttrTypes: ValueExtractionValue{}.AttributeTypes(ctx),
-			},
-		},
-	}
-}
-
 var _ basetypes.ObjectTypable = ValueExtractionType{}
 
 type ValueExtractionType struct {
@@ -3596,5 +2962,790 @@ func (v SourcesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 			ElemType: types.StringType,
 		},
 		"type": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = RulesType{}
+
+type RulesType struct {
+	basetypes.ObjectType
+}
+
+func (t RulesType) Equal(o attr.Type) bool {
+	other, ok := o.(RulesType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t RulesType) String() string {
+	return "RulesType"
+}
+
+func (t RulesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewRulesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewRulesValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	actionAttribute, ok := attributes["action"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`action is missing from object`)
+
+		return nil, diags
+	}
+
+	actionVal, ok := actionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`action expected to be basetypes.StringValue, was: %T`, actionAttribute))
+	}
+
+	componentsAttribute, ok := attributes["components"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`components is missing from object`)
+
+		return nil, diags
+	}
+
+	componentsVal, ok := componentsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`components expected to be basetypes.ListValue, was: %T`, componentsAttribute))
+	}
+
+	descriptionAttribute, ok := attributes["description"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`description is missing from object`)
+
+		return nil, diags
+	}
+
+	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
+	}
+
+	formulaAttribute, ok := attributes["formula"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`formula is missing from object`)
+
+		return nil, diags
+	}
+
+	formulaVal, ok := formulaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`formula expected to be basetypes.StringValue, was: %T`, formulaAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return nil, diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	validityPeriodsAttribute, ok := attributes["validity_periods"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`validity_periods is missing from object`)
+
+		return nil, diags
+	}
+
+	validityPeriodsVal, ok := validityPeriodsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`validity_periods expected to be basetypes.ListValue, was: %T`, validityPeriodsAttribute))
+	}
+
+	valueExtractionAttribute, ok := attributes["value_extraction"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value_extraction is missing from object`)
+
+		return nil, diags
+	}
+
+	valueExtractionValuable, ok := valueExtractionAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value_extraction expected to be basetypes.ObjectValuable, was: %T`, valueExtractionAttribute))
+
+		return nil, diags
+	}
+
+	valueExtractionObjVal, valueExtractionObjValDiags := valueExtractionValuable.ToObjectValue(ctx)
+	diags.Append(valueExtractionObjValDiags...)
+
+	valueExtractionTypable, ok := t.AttrTypes["value_extraction"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value_extraction expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["value_extraction"]))
+
+		return nil, diags
+	}
+
+	valueExtractionConverted, valueExtractionConvertedDiags := valueExtractionTypable.ValueFromObject(ctx, valueExtractionObjVal)
+	diags.Append(valueExtractionConvertedDiags...)
+
+	valueExtractionVal, ok := valueExtractionConverted.(ValueExtractionValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value_extraction expected to be ValueExtractionValue, was: %T`, valueExtractionConverted))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return RulesValue{
+		Action:          actionVal,
+		Components:      componentsVal,
+		Description:     descriptionVal,
+		Formula:         formulaVal,
+		Id:              idVal,
+		Name:            nameVal,
+		ValidityPeriods: validityPeriodsVal,
+		ValueExtraction: valueExtractionVal,
+		state:           attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRulesValueNull() RulesValue {
+	return RulesValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewRulesValueUnknown() RulesValue {
+	return RulesValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewRulesValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (RulesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing RulesValue Attribute Value",
+				"While creating a RulesValue value, a missing attribute value was detected. "+
+					"A RulesValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RulesValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid RulesValue Attribute Type",
+				"While creating a RulesValue value, an invalid attribute value was detected. "+
+					"A RulesValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RulesValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("RulesValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra RulesValue Attribute Value",
+				"While creating a RulesValue value, an extra attribute value was detected. "+
+					"A RulesValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra RulesValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewRulesValueUnknown(), diags
+	}
+
+	actionAttribute, ok := attributes["action"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`action is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	actionVal, ok := actionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`action expected to be basetypes.StringValue, was: %T`, actionAttribute))
+	}
+
+	componentsAttribute, ok := attributes["components"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`components is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	componentsVal, ok := componentsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`components expected to be basetypes.ListValue, was: %T`, componentsAttribute))
+	}
+
+	descriptionAttribute, ok := attributes["description"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`description is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
+	}
+
+	formulaAttribute, ok := attributes["formula"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`formula is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	formulaVal, ok := formulaAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`formula expected to be basetypes.StringValue, was: %T`, formulaAttribute))
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	validityPeriodsAttribute, ok := attributes["validity_periods"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`validity_periods is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	validityPeriodsVal, ok := validityPeriodsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`validity_periods expected to be basetypes.ListValue, was: %T`, validityPeriodsAttribute))
+	}
+
+	valueExtractionAttribute, ok := attributes["value_extraction"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`value_extraction is missing from object`)
+
+		return NewRulesValueUnknown(), diags
+	}
+
+	valueExtractionVal, ok := valueExtractionAttribute.(ValueExtractionValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`value_extraction expected to be ValueExtractionValue, was: %T`, valueExtractionAttribute))
+	}
+
+	if diags.HasError() {
+		return NewRulesValueUnknown(), diags
+	}
+
+	return RulesValue{
+		Action:          actionVal,
+		Components:      componentsVal,
+		Description:     descriptionVal,
+		Formula:         formulaVal,
+		Id:              idVal,
+		Name:            nameVal,
+		ValidityPeriods: validityPeriodsVal,
+		ValueExtraction: valueExtractionVal,
+		state:           attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRulesValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) RulesValue {
+	object, diags := NewRulesValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewRulesValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t RulesType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewRulesValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewRulesValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewRulesValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewRulesValueMust(RulesValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t RulesType) ValueType(ctx context.Context) attr.Value {
+	return RulesValue{}
+}
+
+var _ basetypes.ObjectValuable = RulesValue{}
+
+type RulesValue struct {
+	Action          basetypes.StringValue `tfsdk:"action"`
+	Components      basetypes.ListValue   `tfsdk:"components"`
+	Description     basetypes.StringValue `tfsdk:"description"`
+	Formula         basetypes.StringValue `tfsdk:"formula"`
+	Id              basetypes.StringValue `tfsdk:"id"`
+	Name            basetypes.StringValue `tfsdk:"name"`
+	ValidityPeriods basetypes.ListValue   `tfsdk:"validity_periods"`
+	ValueExtraction ValueExtractionValue  `tfsdk:"value_extraction"`
+	state           attr.ValueState
+}
+
+func (v RulesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 8)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["action"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["components"] = basetypes.ListType{
+		ElemType: ComponentsValue{}.Type(ctx),
+	}.TerraformType(ctx)
+	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["formula"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["validity_periods"] = basetypes.ListType{
+		ElemType: ValidityPeriodsValue{}.Type(ctx),
+	}.TerraformType(ctx)
+	attrTypes["value_extraction"] = ValueExtractionType{
+		basetypes.ObjectType{
+			AttrTypes: ValueExtractionValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 8)
+
+		val, err = v.Action.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["action"] = val
+
+		val, err = v.Components.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["components"] = val
+
+		val, err = v.Description.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["description"] = val
+
+		val, err = v.Formula.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["formula"] = val
+
+		val, err = v.Id.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["id"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		val, err = v.ValidityPeriods.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["validity_periods"] = val
+
+		val, err = v.ValueExtraction.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["value_extraction"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v RulesValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v RulesValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v RulesValue) String() string {
+	return "RulesValue"
+}
+
+func (v RulesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var components attr.Value
+
+	{
+		components = v.Components
+	}
+
+	var validityPeriods attr.Value
+
+	{
+		validityPeriods = v.ValidityPeriods
+	}
+
+	var valueExtraction attr.Value
+
+	{
+		valueExtraction = v.ValueExtraction
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"action": basetypes.StringType{},
+		"components": basetypes.ListType{
+			ElemType: ComponentsValue{}.Type(ctx),
+		},
+		"description": basetypes.StringType{},
+		"formula":     basetypes.StringType{},
+		"id":          basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"validity_periods": basetypes.ListType{
+			ElemType: ValidityPeriodsValue{}.Type(ctx),
+		},
+		"value_extraction": ValueExtractionType{
+			basetypes.ObjectType{
+				AttrTypes: ValueExtractionValue{}.AttributeTypes(ctx),
+			},
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"action":           v.Action,
+			"components":       components,
+			"description":      v.Description,
+			"formula":          v.Formula,
+			"id":               v.Id,
+			"name":             v.Name,
+			"validity_periods": validityPeriods,
+			"value_extraction": valueExtraction,
+		})
+
+	return objVal, diags
+}
+
+func (v RulesValue) Equal(o attr.Value) bool {
+	other, ok := o.(RulesValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Action.Equal(other.Action) {
+		return false
+	}
+
+	if !v.Components.Equal(other.Components) {
+		return false
+	}
+
+	if !v.Description.Equal(other.Description) {
+		return false
+	}
+
+	if !v.Formula.Equal(other.Formula) {
+		return false
+	}
+
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	if !v.ValidityPeriods.Equal(other.ValidityPeriods) {
+		return false
+	}
+
+	if !v.ValueExtraction.Equal(other.ValueExtraction) {
+		return false
+	}
+
+	return true
+}
+
+func (v RulesValue) Type(ctx context.Context) attr.Type {
+	return RulesType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v RulesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"action": basetypes.StringType{},
+		"components": basetypes.ListType{
+			ElemType: ComponentsValue{}.Type(ctx),
+		},
+		"description": basetypes.StringType{},
+		"formula":     basetypes.StringType{},
+		"id":          basetypes.StringType{},
+		"name":        basetypes.StringType{},
+		"validity_periods": basetypes.ListType{
+			ElemType: ValidityPeriodsValue{}.Type(ctx),
+		},
+		"value_extraction": ValueExtractionType{
+			basetypes.ObjectType{
+				AttrTypes: ValueExtractionValue{}.AttributeTypes(ctx),
+			},
+		},
 	}
 }

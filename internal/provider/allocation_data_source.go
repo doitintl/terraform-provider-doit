@@ -172,6 +172,13 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 		}
 		ruleMap["validity_periods"] = vpList
 
+		veVal, veDiags := ds.mapValueExtraction(ctx, rule.ValueExtraction)
+		diags.Append(veDiags...)
+		if diags.HasError() {
+			return diags
+		}
+		ruleMap["value_extraction"] = veVal
+
 		var ruleDiags diag.Diagnostics
 		data.Rule, ruleDiags = datasource_allocation.NewRuleValue(datasource_allocation.RuleValue{}.AttributeTypes(ctx), ruleMap)
 		diags.Append(ruleDiags...)

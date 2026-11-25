@@ -22878,6 +22878,13 @@ components:
           type: string
           description: Formula for combining components (A is the first component, B is the second one, etc.).
           example: "A AND B"
+        valueExtraction:
+          description: >-
+            When updating, omit it to keep the stored value, send null to clear
+            it, or send an object to replace it.
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/AllocationValueExtraction"
         validityPeriods:
           type: array
           nullable: true
