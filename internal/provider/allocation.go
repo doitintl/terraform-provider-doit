@@ -97,6 +97,11 @@ func overlayAllocationSingleRule(ctx context.Context, resolved, plan *resource_a
 	} else if !plan.ValidityPeriods.IsNull() && !resolved.ValidityPeriods.IsNull() && !resolved.ValidityPeriods.IsUnknown() {
 		diags.Append(overlayListElements(ctx, &resolved.ValidityPeriods, &plan.ValidityPeriods, overlayAllocationValidityPeriod)...)
 	}
+	if plan.ValueExtraction.IsUnknown() {
+		plan.ValueExtraction = resolved.ValueExtraction
+	} else if !plan.ValueExtraction.IsNull() && !resolved.ValueExtraction.IsNull() && !resolved.ValueExtraction.IsUnknown() {
+		diags.Append(overlayAllocationValueExtraction(ctx, &resolved.ValueExtraction, &plan.ValueExtraction)...)
+	}
 	return diags
 }
 
@@ -326,7 +331,8 @@ func convertValueExtractionToModel(ctx context.Context, ve resource_allocation.V
 	}
 
 	onMissingStr := string(models.AllocationValueExtractionOnMissingUseFallback)
-	if !ve.OnMissing.IsNull() && !ve.OnMissing.IsUnknown() && ve.OnMissing.ValueString() != "" {
+	// on_missing has a schema Default, so the plan never holds an unknown here.
+	if !ve.OnMissing.IsNull() && ve.OnMissing.ValueString() != "" {
 		onMissingStr = ve.OnMissing.ValueString()
 	}
 	modelVE := models.AllocationValueExtraction{
@@ -452,7 +458,28 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 				return diags
 			}
 		} else if plan.Rule.ValidityPeriods.IsNull() {
-			rule.ValidityPeriods.SetNull()
+			// The API treats a null (like an omitted) validityPeriods as "keep the
+			// stored periods"; only an empty array clears them.
+			//
+			// Terraform does not plan null here today: useNullForUnknownListWhenConfigNull
+			// plans [] once a prior value exists, and an omitted attribute otherwise plans
+			// unknown whenever anything else changes (so this branch is not reachable from
+			// an acceptance test). It stays as a guard so that a future change that makes
+			// null reachable clears the periods instead of silently keeping them;
+			// TestFillAllocationCommon_SingleRule_ValidityPeriodsNullSendsEmptyArray pins it.
+			rule.ValidityPeriods = valueToNullable([]models.AllocationRulePeriod{})
+		}
+		// An omitted valueExtraction keeps the stored value on the API side, so a null
+		// plan must send an explicit null to clear it. Unknown is left out (keep).
+		if !plan.Rule.ValueExtraction.IsNull() && !plan.Rule.ValueExtraction.IsUnknown() {
+			var veDiags diag.Diagnostics
+			rule.ValueExtraction, veDiags = convertValueExtractionToModel(ctx, plan.Rule.ValueExtraction)
+			diags.Append(veDiags...)
+			if diags.HasError() {
+				return diags
+			}
+		} else if plan.Rule.ValueExtraction.IsNull() {
+			rule.ValueExtraction.SetNull()
 		}
 		req.Rule.Set(rule)
 	}
@@ -611,6 +638,14 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 		m["validity_periods"], vpDiags = toValidityPeriodsListValue(ctx, rule.ValidityPeriods)
 		diags.Append(vpDiags...)
 		if vpDiags.HasError() {
+			return
+		}
+		// The single GET returns rule.valueExtraction itself (no detail fetch needed,
+		// unlike group members); an absent or null value maps to a typed null.
+		var veDiags diag.Diagnostics
+		m["value_extraction"], veDiags = toValueExtractionValue(ctx, rule.ValueExtraction)
+		diags.Append(veDiags...)
+		if veDiags.HasError() {
 			return
 		}
 		if rule.Components != nil {

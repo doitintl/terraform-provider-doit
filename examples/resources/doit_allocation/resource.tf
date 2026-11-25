@@ -42,6 +42,30 @@ resource "doit_allocation" "allocation_dev_clusters_us" {
   }
 }
 
+# Create an allocation that extracts a value (here the "team" label) from the
+# matching rows. The first source with a non-empty value wins; rows without any
+# value get the fallback. Remove the value_extraction block to clear it.
+resource "doit_allocation" "allocation_by_team" {
+  name        = "Costs by team"
+  description = "Production costs, extracted by team label"
+  rule = {
+    formula = "A"
+    components = [{
+      mode   = "is"
+      type   = "project_label"
+      key    = "env"
+      values = ["prod"]
+    }]
+    value_extraction = {
+      fallback = "unassigned"
+      sources = [{
+        type = "project_label"
+        key  = "team"
+      }]
+    }
+  }
+}
+
 # Create a group allocation from separate single allocations.
 # Group allocations use "rules" (plural) and require "unallocated_costs"
 # to label costs that don't match any rule. Define each member as its own

@@ -57,6 +57,30 @@ resource "doit_allocation" "allocation_dev_clusters_us" {
   }
 }
 
+# Create an allocation that extracts a value (here the "team" label) from the
+# matching rows. The first source with a non-empty value wins; rows without any
+# value get the fallback. Remove the value_extraction block to clear it.
+resource "doit_allocation" "allocation_by_team" {
+  name        = "Costs by team"
+  description = "Production costs, extracted by team label"
+  rule = {
+    formula = "A"
+    components = [{
+      mode   = "is"
+      type   = "project_label"
+      key    = "env"
+      values = ["prod"]
+    }]
+    value_extraction = {
+      fallback = "unassigned"
+      sources = [{
+        type = "project_label"
+        key  = "team"
+      }]
+    }
+  }
+}
+
 # Create a group allocation from separate single allocations.
 # Group allocations use "rules" (plural) and require "unallocated_costs"
 # to label costs that don't match any rule. Define each member as its own
@@ -386,6 +410,7 @@ Required:
 Optional:
 
 - `validity_periods` (Attributes List) Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies. (see [below for nested schema](#nestedatt--rule--validity_periods))
+- `value_extraction` (Attributes) Extracts a value (for example a label or tag value) from the rows the rule matches. The configuration is the source of truth: removing this block clears the stored extraction, so declare it to keep it. (see [below for nested schema](#nestedatt--rule--value_extraction))
 
 <a id="nestedatt--rule--components"></a>
 ### Nested Schema for `rule.components`
@@ -414,6 +439,34 @@ Optional:
 
 - `end_date` (String) End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound.
 - `start_date` (String) Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound.
+
+
+<a id="nestedatt--rule--value_extraction"></a>
+### Nested Schema for `rule.value_extraction`
+
+Required:
+
+- `sources` (Attributes List) Ordered extraction sources; the first non-empty value wins. (see [below for nested schema](#nestedatt--rule--value_extraction--sources))
+
+Optional:
+
+- `fallback` (String) Literal emitted when every source is missing. Required with onMissing "useFallback" (the default); not allowed with onMissing "nextRule".
+- `on_missing` (String) What happens when every source is missing or empty on a matching row. "useFallback" (default) emits the fallback value, which is required in that mode; "nextRule" lets the row fall through to the next rule in the group.
+Possible values: `useFallback`, `nextRule`
+
+<a id="nestedatt--rule--value_extraction--sources"></a>
+### Nested Schema for `rule.value_extraction.sources`
+
+Required:
+
+- `key` (String) The label/tag key, or the fixed dimension ID, whose value is extracted.
+- `type` (String) The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; "fixed" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.
+Possible values: `label`, `tag`, `project_label`, `system_label`, `gke_label`, `fixed`
+
+Optional:
+
+- `providers` (List of String) Optional cloud providers this source applies to.
+
 
 
 

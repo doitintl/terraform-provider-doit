@@ -6436,6 +6436,9 @@ type AllocationRule struct {
 
 	// ValidityPeriods Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.
 	ValidityPeriods nullable.Nullable[[]AllocationRulePeriod] `json:"validityPeriods,omitempty"`
+
+	// ValueExtraction When updating, omit it to keep the stored value, send null to clear it, or send an object to replace it.
+	ValueExtraction nullable.Nullable[AllocationValueExtraction] `json:"valueExtraction,omitempty"`
 }
 
 // AllocationRulePeriod A date range when a rule applies. startDate and endDate are both inclusive, so a handover between two rules needs a one-day gap: the first rule's endDate the day before, the second rule's startDate the handover day. Only the first period in the list may omit startDate, and only the last may omit endDate.

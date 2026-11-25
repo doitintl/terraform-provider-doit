@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -39,6 +40,17 @@ func (ds *allocationDataSource) Metadata(_ context.Context, req datasource.Metad
 
 func (ds *allocationDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_allocation.AllocationDataSourceSchema(ctx)
+
+	// The API wording for rule.valueExtraction describes updating, which does not apply
+	// to a read-only data source.
+	if rule, ok := s.Attributes["rule"].(schema.SingleNestedAttribute); ok {
+		if ve, ok := rule.Attributes["value_extraction"].(schema.SingleNestedAttribute); ok {
+			ve.Description = "Extracts a value (for example a label or tag value) from the rows the rule matches."
+			ve.MarkdownDescription = ve.Description
+			rule.Attributes["value_extraction"] = ve
+		}
+		s.Attributes["rule"] = rule
+	}
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
@@ -171,6 +183,13 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 			return diags
 		}
 		ruleMap["validity_periods"] = vpList
+
+		veVal, veDiags := ds.mapValueExtraction(ctx, rule.ValueExtraction)
+		diags.Append(veDiags...)
+		if diags.HasError() {
+			return diags
+		}
+		ruleMap["value_extraction"] = veVal
 
 		var ruleDiags diag.Diagnostics
 		data.Rule, ruleDiags = datasource_allocation.NewRuleValue(datasource_allocation.RuleValue{}.AttributeTypes(ctx), ruleMap)

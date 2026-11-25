@@ -142,6 +142,32 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 			}
 			rule.Attributes["validity_periods"] = vp
 		}
+		// Category A: null is a valid stored state and the API clears it on an explicit
+		// null (omitting it keeps the stored value), same wiring as rules[*].value_extraction.
+		if ve, ok := rule.Attributes["value_extraction"].(schema.SingleNestedAttribute); ok {
+			ve.Validators = append(ve.Validators, allocationValueExtractionValidator{})
+			ve.PlanModifiers = append(ve.PlanModifiers, useNullForUnknownValueExtraction())
+			if fb, ok := ve.Attributes["fallback"].(schema.StringAttribute); ok {
+				fb.PlanModifiers = append(fb.PlanModifiers, useNullForUnknownStringWhenConfigNull())
+				ve.Attributes["fallback"] = fb
+			}
+			if sources, ok := ve.Attributes["sources"].(schema.ListNestedAttribute); ok {
+				sources.Validators = append(sources.Validators, allocationValueExtractionSourcesValidator{})
+				if prov, ok := sources.NestedObject.Attributes["providers"].(schema.ListAttribute); ok {
+					prov.PlanModifiers = append(prov.PlanModifiers, useNullForUnknownListNullWhenConfigNull(types.StringType))
+					sources.NestedObject.Attributes["providers"] = prov
+				}
+				ve.Attributes["sources"] = sources
+			}
+			// The API wording ("omit it to keep the stored value") describes a raw PATCH.
+			// Here the configuration is the source of truth: omitting the block plans
+			// null and sends an explicit null.
+			ve.Description = "Extracts a value (for example a label or tag value) from the rows the rule matches. " +
+				"The configuration is the source of truth: removing this block clears the stored extraction, " +
+				"so declare it to keep it."
+			ve.MarkdownDescription = ve.Description
+			rule.Attributes["value_extraction"] = ve
+		}
 		s.Attributes["rule"] = rule
 	}
 

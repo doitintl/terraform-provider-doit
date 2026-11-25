@@ -93,6 +93,7 @@ func TestFillAllocationCommon_SingleRule_NoEmptyRules(t *testing.T) {
 			"formula":          types.StringValue("A"),
 			"components":       compList,
 			"validity_periods": types.ListNull(resource_allocation.ValidityPeriodsValue{}.Type(ctx)),
+			"value_extraction": resource_allocation.NewValueExtractionValueNull(),
 		},
 	)
 	if ruleDiags.HasError() {

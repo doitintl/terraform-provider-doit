@@ -73,6 +73,7 @@ Read-Only:
 - `components` (Attributes List) List of allocation filter components. (see [below for nested schema](#nestedatt--rule--components))
 - `formula` (String) Formula for combining components (A is the first component, B is the second one, etc.).
 - `validity_periods` (Attributes List) Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies. (see [below for nested schema](#nestedatt--rule--validity_periods))
+- `value_extraction` (Attributes) Extracts a value (for example a label or tag value) from the rows the rule matches. (see [below for nested schema](#nestedatt--rule--value_extraction))
 
 <a id="nestedatt--rule--components"></a>
 ### Nested Schema for `rule.components`
@@ -96,6 +97,26 @@ Read-Only:
 
 - `end_date` (String) End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound.
 - `start_date` (String) Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound.
+
+
+<a id="nestedatt--rule--value_extraction"></a>
+### Nested Schema for `rule.value_extraction`
+
+Read-Only:
+
+- `fallback` (String) Literal emitted when every source is missing. Required with onMissing "useFallback" (the default); not allowed with onMissing "nextRule".
+- `on_missing` (String) What happens when every source is missing or empty on a matching row. "useFallback" (default) emits the fallback value, which is required in that mode; "nextRule" lets the row fall through to the next rule in the group.
+- `sources` (Attributes List) Ordered extraction sources; the first non-empty value wins. (see [below for nested schema](#nestedatt--rule--value_extraction--sources))
+
+<a id="nestedatt--rule--value_extraction--sources"></a>
+### Nested Schema for `rule.value_extraction.sources`
+
+Read-Only:
+
+- `key` (String) The label/tag key, or the fixed dimension ID, whose value is extracted.
+- `providers` (List of String) Optional cloud providers this source applies to.
+- `type` (String) The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; "fixed" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.
+
 
 
 
