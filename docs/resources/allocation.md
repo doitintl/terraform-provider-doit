@@ -410,7 +410,7 @@ Required:
 Optional:
 
 - `validity_periods` (Attributes List) Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies. (see [below for nested schema](#nestedatt--rule--validity_periods))
-- `value_extraction` (Attributes) When updating, omit it to keep the stored value, send null to clear it, or send an object to replace it. (see [below for nested schema](#nestedatt--rule--value_extraction))
+- `value_extraction` (Attributes) Extracts a value (for example a label or tag value) from the rows the rule matches. The configuration is the source of truth: removing this block clears the stored extraction, so declare it to keep it. (see [below for nested schema](#nestedatt--rule--value_extraction))
 
 <a id="nestedatt--rule--components"></a>
 ### Nested Schema for `rule.components`

@@ -159,6 +159,13 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 				}
 				ve.Attributes["sources"] = sources
 			}
+			// The API wording ("omit it to keep the stored value") describes a raw PATCH.
+			// Here the configuration is the source of truth: omitting the block plans
+			// null and sends an explicit null.
+			ve.Description = "Extracts a value (for example a label or tag value) from the rows the rule matches. " +
+				"The configuration is the source of truth: removing this block clears the stored extraction, " +
+				"so declare it to keep it."
+			ve.MarkdownDescription = ve.Description
 			rule.Attributes["value_extraction"] = ve
 		}
 		s.Attributes["rule"] = rule

@@ -2,11 +2,16 @@ package provider
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	resschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -241,4 +246,37 @@ func TestOverlayAllocationSingleRule_ValueExtraction(t *testing.T) {
 			t.Fatalf("value_extraction = %v, want null (plan wins)", plan.ValueExtraction)
 		}
 	})
+}
+
+// The generated description of rule.value_extraction is the API's PATCH wording ("omit it
+// to keep the stored value"), which is wrong for the resource (omitting the block clears
+// it) and meaningless for the read-only data source. Both schemas override it.
+func TestAllocationSchema_SingleRuleValueExtractionDescription(t *testing.T) {
+	ctx := t.Context()
+	const apiWording = "omit it to keep"
+
+	var resResp resource.SchemaResponse
+	(&allocationResource{}).Schema(ctx, resource.SchemaRequest{}, &resResp)
+	rule, ok := resResp.Schema.Attributes["rule"].(resschema.SingleNestedAttribute)
+	if !ok {
+		t.Fatalf("resource rule attribute is %T", resResp.Schema.Attributes["rule"])
+	}
+	ve := rule.Attributes["value_extraction"]
+	if strings.Contains(ve.GetDescription(), apiWording) || strings.Contains(ve.GetMarkdownDescription(), apiWording) {
+		t.Errorf("resource value_extraction still carries the API wording: %q", ve.GetDescription())
+	}
+	if !strings.Contains(ve.GetDescription(), "removing this block clears") || ve.GetDescription() != ve.GetMarkdownDescription() {
+		t.Errorf("resource value_extraction description does not state the clear-on-removal semantics: %q", ve.GetDescription())
+	}
+
+	var dsResp datasource.SchemaResponse
+	(&allocationDataSource{}).Schema(ctx, datasource.SchemaRequest{}, &dsResp)
+	dsRule, ok := dsResp.Schema.Attributes["rule"].(dsschema.SingleNestedAttribute)
+	if !ok {
+		t.Fatalf("data source rule attribute is %T", dsResp.Schema.Attributes["rule"])
+	}
+	dsVE := dsRule.Attributes["value_extraction"]
+	if strings.Contains(dsVE.GetDescription(), apiWording) || strings.Contains(dsVE.GetMarkdownDescription(), apiWording) {
+		t.Errorf("data source value_extraction still carries the API wording: %q", dsVE.GetDescription())
+	}
 }
