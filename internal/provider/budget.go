@@ -199,7 +199,7 @@ type budgetRequestParts struct {
 	rollover      *models.BudgetRollover
 }
 
-func (plan *budgetResourceModel) toRequestParts(ctx context.Context) (parts budgetRequestParts, diags diag.Diagnostics) {
+func (plan *budgetResourceModel) toRequestParts(ctx context.Context, isUpdate bool) (parts budgetRequestParts, diags diag.Diagnostics) {
 	if !plan.Alerts.IsNull() && !plan.Alerts.IsUnknown() {
 		var alerts []resource_budget.AlertsValue
 		diags.Append(plan.Alerts.ElementsAs(ctx, &alerts, false)...)
@@ -301,9 +301,7 @@ func (plan *budgetResourceModel) toRequestParts(ctx context.Context) (parts budg
 		parts.seasonal = &seasonalAmounts
 	}
 
-	if !plan.AllowGrowth.IsNull() && !plan.AllowGrowth.IsUnknown() {
-		parts.allowGrowth = plan.AllowGrowth.ValueBoolPointer()
-	}
+	parts.allowGrowth = plan.requestAllowGrowth(isUpdate)
 
 	// A null rollover is left out here; toUpdateRequest turns it into a
 	// disabled one.
@@ -317,11 +315,35 @@ func (plan *budgetResourceModel) toRequestParts(ctx context.Context) (parts budg
 	return parts, diags
 }
 
+// requestAllowGrowth returns the allowGrowth to send, or nil to leave it out.
+//
+// The API checks growthPerPeriod against allowGrowth after merging the request
+// into the stored budget. Create turns growth on for a rate above 0 when
+// allowGrowth is omitted, but an update never does: it keeps the stored
+// allowGrowth, and a rate above 0 next to a stored false is a 400. An omitted
+// allow_growth plans as unknown on an update that changes something else, so
+// the rate decides, as it does on create. A fixed budget cannot have growth,
+// and a switch to fixed must turn it off in the same request.
+func (plan *budgetResourceModel) requestAllowGrowth(isUpdate bool) *bool {
+	if !plan.AllowGrowth.IsNull() && !plan.AllowGrowth.IsUnknown() {
+		return plan.AllowGrowth.ValueBoolPointer()
+	}
+	// growth_per_period has a schema default and type is Required, so both are
+	// known here.
+	if plan.GrowthPerPeriod.ValueFloat64() > 0 {
+		return new(true)
+	}
+	if isUpdate && plan.Type.ValueString() == "fixed" {
+		return new(false)
+	}
+	return nil
+}
+
 // toCreateRequest converts the Terraform model to the API BudgetCreateRequest.
 // name, currency, type, start_period and scopes are Required in the schema, so
 // they are copied unconditionally.
 func (plan *budgetResourceModel) toCreateRequest(ctx context.Context) (req models.BudgetCreateRequest, diags diag.Diagnostics) {
-	parts, d := plan.toRequestParts(ctx)
+	parts, d := plan.toRequestParts(ctx, false)
 	diags.Append(d...)
 	if diags.HasError() {
 		return req, diags
@@ -372,7 +394,7 @@ func (plan *budgetResourceModel) toCreateRequest(ctx context.Context) (req model
 // left out, which keeps them unchanged: amount is unknown on a seasonal budget
 // whose configuration omits it, and the API rejects any amount there.
 func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req models.BudgetUpdateRequest, diags diag.Diagnostics) {
-	parts, d := plan.toRequestParts(ctx)
+	parts, d := plan.toRequestParts(ctx, true)
 	diags.Append(d...)
 	if diags.HasError() {
 		return req, diags

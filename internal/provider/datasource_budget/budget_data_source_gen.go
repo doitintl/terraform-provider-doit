@@ -43,8 +43,8 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"allow_growth": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Whether `growthPerPeriod` is applied to the amount each period.",
-				MarkdownDescription: "Whether `growthPerPeriod` is applied to the amount each period.",
+				Description:         "Whether `growthPerPeriod` is applied to the amount each period. Not allowed for fixed budgets.",
+				MarkdownDescription: "Whether `growthPerPeriod` is applied to the amount each period. Not allowed for fixed budgets.",
 			},
 			"amount": schema.Float64Attribute{
 				Computed:            true,
@@ -189,8 +189,8 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.",
-				MarkdownDescription: "Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.",
+				Description:         "Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`.",
+				MarkdownDescription: "Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`.",
 			},
 			"scopes": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -270,8 +270,8 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"use_prev_spend": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.",
-				MarkdownDescription: "Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.",
+				Description:         "Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`.",
+				MarkdownDescription: "Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`.",
 			},
 		},
 		Description:         "Track actual cloud spend against planned spend.",

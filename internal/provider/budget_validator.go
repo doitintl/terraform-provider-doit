@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_budget"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -830,10 +832,10 @@ func (v budgetRolloverValidator) ValidateResource(ctx context.Context, req resou
 
 // validateBudgetSeasonalGrowth rejects seasonal amounts on a budget that would
 // grow, when the configuration omits allow_growth (a configured value is
-// checked by budgetSeasonalAmountsValidator). The API decides growth
-// differently on create and update: create turns it on for a
-// growth_per_period above 0, while an update keeps the stored allow_growth
-// whatever the rate is.
+// checked by budgetSeasonalAmountsValidator and budgetGrowthValidator). A rate
+// above 0 turns growth on when allow_growth is omitted (the API does it on
+// create, the request builder does it on update), and an update keeps a stored
+// allow_growth = true.
 func validateBudgetSeasonalGrowth(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse, isCreate bool) {
 	var seasonal types.List
 	diags := req.Plan.GetAttribute(ctx, path.Root("seasonal_amounts"), &seasonal)
@@ -861,11 +863,10 @@ func validateBudgetSeasonalGrowth(ctx context.Context, req resource.ModifyPlanRe
 		return
 	}
 
-	if isCreate {
-		validateBudgetSeasonalGrowthRate(ctx, req, resp)
-		return
+	validateBudgetSeasonalGrowthRate(ctx, req, resp)
+	if !isCreate {
+		validateBudgetSeasonalStoredGrowth(ctx, req, resp)
 	}
-	validateBudgetSeasonalStoredGrowth(ctx, req, resp)
 }
 
 func validateBudgetSeasonalGrowthRate(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
@@ -880,11 +881,11 @@ func validateBudgetSeasonalGrowthRate(ctx context.Context, req resource.ModifyPl
 	}
 	if growth.ValueFloat64() > 0 {
 		resp.Diagnostics.AddAttributeError(
-			path.Root("allow_growth"),
+			path.Root("growth_per_period"),
 			"Invalid Attribute Combination",
 			"A growth_per_period above 0 turns growth on when allow_growth is omitted, and seasonal_amounts cannot "+
-				"be combined with growth. Set allow_growth = false (the rate is then stored but not applied) "+
-				"or set growth_per_period to 0.",
+				"be combined with growth. Set growth_per_period to 0. The DoiT API rejects a rate above 0 "+
+				"when growth is off, so allow_growth = false does not keep the rate.",
 		)
 	}
 }
@@ -904,7 +905,7 @@ func validateBudgetSeasonalStoredGrowth(ctx context.Context, req resource.Modify
 			path.Root("allow_growth"),
 			"Invalid Attribute Combination",
 			"The budget has growth turned on, and seasonal_amounts cannot be combined with growth. "+
-				"Set allow_growth = false to switch it to seasonal amounts.",
+				"Set allow_growth = false and growth_per_period = 0 to switch it to seasonal amounts.",
 		)
 	}
 }
@@ -1049,5 +1050,332 @@ func validateBudgetSeasonalRemoval(ctx context.Context, req resource.ModifyPlanR
 		"Missing Budget Amount",
 		"Removing seasonal_amounts needs a replacement for the amount of each period: set amount, "+
 			"or use_prev_spend = true. The DoiT API rejects removing seasonal amounts without one.",
+	)
+}
+
+// The helpers below read one configuration value and append the diagnostics of
+// their own GetAttribute call, so an independent check that runs after another
+// is not suppressed by it. ok is false when the attribute could not be read.
+
+func getBudgetConfigBool(ctx context.Context, config tfsdk.Config, name string, diags *diag.Diagnostics) (value types.Bool, ok bool) {
+	d := config.GetAttribute(ctx, path.Root(name), &value)
+	diags.Append(d...)
+	return value, !d.HasError()
+}
+
+func getBudgetConfigFloat64(ctx context.Context, config tfsdk.Config, name string, diags *diag.Diagnostics) (value types.Float64, ok bool) {
+	d := config.GetAttribute(ctx, path.Root(name), &value)
+	diags.Append(d...)
+	return value, !d.HasError()
+}
+
+func getBudgetConfigString(ctx context.Context, config tfsdk.Config, name string, diags *diag.Diagnostics) (value types.String, ok bool) {
+	d := config.GetAttribute(ctx, path.Root(name), &value)
+	diags.Append(d...)
+	return value, !d.HasError()
+}
+
+// getBudgetConfigRolloverEnabled returns rollover.enabled from the
+// configuration: null when the block or the attribute is omitted, unknown when
+// either is not known yet.
+func getBudgetConfigRolloverEnabled(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) (enabled types.Bool, ok bool) {
+	var rollover resource_budget.RolloverValue
+	d := config.GetAttribute(ctx, path.Root("rollover"), &rollover)
+	diags.Append(d...)
+	if d.HasError() {
+		return enabled, false
+	}
+	if rollover.IsNull() {
+		return types.BoolNull(), true
+	}
+	if rollover.IsUnknown() {
+		return types.BoolUnknown(), true
+	}
+	return rollover.Enabled, true
+}
+
+// budgetGrowthValidator rejects the growth settings the API rejects on its own:
+// a negative growth_per_period, and a growth_per_period other than 0 next to
+// allow_growth = false. The API (checked against the CI tenant) answers the
+// second with 400 on create and on update, so a rate can no longer be kept
+// "stored but not applied". An omitted allow_growth is not an error: the
+// request builder turns it on for a rate above 0 (requestAllowGrowth).
+type budgetGrowthValidator struct{}
+
+var _ resource.ConfigValidator = budgetGrowthValidator{}
+
+func (v budgetGrowthValidator) Description(_ context.Context) string {
+	return "Validates that growth_per_period is not negative and is 0 when allow_growth is false"
+}
+
+func (v budgetGrowthValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `growth_per_period` is not negative and is 0 when `allow_growth` is false"
+}
+
+func (v budgetGrowthValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	validateBudgetGrowthNotNegative(ctx, req, resp)
+	validateBudgetGrowthRateNeedsAllowGrowth(ctx, req, resp)
+}
+
+func validateBudgetGrowthNotNegative(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	growth, ok := getBudgetConfigFloat64(ctx, req.Config, "growth_per_period", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+	if growth.IsNull() || growth.IsUnknown() {
+		return
+	}
+	if growth.ValueFloat64() < 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("growth_per_period"),
+			"Invalid Growth Per Period",
+			fmt.Sprintf("growth_per_period must not be negative. Found %v.", growth.ValueFloat64()),
+		)
+	}
+}
+
+func validateBudgetGrowthRateNeedsAllowGrowth(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	allowGrowth, ok := getBudgetConfigBool(ctx, req.Config, "allow_growth", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+	if allowGrowth.IsNull() || allowGrowth.IsUnknown() {
+		return
+	}
+	growth, ok := getBudgetConfigFloat64(ctx, req.Config, "growth_per_period", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+	if growth.IsNull() || growth.IsUnknown() {
+		return
+	}
+	if !allowGrowth.ValueBool() && growth.ValueFloat64() != 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("growth_per_period"),
+			"Invalid Attribute Combination",
+			"Attribute growth_per_period must be 0 when allow_growth is false, and the DoiT API rejects any other value. "+
+				"Set growth_per_period to 0 to turn growth off, or set allow_growth to true to apply the rate.",
+		)
+	}
+}
+
+// budgetFixedValidator rejects what the API rejects on a fixed budget: growth, a
+// growth rate, an enabled rollover and use_prev_spend. They are for recurring
+// budgets; the API checks all four on create and on update. A disabled rollover
+// and use_prev_spend = false are accepted, and are what a fixed budget reads
+// back as.
+type budgetFixedValidator struct{}
+
+var _ resource.ConfigValidator = budgetFixedValidator{}
+
+func (v budgetFixedValidator) Description(_ context.Context) string {
+	return "Validates that a fixed budget has no growth, enabled rollover or use_prev_spend"
+}
+
+func (v budgetFixedValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that a budget with `type = \"fixed\"` has no `allow_growth`, no `growth_per_period` other than 0, " +
+		"no enabled `rollover` and no `use_prev_spend`"
+}
+
+func (v budgetFixedValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	budgetType, ok := getBudgetConfigString(ctx, req.Config, "type", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+	if budgetType.IsNull() || budgetType.IsUnknown() {
+		return
+	}
+	if budgetType.ValueString() != "fixed" {
+		return
+	}
+
+	validateBudgetFixedAllowGrowth(ctx, req, resp)
+	validateBudgetFixedGrowthRate(ctx, req, resp)
+	validateBudgetFixedRollover(ctx, req, resp)
+	validateBudgetFixedUsePrevSpend(ctx, req, resp)
+}
+
+func validateBudgetFixedAllowGrowth(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	allowGrowth, ok := getBudgetConfigBool(ctx, req.Config, "allow_growth", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+	if allowGrowth.IsNull() || allowGrowth.IsUnknown() {
+		return
+	}
+	if allowGrowth.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("allow_growth"),
+			"Invalid Attribute Combination",
+			"Attribute allow_growth cannot be true when type is \"fixed\". Growth is only supported for recurring budgets.",
+		)
+	}
+}
+
+func validateBudgetFixedGrowthRate(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	growth, ok := getBudgetConfigFloat64(ctx, req.Config, "growth_per_period", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+	if growth.IsNull() || growth.IsUnknown() {
+		return
+	}
+	if growth.ValueFloat64() != 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("growth_per_period"),
+			"Invalid Attribute Combination",
+			"Attribute growth_per_period must be 0 when type is \"fixed\". Growth is only supported for recurring budgets.",
+		)
+	}
+}
+
+func validateBudgetFixedRollover(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	enabled, ok := getBudgetConfigRolloverEnabled(ctx, req.Config, &resp.Diagnostics)
+	if !ok {
+		return
+	}
+	if enabled.IsNull() || enabled.IsUnknown() {
+		return
+	}
+	if enabled.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("rollover").AtName("enabled"),
+			"Invalid Attribute Combination",
+			"Rollover cannot be enabled when type is \"fixed\". Rollover is only supported for recurring budgets.",
+		)
+	}
+}
+
+func validateBudgetFixedUsePrevSpend(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	usePrevSpend, ok := getBudgetConfigBool(ctx, req.Config, "use_prev_spend", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+	if usePrevSpend.IsNull() || usePrevSpend.IsUnknown() {
+		return
+	}
+	if usePrevSpend.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("use_prev_spend"),
+			"Invalid Attribute Combination",
+			"Attribute use_prev_spend cannot be true when type is \"fixed\". Previous spend is only supported for recurring budgets.",
+		)
+	}
+}
+
+// budgetUsePrevSpendValidator rejects use_prev_spend = true together with an
+// enabled rollover, which the API rejects on create and on update. The other
+// combinations with use_prev_spend are checked by budgetFixedValidator and
+// budgetSeasonalAmountsValidator.
+//
+// A configured amount next to use_prev_spend is not checked yet: the API
+// accepts it and reads back the previous period's spend instead, but a
+// configuration generated by an import holds that read-back amount, so a
+// validator would reject its own generated configuration. The API will reject
+// the combination and stop returning amount for these budgets (CMP-56721,
+// second part); the check belongs there.
+type budgetUsePrevSpendValidator struct{}
+
+var _ resource.ConfigValidator = budgetUsePrevSpendValidator{}
+
+func (v budgetUsePrevSpendValidator) Description(_ context.Context) string {
+	return "Validates that use_prev_spend is not combined with an enabled rollover"
+}
+
+func (v budgetUsePrevSpendValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `use_prev_spend` is not combined with an enabled `rollover`"
+}
+
+func (v budgetUsePrevSpendValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	usePrevSpend, ok := getBudgetConfigBool(ctx, req.Config, "use_prev_spend", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+	if usePrevSpend.IsNull() || usePrevSpend.IsUnknown() {
+		return
+	}
+	if !usePrevSpend.ValueBool() {
+		return
+	}
+
+	enabled, ok := getBudgetConfigRolloverEnabled(ctx, req.Config, &resp.Diagnostics)
+	if !ok {
+		return
+	}
+	if enabled.IsNull() || enabled.IsUnknown() {
+		return
+	}
+	if enabled.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("rollover").AtName("enabled"),
+			"Invalid Attribute Combination",
+			"Rollover cannot be enabled together with use_prev_spend = true.",
+		)
+	}
+}
+
+// validateBudgetUsePrevSpendRemoval rejects an update that turns use_prev_spend
+// off without an amount: the amount of a previous-spend budget is last period's
+// spend, so the API needs the amount to keep in the same request ("invalid
+// amount" otherwise), unless seasonal_amounts replaces it. The configuration
+// decides, as in validateBudgetSeasonalRemoval: the planned amount is unknown
+// for an omitted attribute as soon as anything else changes, and an unknown
+// amount or seasonal_amounts defers the check to apply.
+func validateBudgetUsePrevSpendRemoval(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var stored types.Bool
+	diags := req.State.GetAttribute(ctx, path.Root("use_prev_spend"), &stored)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if stored.IsNull() || stored.IsUnknown() {
+		return
+	}
+	if !stored.ValueBool() {
+		return
+	}
+
+	var planned types.Bool
+	diags = req.Plan.GetAttribute(ctx, path.Root("use_prev_spend"), &planned)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if planned.IsNull() || planned.IsUnknown() {
+		return
+	}
+	if planned.ValueBool() {
+		return
+	}
+
+	amount, ok := getBudgetConfigFloat64(ctx, req.Config, "amount", &resp.Diagnostics)
+	if !ok {
+		return
+	}
+	if amount.IsUnknown() {
+		return
+	}
+	if !amount.IsNull() {
+		return
+	}
+
+	var seasonal types.List
+	diags = req.Config.GetAttribute(ctx, path.Root("seasonal_amounts"), &seasonal)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if seasonal.IsUnknown() {
+		return
+	}
+	if !seasonal.IsNull() && len(seasonal.Elements()) > 0 {
+		return
+	}
+
+	resp.Diagnostics.AddAttributeError(
+		path.Root("amount"),
+		"Missing Budget Amount",
+		"Turning use_prev_spend off needs the amount to keep: set amount, or seasonal_amounts. "+
+			"Without use_prev_spend the amount is no longer last period's spend, and the DoiT API rejects the update without one.",
 	)
 }

@@ -1302,14 +1302,14 @@
 						"name": "allow_growth",
 						"bool": {
 							"computed_optional_required": "computed_optional",
-							"description": "Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`."
+							"description": "Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Must be true when `growthPerPeriod` is not 0. Cannot be true together with `seasonalAmounts`. Not allowed for fixed budgets."
 						}
 					},
 					{
 						"name": "amount",
 						"float64": {
 							"computed_optional_required": "computed_optional",
-							"description": "Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set."
+							"description": "Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set. Not used when `usePrevSpend` is true."
 						}
 					},
 					{
@@ -1409,7 +1409,7 @@
 							"default": {
 								"static": 0
 							},
-							"description": "Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true."
+							"description": "Growth percentage per period, applied when `allowGrowth` is true. Must not be negative. If `allowGrowth` is omitted, a value above 0 sets it to true. A value other than 0 with `allowGrowth` false is rejected. Must be 0 for fixed budgets."
 						}
 					},
 					{
@@ -1549,7 +1549,7 @@
 									}
 								}
 							],
-							"description": "Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`."
+							"description": "Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`."
 						}
 					},
 					{
@@ -1695,7 +1695,7 @@
 							"default": {
 								"static": false
 							},
-							"description": "Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`."
+							"description": "Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`."
 						}
 					},
 					{

@@ -287,8 +287,8 @@ Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, 
 ### Optional
 
 - `alerts` (Attributes List) List of up to three thresholds defined as a percentage of the amount. (see [below for nested schema](#nestedatt--alerts))
-- `allow_growth` (Boolean) Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`.
-- `amount` (Number) Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set.
+- `allow_growth` (Boolean) Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Must be true when `growthPerPeriod` is not 0. Cannot be true together with `seasonalAmounts`. Not allowed for fixed budgets.
+- `amount` (Number) Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set. Not used when `usePrevSpend` is true.
 - `collaborators` (Attributes List) List of permitted users to view/edit the report. (see [below for nested schema](#nestedatt--collaborators))
 - `data_source` (String) Data source used to evaluate the budget.
 When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
@@ -297,18 +297,18 @@ Possible values: `billing`, `billing-datahub`
 - `description` (String) Budget description
 - `end_period` (Number) Fixed budget end date
 required: true(if budget type is fixed)
-- `growth_per_period` (Number) Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true.
+- `growth_per_period` (Number) Growth percentage per period, applied when `allowGrowth` is true. Must not be negative. If `allowGrowth` is omitted, a value above 0 sets it to true. A value other than 0 with `allowGrowth` false is rejected. Must be 0 for fixed budgets.
 - `metric` (String) Budget metric
 Possible values: `cost`, `amortized_cost`
 - `public` (String) Public sharing access level for the budget.
 Possible values: `owner`, `editor`, `viewer`
 - `recipients` (List of String) List of emails to notify when reaching alert threshold.
 - `recipients_slack_channels` (Attributes List) List of Slack channels to notify when reaching alert threshold. (see [below for nested schema](#nestedatt--recipients_slack_channels))
-- `rollover` (Attributes) Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`. Removing the block disables rollover. (see [below for nested schema](#nestedatt--rollover))
+- `rollover` (Attributes) Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`. Removing the block disables rollover. (see [below for nested schema](#nestedatt--rollover))
 - `seasonal_amounts` (List of Number) Amount for each period of a recurring budget, in calendar order. Requires 7 values for `day` (Monday to Sunday), 12 for `month`, 4 for `quarter` and 5 for `year` (counted from the start year). Not allowed for fixed budgets or the `week` interval. When set, `amount` must be omitted, and `currentPeriodAmount` returns the amount for the current period. Cannot be combined with `allowGrowth`, an enabled `rollover` or `usePrevSpend`. To remove seasonal amounts, send an empty array together with `amount` or `usePrevSpend`.
 - `time_interval` (String) Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
-- `use_prev_spend` (Boolean) Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.
+- `use_prev_spend` (Boolean) Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`.
 
 ### Read-Only
 
