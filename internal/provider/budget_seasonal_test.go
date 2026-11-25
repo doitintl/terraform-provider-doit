@@ -237,14 +237,17 @@ func TestAccBudget_SeasonalImport(t *testing.T) {
 }
 
 // TestAccBudget_GrowthToSeasonal switches a budget with growth to seasonal
-// amounts. An update keeps the stored allow_growth whatever growth_per_period
-// says, so without allow_growth = false the switch fails at plan time, and
-// with it the rate is kept but not applied.
+// amounts. An update keeps the stored allow_growth = true, and the API rejects
+// a growth_per_period other than 0 next to allow_growth = false, so the switch
+// needs allow_growth = false and growth_per_period = 0 together. Without
+// allow_growth = false, or with the rate kept, it fails at plan time.
 func TestAccBudget_GrowthToSeasonal(t *testing.T) {
 	name := fmt.Sprintf("test-growth-seasonal-%d", acctest.RandInt())
 	growth := testAccBudgetLifecycleConfig(name, "  amount = 100\n  growth_per_period = 1")
-	seasonalKeepsGrowth := testAccBudgetLifecycleConfig(name, "  growth_per_period = 1\n  seasonal_amounts = "+budgetMonthlySeasonal)
-	seasonal := testAccBudgetLifecycleConfig(name, "  growth_per_period = 1\n  allow_growth = false\n  seasonal_amounts = "+budgetMonthlySeasonal)
+	seasonalKeepsGrowth := testAccBudgetLifecycleConfig(name, "  seasonal_amounts = "+budgetMonthlySeasonal)
+	seasonalKeepsRate := testAccBudgetLifecycleConfig(name, "  growth_per_period = 1\n  seasonal_amounts = "+budgetMonthlySeasonal)
+	seasonalRateWithoutGrowth := testAccBudgetLifecycleConfig(name, "  growth_per_period = 1\n  allow_growth = false\n  seasonal_amounts = "+budgetMonthlySeasonal)
+	seasonal := testAccBudgetLifecycleConfig(name, "  allow_growth = false\n  seasonal_amounts = "+budgetMonthlySeasonal)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders:        budgetTimeProvider(),
@@ -265,14 +268,27 @@ func TestAccBudget_GrowthToSeasonal(t *testing.T) {
 			{
 				Config:      seasonalKeepsGrowth,
 				PlanOnly:    true,
-				ExpectError: budgetErrorPattern(`Set allow_growth = false to switch it to seasonal amounts`),
+				ExpectError: budgetErrorPattern(`Set allow_growth = false and growth_per_period = 0 to switch it to seasonal amounts`),
+			},
+			// An omitted allow_growth with a rate turns growth on, which
+			// seasonal amounts cannot be combined with.
+			{
+				Config:      seasonalKeepsRate,
+				PlanOnly:    true,
+				ExpectError: budgetErrorPattern(`A growth_per_period above 0 turns growth on when allow_growth is omitted`),
+			},
+			// The API rejects a rate next to allow_growth = false.
+			{
+				Config:      seasonalRateWithoutGrowth,
+				PlanOnly:    true,
+				ExpectError: budgetErrorPattern(`growth_per_period must be 0 when allow_growth is false`),
 			},
 			{
 				Config:           seasonal,
 				ConfigPlanChecks: budgetUpdateChecks(),
 				ConfigStateChecks: []statecheck.StateCheck{
 					budgetState("allow_growth", knownvalue.Bool(false)),
-					budgetState("growth_per_period", knownvalue.Float64Exact(1)),
+					budgetState("growth_per_period", knownvalue.Float64Exact(0)),
 					budgetState("amount", knownvalue.Null()),
 					budgetState("seasonal_amounts", knownvalue.ListSizeExact(12)),
 				},
@@ -394,7 +410,9 @@ func TestAccBudget_SeasonalValidation(t *testing.T) {
 		{"use_prev_spend", seasonal + "\n  use_prev_spend = true", "", `use_prev_spend cannot be true together with seasonal_amounts`},
 		{"allow_growth", seasonal + "\n  allow_growth = true", "", `allow_growth cannot be true together with seasonal_amounts`},
 		{"growth rate on create", seasonal + "\n  growth_per_period = 5", "", `A growth_per_period above 0 turns growth on`},
-		{"growth rate with allow_growth false", seasonal + "\n  growth_per_period = 5\n  allow_growth = false", "", ""},
+		{"growth rate with allow_growth false", seasonal + "\n  growth_per_period = 5\n  allow_growth = false", "", `growth_per_period must be 0 when allow_growth is false`},
+		{"allow_growth false, no rate", seasonal + "\n  allow_growth = false", "", ""},
+		{"unknown growth rate", seasonal + "\n  growth_per_period = terraform_data.dep.output", `resource "terraform_data" "dep" { input = 5 }`, ""},
 		{"rollover enabled", seasonal + "\n  rollover = { enabled = true, limit = 2 }", "", `Rollover cannot be enabled together with seasonal_amounts`},
 		{"rollover disabled", seasonal + "\n  rollover = { enabled = false, limit = 0 }", "", ""},
 		{"wrong length", "seasonal_amounts = [1, 2, 3]", "", `time_interval "month" requires exactly 12 seasonal_amounts`},

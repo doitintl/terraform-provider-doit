@@ -10451,7 +10451,7 @@ components:
           format: double
         allowGrowth:
           type: boolean
-          description: Whether `growthPerPeriod` is applied to the amount each period.
+          description: Whether `growthPerPeriod` is applied to the amount each period. Not allowed for fixed budgets.
         growthPerPeriod:
           type: number
           description: Growth percentage per period, applied when `allowGrowth` is true.
@@ -10509,7 +10509,7 @@ components:
           format: int64
         usePrevSpend:
           type: boolean
-          description: Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.
+          description: Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`.
           default: false
     BudgetCreateRequest:
       type: object
@@ -10528,7 +10528,7 @@ components:
             $ref: "#/components/schemas/BudgetCreateUpdateAlert"
         amount:
           type: number
-          description: Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set.
+          description: Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set. Not used when `usePrevSpend` is true.
           format: double
         seasonalAmounts:
           type: array
@@ -10557,10 +10557,10 @@ components:
           format: int64
         allowGrowth:
           type: boolean
-          description: Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`.
+          description: Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Must be true when `growthPerPeriod` is not 0. Cannot be true together with `seasonalAmounts`. Not allowed for fixed budgets.
         growthPerPeriod:
           type: number
-          description: Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true.
+          description: Growth percentage per period, applied when `allowGrowth` is true. Must not be negative. If `allowGrowth` is omitted, a value above 0 sets it to true. A value other than 0 with `allowGrowth` false is rejected. Must be 0 for fixed budgets.
           format: double
           default: 0
         rollover:
@@ -10610,7 +10610,7 @@ components:
           description: 'budget type can be one of: ["fixed", "recurring"]'
         usePrevSpend:
           type: boolean
-          description: Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.
+          description: Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`.
           default: false
     BudgetCreateUpdateAlert:
       type: object
@@ -10680,7 +10680,7 @@ components:
           type: string
     BudgetRollover:
       type: object
-      description: Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.
+      description: Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`.
       required:
         - enabled
         - limit
@@ -10772,7 +10772,7 @@ components:
             $ref: "#/components/schemas/BudgetCreateUpdateAlert"
         amount:
           type: number
-          description: Budget period amount. Must be omitted when the budget has `seasonalAmounts`. Required when removing `seasonalAmounts`, unless `usePrevSpend` is true.
+          description: Budget period amount. Must be omitted when the budget has `seasonalAmounts`. Required when removing `seasonalAmounts`, unless `usePrevSpend` is true, and when turning `usePrevSpend` off, unless `seasonalAmounts` is set. Not used when the budget has `usePrevSpend`.
           format: double
         seasonalAmounts:
           type: array
@@ -10801,10 +10801,10 @@ components:
           format: int64
         allowGrowth:
           type: boolean
-          description: Apply `growthPerPeriod` to the amount each period. Cannot be true together with `seasonalAmounts`; to switch a budget with growth to seasonal amounts, send `allowGrowth` false in the same request.
+          description: Apply `growthPerPeriod` to the amount each period. To turn growth off on a budget with a `growthPerPeriod` other than 0, also send `growthPerPeriod` 0. Cannot be true together with `seasonalAmounts`; to switch a budget with growth to seasonal amounts, send `allowGrowth` false and `growthPerPeriod` 0 in the same request. Not allowed for fixed budgets; to switch a budget with growth to `fixed`, also send `allowGrowth` false and `growthPerPeriod` 0.
         growthPerPeriod:
           type: number
-          description: Growth percentage per period, applied when `allowGrowth` is true. Changing it does not change `allowGrowth`.
+          description: Growth percentage per period, applied when `allowGrowth` is true. Must not be negative. A value other than 0 requires `allowGrowth` true, either already set on the budget or sent in the same request. Must be 0 for fixed budgets.
           format: double
           default: 0
         rollover:
@@ -10853,7 +10853,7 @@ components:
           description: 'budget type can be one of: ["fixed", "recurring"]'
         usePrevSpend:
           type: boolean
-          description: Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.
+          description: Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`.
           default: false
     CloudAnalyticsAlertConfigDataSource:
       type: string

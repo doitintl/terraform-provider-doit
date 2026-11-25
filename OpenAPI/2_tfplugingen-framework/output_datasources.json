@@ -4727,7 +4727,7 @@
 						"name": "allow_growth",
 						"bool": {
 							"computed_optional_required": "computed",
-							"description": "Whether `growthPerPeriod` is applied to the amount each period."
+							"description": "Whether `growthPerPeriod` is applied to the amount each period. Not allowed for fixed budgets."
 						}
 					},
 					{
@@ -4919,7 +4919,7 @@
 									}
 								}
 							],
-							"description": "Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`."
+							"description": "Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`."
 						}
 					},
 					{
@@ -5027,7 +5027,7 @@
 						"name": "use_prev_spend",
 						"bool": {
 							"computed_optional_required": "computed",
-							"description": "Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`."
+							"description": "Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`."
 						}
 					}
 				],

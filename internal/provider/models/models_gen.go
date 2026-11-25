@@ -7231,7 +7231,7 @@ type BudgetAPI struct {
 	// Alerts List of up to three thresholds defined as a percentage of `currentPeriodAmount`.
 	Alerts *[]ExternalBudgetAlert `json:"alerts,omitempty"`
 
-	// AllowGrowth Whether `growthPerPeriod` is applied to the amount each period.
+	// AllowGrowth Whether `growthPerPeriod` is applied to the amount each period. Not allowed for fixed budgets.
 	AllowGrowth *bool `json:"allowGrowth,omitempty"`
 
 	// Amount Budget period amount, as set on create or update. Growth and rollover do not change it; see `currentPeriodAmount` for the amount that applies to the current period. For budgets with `usePrevSpend`, this is the amount for the current period. Omitted for budgets with `seasonalAmounts`.
@@ -7283,7 +7283,7 @@ type BudgetAPI struct {
 	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold.
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Rollover Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.
+	// Rollover Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`.
 	Rollover *BudgetRollover `json:"rollover,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
@@ -7304,7 +7304,7 @@ type BudgetAPI struct {
 	// UpdateTime Update time (in UNIX timestamp).
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 
-	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.
+	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`.
 	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
 }
 
@@ -7316,10 +7316,10 @@ type BudgetCreateRequest struct {
 	// Alerts List of up to three thresholds defined as a percentage of the amount.
 	Alerts *[]BudgetCreateUpdateAlert `json:"alerts,omitempty"`
 
-	// AllowGrowth Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`.
+	// AllowGrowth Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Must be true when `growthPerPeriod` is not 0. Cannot be true together with `seasonalAmounts`. Not allowed for fixed budgets.
 	AllowGrowth *bool `json:"allowGrowth,omitempty"`
 
-	// Amount Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set.
+	// Amount Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set. Not used when `usePrevSpend` is true.
 	Amount *float64 `json:"amount,omitempty"`
 
 	// Collaborators List of permitted users to view/edit the report.
@@ -7340,7 +7340,7 @@ type BudgetCreateRequest struct {
 	// required: true(if budget type is fixed)
 	EndPeriod *int64 `json:"endPeriod,omitempty"`
 
-	// GrowthPerPeriod Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true.
+	// GrowthPerPeriod Growth percentage per period, applied when `allowGrowth` is true. Must not be negative. If `allowGrowth` is omitted, a value above 0 sets it to true. A value other than 0 with `allowGrowth` false is rejected. Must be 0 for fixed budgets.
 	GrowthPerPeriod *float64 `json:"growthPerPeriod,omitempty"`
 
 	// Metric Budget metric
@@ -7356,7 +7356,7 @@ type BudgetCreateRequest struct {
 	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold.
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Rollover Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.
+	// Rollover Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`.
 	Rollover *BudgetRollover `json:"rollover,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget. At least one filter is required.
@@ -7374,7 +7374,7 @@ type BudgetCreateRequest struct {
 	// Type budget type can be one of: ["fixed", "recurring"]
 	Type string `json:"type"`
 
-	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.
+	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`.
 	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
 }
 
@@ -7427,7 +7427,7 @@ type BudgetListItem struct {
 // "unknown" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.
 type BudgetListItemRiskStatus string
 
-// BudgetRollover Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.
+// BudgetRollover Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`.
 type BudgetRollover struct {
 	// Enabled Whether unspent budget carries over.
 	Enabled bool `json:"enabled"`
@@ -7487,10 +7487,10 @@ type BudgetUpdateRequest struct {
 	// Alerts List of up to three thresholds defined as a percentage of the amount.
 	Alerts *[]BudgetCreateUpdateAlert `json:"alerts,omitempty"`
 
-	// AllowGrowth Apply `growthPerPeriod` to the amount each period. Cannot be true together with `seasonalAmounts`; to switch a budget with growth to seasonal amounts, send `allowGrowth` false in the same request.
+	// AllowGrowth Apply `growthPerPeriod` to the amount each period. To turn growth off on a budget with a `growthPerPeriod` other than 0, also send `growthPerPeriod` 0. Cannot be true together with `seasonalAmounts`; to switch a budget with growth to seasonal amounts, send `allowGrowth` false and `growthPerPeriod` 0 in the same request. Not allowed for fixed budgets; to switch a budget with growth to `fixed`, also send `allowGrowth` false and `growthPerPeriod` 0.
 	AllowGrowth *bool `json:"allowGrowth,omitempty"`
 
-	// Amount Budget period amount. Must be omitted when the budget has `seasonalAmounts`. Required when removing `seasonalAmounts`, unless `usePrevSpend` is true.
+	// Amount Budget period amount. Must be omitted when the budget has `seasonalAmounts`. Required when removing `seasonalAmounts`, unless `usePrevSpend` is true, and when turning `usePrevSpend` off, unless `seasonalAmounts` is set. Not used when the budget has `usePrevSpend`.
 	Amount *float64 `json:"amount,omitempty"`
 
 	// Collaborators List of permitted users to view/edit the report.
@@ -7511,7 +7511,7 @@ type BudgetUpdateRequest struct {
 	// required: true(if budget type is fixed)
 	EndPeriod *int64 `json:"endPeriod,omitempty"`
 
-	// GrowthPerPeriod Growth percentage per period, applied when `allowGrowth` is true. Changing it does not change `allowGrowth`.
+	// GrowthPerPeriod Growth percentage per period, applied when `allowGrowth` is true. Must not be negative. A value other than 0 requires `allowGrowth` true, either already set on the budget or sent in the same request. Must be 0 for fixed budgets.
 	GrowthPerPeriod *float64 `json:"growthPerPeriod,omitempty"`
 
 	// Metric Budget metric
@@ -7527,7 +7527,7 @@ type BudgetUpdateRequest struct {
 	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold.
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Rollover Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.
+	// Rollover Carries unspent budget from previous periods into the current one. Cannot be enabled for fixed budgets, or together with `seasonalAmounts` or `usePrevSpend`.
 	Rollover *BudgetRollover `json:"rollover,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget. Omit to keep the existing scope.
@@ -7545,7 +7545,7 @@ type BudgetUpdateRequest struct {
 	// Type budget type can be one of: ["fixed", "recurring"]
 	Type *string `json:"type,omitempty"`
 
-	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.
+	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets. Not allowed for fixed budgets. Cannot be combined with `seasonalAmounts` or an enabled `rollover`.
 	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
 }
 
