@@ -1350,7 +1350,9 @@ func TestSubmitAsyncReport_ActiveOperationLimitOutlastsReadTimeout(t *testing.T)
 		srv := newAsyncTestServer(t, &asyncTestServer{submitLimited: 1_000})
 		client := newAsyncTestClient(t, srv.Server)
 
-		ctx, stop := context.WithTimeout(t.Context(), DefaultReadTimeout)
+		// A second past the read timeout, so the deadline does not fall on the
+		// same virtual instant as a 30s Retry-After wait ends (the two would race).
+		ctx, stop := context.WithTimeout(t.Context(), DefaultReadTimeout+time.Second)
 		defer stop()
 
 		_, err := submitViaInline(ctx, client)

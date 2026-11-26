@@ -415,7 +415,12 @@ func TestDCIRetryClient_DeadlineReportsLastRetryableResponse(t *testing.T) {
 
 				client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
 
-				ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+				// One second past the 300s deadline's multiples of the retry waits
+				// (30s, 2s): a deadline that falls on the same virtual instant as a
+				// retry timer makes the two race, and whether an attempt starts
+				// before the deadline then varies between runs. With a real clock a
+				// wait always ends a little after the deadline, as here.
+				ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout+time.Second)
 				defer cancel()
 
 				_, err := doGet(ctx, t, client, server.URL)
@@ -506,36 +511,67 @@ func TestDCIRetryClient_StalledRetryableBodyDoesNotDelayTheRetry(t *testing.T) {
 	}
 }
 
-// TestDCIRetryClient_DeadlineDoesNotBlameAnEarlierResponse covers a 429 followed
-// by attempts that fail differently: the server stops answering. The error is
-// there to say why the retries ended, so it must not present the old 429 as the
-// last thing the API said while later attempts failed on the transport.
-func TestDCIRetryClient_DeadlineDoesNotBlameAnEarlierResponse(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		var requestCount atomic.Int64
-		server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
-			if requestCount.Load() == 1 {
-				w.Header().Set("Retry-After", "30")
-				w.WriteHeader(http.StatusTooManyRequests)
-				_, _ = w.Write([]byte(`{"code":"too_many_active_operations_for_user"}`))
-				return
-			}
-			<-r.Context().Done() // never answers again
+// TestDCIRetryClient_DeadlineAndAnEarlierResponse covers a 429 followed by
+// attempts that fail differently: the server stops answering. The error is there
+// to say why the retries ended, so it names the 429 only when that is still the
+// latest word. Once a later attempt got no response, whether its own request
+// timeout or the operation deadline cut it off, the old 429 is stale.
+func TestDCIRetryClient_DeadlineAndAnEarlierResponse(t *testing.T) {
+	tests := []struct {
+		name        string
+		readTimeout time.Duration
+		wantBlamed  bool // the error still quotes the 429
+	}{
+		{
+			// The retry at 30s is cut off by its own 150s request timeout, then
+			// again, until the deadline.
+			name:        "request timeout elapses first",
+			readTimeout: DefaultReadTimeout + time.Second,
+		},
+		{
+			// The retry at 30s is still waiting when the 60s deadline cuts it
+			// off, before its request timeout.
+			name:        "deadline cuts off the unanswered retry",
+			readTimeout: time.Minute,
+		},
+		{
+			// The deadline falls in the 30s wait for the retry, so no later
+			// attempt exists and the 429 is still the latest response.
+			name:        "deadline falls during the wait",
+			readTimeout: 20 * time.Second,
+			wantBlamed:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				var requestCount atomic.Int64
+				server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
+					if requestCount.Load() == 1 {
+						w.Header().Set("Retry-After", "30")
+						w.WriteHeader(http.StatusTooManyRequests)
+						_, _ = w.Write([]byte(`{"code":"too_many_active_operations_for_user"}`))
+						return
+					}
+					<-r.Context().Done() // never answers again
+				})
+
+				client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+				ctx, cancel := context.WithTimeout(t.Context(), tt.readTimeout)
+				defer cancel()
+
+				_, err := doGet(ctx, t, client, server.URL)
+				if err == nil {
+					t.Fatal("expected the deadline to end the retries with an error")
+				}
+				if blamed := strings.Contains(err.Error(), "too_many_active_operations"); blamed != tt.wantBlamed {
+					t.Errorf("error quotes the 429 = %v, want %v: %v", blamed, tt.wantBlamed, err)
+				}
+			})
 		})
-
-		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
-
-		ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
-		defer cancel()
-
-		_, err := doGet(ctx, t, client, server.URL)
-		if err == nil {
-			t.Fatal("expected the deadline to end the retries with an error")
-		}
-		if strings.Contains(err.Error(), "too_many_active_operations") {
-			t.Errorf("the error blames the first response, but the later attempts timed out: %v", err)
-		}
-	})
+	}
 }
 
 // TestDCIRetryClient_429WithRetryAfter_Honored verifies a server-supplied
