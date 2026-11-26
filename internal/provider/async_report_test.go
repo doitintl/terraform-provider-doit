@@ -1214,6 +1214,51 @@ func TestRunAsyncReport_RetriesAnInterruptedOperation(t *testing.T) {
 	}
 }
 
+// TestRunAsyncReport_RetryDoesNotRenewTheReadTimeout pins that the read timeout
+// bounds the whole run, not each attempt. The first attempt runs for 4 minutes
+// before the API interrupts it, so the retry has the rest of the budget: its
+// operation is cancelled when the original deadline passes, not 10 minutes
+// after the retry started.
+func TestRunAsyncReport_RetryDoesNotRenewTheReadTimeout(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		// Not a multiple of the 30s poll interval, so the deadline does not fall
+		// on the same virtual instant as a poll wait ends.
+		const readTimeout = 10*time.Minute + 500*time.Millisecond
+
+		// Polls 1-8 find the operation running and each waits 30s, so poll 9 at
+		// 4 minutes is the interruption. The retry's operation then stays running.
+		statuses := append(slices.Repeat([]string{"running"}, 8), "failed", "running")
+		srv := newAsyncTestServer(t, &asyncTestServer{
+			pollStatuses: statuses,
+			pollRetryHdr: "30",
+			failureError: interruptedError(),
+		})
+		client := newAsyncTestClient(t, srv.Server)
+
+		start := time.Now()
+		_, diags := runAsyncReportWith(t.Context(), newReportRunLimiter(1), client, "query",
+			readTimeout, inlineSubmit(client), nil)
+		elapsed := time.Since(start)
+
+		if !diags.HasError() {
+			t.Fatal("expected the read timeout to end the retry")
+		}
+		if got := diags.Errors()[0].Detail(); !strings.Contains(got, "did not finish within the read timeout") {
+			t.Errorf("detail = %q, want the read timeout error", got)
+		}
+		submits, cancels, _, _, _ := srv.snapshot()
+		if len(submits) != 2 {
+			t.Errorf("submits = %d, want 2: the interruption came before the deadline", len(submits))
+		}
+		if len(cancels) != 1 {
+			t.Errorf("cancel calls = %d, want 1: the retry's operation", len(cancels))
+		}
+		if elapsed != readTimeout {
+			t.Errorf("elapsed = %v, want %v: both attempts share one read timeout", elapsed, readTimeout)
+		}
+	})
+}
+
 func TestAwaitAsyncReport_TerminalStatesAndErrors(t *testing.T) {
 	pdf := models.GetAsyncOperationResultsParamsFileOutputPdf
 	// Pointers, not values: asyncTestServer carries a mutex and must not be copied.
