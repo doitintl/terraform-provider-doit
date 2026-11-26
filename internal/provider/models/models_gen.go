@@ -5191,6 +5191,42 @@ func (e SortOrder) Valid() bool {
 	}
 }
 
+// Defines values for TooManyActiveOperationsCode.
+const (
+	TooManyActiveOperationsCodeTooManyActiveOperationsForTenant TooManyActiveOperationsCode = "too_many_active_operations_for_tenant"
+	TooManyActiveOperationsCodeTooManyActiveOperationsForUser   TooManyActiveOperationsCode = "too_many_active_operations_for_user"
+)
+
+// Valid indicates whether the value is a known member of the TooManyActiveOperationsCode enum.
+func (e TooManyActiveOperationsCode) Valid() bool {
+	switch e {
+	case TooManyActiveOperationsCodeTooManyActiveOperationsForTenant:
+		return true
+	case TooManyActiveOperationsCodeTooManyActiveOperationsForUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TooManyActiveOperationsScope.
+const (
+	TooManyActiveOperationsScopeActor    TooManyActiveOperationsScope = "actor"
+	TooManyActiveOperationsScopeCustomer TooManyActiveOperationsScope = "customer"
+)
+
+// Valid indicates whether the value is a known member of the TooManyActiveOperationsScope enum.
+func (e TooManyActiveOperationsScope) Valid() bool {
+	switch e {
+	case TooManyActiveOperationsScopeActor:
+		return true
+	case TooManyActiveOperationsScopeCustomer:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListAlertsParamsSortBy.
 const (
 	ListAlertsParamsSortByCreateTime  ListAlertsParamsSortBy = "createTime"
@@ -5503,6 +5539,42 @@ func (e ListLabelsParamsSortOrder) Valid() bool {
 	}
 }
 
+// Defines values for AsyncRunInline429ApplicationProblemPlusJSONResponseBodyCode.
+const (
+	AsyncRunInline429ApplicationProblemPlusJSONResponseBodyCodeTooManyActiveOperationsForTenant AsyncRunInline429ApplicationProblemPlusJSONResponseBodyCode = "too_many_active_operations_for_tenant"
+	AsyncRunInline429ApplicationProblemPlusJSONResponseBodyCodeTooManyActiveOperationsForUser   AsyncRunInline429ApplicationProblemPlusJSONResponseBodyCode = "too_many_active_operations_for_user"
+)
+
+// Valid indicates whether the value is a known member of the AsyncRunInline429ApplicationProblemPlusJSONResponseBodyCode enum.
+func (e AsyncRunInline429ApplicationProblemPlusJSONResponseBodyCode) Valid() bool {
+	switch e {
+	case AsyncRunInline429ApplicationProblemPlusJSONResponseBodyCodeTooManyActiveOperationsForTenant:
+		return true
+	case AsyncRunInline429ApplicationProblemPlusJSONResponseBodyCodeTooManyActiveOperationsForUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AsyncRunInline429ApplicationProblemPlusJSONResponseBodyScope.
+const (
+	AsyncRunInline429ApplicationProblemPlusJSONResponseBodyScopeActor    AsyncRunInline429ApplicationProblemPlusJSONResponseBodyScope = "actor"
+	AsyncRunInline429ApplicationProblemPlusJSONResponseBodyScopeCustomer AsyncRunInline429ApplicationProblemPlusJSONResponseBodyScope = "customer"
+)
+
+// Valid indicates whether the value is a known member of the AsyncRunInline429ApplicationProblemPlusJSONResponseBodyScope enum.
+func (e AsyncRunInline429ApplicationProblemPlusJSONResponseBodyScope) Valid() bool {
+	switch e {
+	case AsyncRunInline429ApplicationProblemPlusJSONResponseBodyScopeActor:
+		return true
+	case AsyncRunInline429ApplicationProblemPlusJSONResponseBodyScopeCustomer:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetAsyncOperationResultsParamsFileOutput.
 const (
 	GetAsyncOperationResultsParamsFileOutputCsv  GetAsyncOperationResultsParamsFileOutput = "csv"
@@ -5521,6 +5593,42 @@ func (e GetAsyncOperationResultsParamsFileOutput) Valid() bool {
 	case GetAsyncOperationResultsParamsFileOutputPdf:
 		return true
 	case GetAsyncOperationResultsParamsFileOutputPng:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyCode.
+const (
+	AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyCodeTooManyActiveOperationsForTenant AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyCode = "too_many_active_operations_for_tenant"
+	AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyCodeTooManyActiveOperationsForUser   AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyCode = "too_many_active_operations_for_user"
+)
+
+// Valid indicates whether the value is a known member of the AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyCode enum.
+func (e AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyCode) Valid() bool {
+	switch e {
+	case AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyCodeTooManyActiveOperationsForTenant:
+		return true
+	case AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyCodeTooManyActiveOperationsForUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyScope.
+const (
+	AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyScopeActor    AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyScope = "actor"
+	AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyScopeCustomer AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyScope = "customer"
+)
+
+// Valid indicates whether the value is a known member of the AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyScope enum.
+func (e AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyScope) Valid() bool {
+	switch e {
+	case AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyScopeActor:
+		return true
+	case AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyScopeCustomer:
 		return true
 	default:
 		return false
@@ -14990,6 +15098,31 @@ type RateLimited = ProblemDetails
 // ServiceUnavailable RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type ServiceUnavailable = ProblemDetails
 
+// TooManyActiveOperations defines model for TooManyActiveOperations.
+type TooManyActiveOperations struct {
+	// Code too_many_active_operations_for_user when the caller's own limit was reached, too_many_active_operations_for_tenant when the customer-wide limit was reached.
+	Code   *TooManyActiveOperationsCode `json:"code,omitempty"`
+	Detail *string                      `json:"detail,omitempty"`
+
+	// Limit The limit that was reached.
+	Limit *int `json:"limit,omitempty"`
+
+	// OperationIds The caller's own active operations, which it can poll or cancel. Present only when scope is "actor".
+	OperationIds *[]string `json:"operationIds,omitempty"`
+
+	// Scope Which limit was reached: the caller's own (actor) or the customer-wide one.
+	Scope  *TooManyActiveOperationsScope `json:"scope,omitempty"`
+	Status *int                          `json:"status,omitempty"`
+	Title  *string                       `json:"title,omitempty"`
+	Type   *string                       `json:"type,omitempty"`
+}
+
+// TooManyActiveOperationsCode too_many_active_operations_for_user when the caller's own limit was reached, too_many_active_operations_for_tenant when the customer-wide limit was reached.
+type TooManyActiveOperationsCode string
+
+// TooManyActiveOperationsScope Which limit was reached: the caller's own (actor) or the customer-wide one.
+type TooManyActiveOperationsScope string
+
 // Unauthorized RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type Unauthorized = ProblemDetails
 
@@ -15417,6 +15550,12 @@ type AsyncRunInlineParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
 }
 
+// AsyncRunInline429ApplicationProblemPlusJSONResponseBodyCode defines model for AsyncRunInline429ApplicationProblemPlusJSONResponseBody.Code.
+type AsyncRunInline429ApplicationProblemPlusJSONResponseBodyCode string
+
+// AsyncRunInline429ApplicationProblemPlusJSONResponseBodyScope defines model for AsyncRunInline429ApplicationProblemPlusJSONResponseBody.Scope.
+type AsyncRunInline429ApplicationProblemPlusJSONResponseBodyScope string
+
 // CancelAsyncOperationParams defines parameters for CancelAsyncOperation.
 type CancelAsyncOperationParams struct {
 	// DryRun If true, validates the request and returns 200 without modifying any state. The response body will have status "dry_run" and the X-Dry-Run response header will be set to "true".
@@ -15452,6 +15591,12 @@ type AsyncRunReportByIdParams struct {
 	// IdempotencyKey Unique key for this submission. Required on every request.
 	IdempotencyKey string `json:"Idempotency-Key"`
 }
+
+// AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyCode defines model for AsyncRunReportById429ApplicationProblemPlusJSONResponseBody.Code.
+type AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyCode string
+
+// AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyScope defines model for AsyncRunReportById429ApplicationProblemPlusJSONResponseBody.Scope.
+type AsyncRunReportById429ApplicationProblemPlusJSONResponseBodyScope string
 
 // ListWidgetsParams defines parameters for ListWidgets.
 type ListWidgetsParams struct {
@@ -18319,7 +18464,7 @@ type ClientInterface interface {
 
 	// AsyncRunInlineWithBody Run a report asynchronously
 	//
-	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
+	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -18328,7 +18473,7 @@ type ClientInterface interface {
 
 	// AsyncRunInline Run a report asynchronously
 	//
-	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
+	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -18344,7 +18489,7 @@ type ClientInterface interface {
 
 	// CancelAsyncOperation Cancel an async report run operation
 	//
-	// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist or belongs to a different tenant. Use ?dryRun=true to validate the request without modifying any state.
+	// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist, belongs to a different tenant, or was started by another caller. Any caller that can run reports can cancel its own operations. Use ?dryRun=true to validate the request without modifying any state.
 	//
 	// Corresponds with POST /analytics/v1/reports/operations/{operationId}/actions/cancel (the `CancelAsyncOperation` operationId).
 	CancelAsyncOperation(ctx context.Context, operationId string, params *CancelAsyncOperationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -18387,7 +18532,7 @@ type ClientInterface interface {
 
 	// AsyncRunReportById Run a saved report asynchronously
 	//
-	// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation.
+	// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 	//
 	// Corresponds with POST /analytics/v1/reports/{id}/actions/run (the `AsyncRunReportById` operationId).
 	AsyncRunReportById(ctx context.Context, id string, params *AsyncRunReportByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -21325,7 +21470,7 @@ func (c *Client) CreateReport(ctx context.Context, body CreateReportJSONRequestB
 
 // AsyncRunInlineWithBody Run a report asynchronously
 //
-// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
+// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 //
 // Takes any type of body and a specified content type.
 //
@@ -21344,7 +21489,7 @@ func (c *Client) AsyncRunInlineWithBody(ctx context.Context, params *AsyncRunInl
 
 // AsyncRunInline Run a report asynchronously
 //
-// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
+// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -21380,7 +21525,7 @@ func (c *Client) GetAsyncOperation(ctx context.Context, operationId string, reqE
 
 // CancelAsyncOperation Cancel an async report run operation
 //
-// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist or belongs to a different tenant. Use ?dryRun=true to validate the request without modifying any state.
+// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist, belongs to a different tenant, or was started by another caller. Any caller that can run reports can cancel its own operations. Use ?dryRun=true to validate the request without modifying any state.
 //
 // Corresponds with POST /analytics/v1/reports/operations/{operationId}/actions/cancel (the `CancelAsyncOperation` operationId).
 func (c *Client) CancelAsyncOperation(ctx context.Context, operationId string, params *CancelAsyncOperationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -21473,7 +21618,7 @@ func (c *Client) UpdateReport(ctx context.Context, id ReportId, body UpdateRepor
 
 // AsyncRunReportById Run a saved report asynchronously
 //
-// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation.
+// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 //
 // Corresponds with POST /analytics/v1/reports/{id}/actions/run (the `AsyncRunReportById` operationId).
 func (c *Client) AsyncRunReportById(ctx context.Context, id string, params *AsyncRunReportByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -34990,7 +35135,7 @@ type ClientWithResponsesInterface interface {
 
 	// AsyncRunInlineWithBodyWithResponse Run a report asynchronously
 	//
-	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
+	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -34999,7 +35144,7 @@ type ClientWithResponsesInterface interface {
 
 	// AsyncRunInlineWithResponse Run a report asynchronously
 	//
-	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
+	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -35017,7 +35162,7 @@ type ClientWithResponsesInterface interface {
 
 	// CancelAsyncOperationWithResponse Cancel an async report run operation
 	//
-	// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist or belongs to a different tenant. Use ?dryRun=true to validate the request without modifying any state.
+	// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist, belongs to a different tenant, or was started by another caller. Any caller that can run reports can cancel its own operations. Use ?dryRun=true to validate the request without modifying any state.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -35066,7 +35211,7 @@ type ClientWithResponsesInterface interface {
 
 	// AsyncRunReportByIdWithResponse Run a saved report asynchronously
 	//
-	// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation.
+	// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -40738,6 +40883,11 @@ type AsyncRunInlineResp202Headers struct {
 	Location *string
 }
 
+// AsyncRunInlineResp429Headers the declared response headers of an HTTP 429 response for AsyncRunInline
+type AsyncRunInlineResp429Headers struct {
+	RetryAfter *string
+}
+
 type AsyncRunInlineResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -40753,12 +40903,16 @@ type AsyncRunInlineResp struct {
 	JSON403 *N403
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *N404
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *TooManyActiveOperations
 	// JSON500 the response for an HTTP 500 `application/json` response
 	JSON500 *N500
 	// Headers200 the parsed response headers for an HTTP 200 response
 	Headers200 *AsyncRunInlineResp200Headers
 	// Headers202 the parsed response headers for an HTTP 202 response
 	Headers202 *AsyncRunInlineResp202Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *AsyncRunInlineResp429Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -40789,6 +40943,11 @@ func (r AsyncRunInlineResp) GetJSON403() *N403 {
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
 func (r AsyncRunInlineResp) GetJSON404() *N404 {
 	return r.JSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r AsyncRunInlineResp) GetApplicationproblemJSON429() *TooManyActiveOperations {
+	return r.ApplicationproblemJSON429
 }
 
 // GetJSON500 returns the response for an HTTP 500 `application/json` response
@@ -41250,6 +41409,11 @@ type AsyncRunReportByIdResp202Headers struct {
 	Location *string
 }
 
+// AsyncRunReportByIdResp429Headers the declared response headers of an HTTP 429 response for AsyncRunReportById
+type AsyncRunReportByIdResp429Headers struct {
+	RetryAfter *string
+}
+
 type AsyncRunReportByIdResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -41265,12 +41429,16 @@ type AsyncRunReportByIdResp struct {
 	JSON403 *N403
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *N404
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *TooManyActiveOperations
 	// JSON500 the response for an HTTP 500 `application/json` response
 	JSON500 *N500
 	// Headers200 the parsed response headers for an HTTP 200 response
 	Headers200 *AsyncRunReportByIdResp200Headers
 	// Headers202 the parsed response headers for an HTTP 202 response
 	Headers202 *AsyncRunReportByIdResp202Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *AsyncRunReportByIdResp429Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -41301,6 +41469,11 @@ func (r AsyncRunReportByIdResp) GetJSON403() *N403 {
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
 func (r AsyncRunReportByIdResp) GetJSON404() *N404 {
 	return r.JSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r AsyncRunReportByIdResp) GetApplicationproblemJSON429() *TooManyActiveOperations {
+	return r.ApplicationproblemJSON429
 }
 
 // GetJSON500 returns the response for an HTTP 500 `application/json` response
@@ -53098,7 +53271,7 @@ func (c *ClientWithResponses) CreateReportWithResponse(ctx context.Context, body
 
 // AsyncRunInlineWithBodyWithResponse Run a report asynchronously
 //
-// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
+// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -53113,7 +53286,7 @@ func (c *ClientWithResponses) AsyncRunInlineWithBodyWithResponse(ctx context.Con
 
 // AsyncRunInlineWithResponse Run a report asynchronously
 //
-// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
+// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -53143,7 +53316,7 @@ func (c *ClientWithResponses) GetAsyncOperationWithResponse(ctx context.Context,
 
 // CancelAsyncOperationWithResponse Cancel an async report run operation
 //
-// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist or belongs to a different tenant. Use ?dryRun=true to validate the request without modifying any state.
+// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist, belongs to a different tenant, or was started by another caller. Any caller that can run reports can cancel its own operations. Use ?dryRun=true to validate the request without modifying any state.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -53222,7 +53395,7 @@ func (c *ClientWithResponses) UpdateReportWithResponse(ctx context.Context, id R
 
 // AsyncRunReportByIdWithResponse Run a saved report asynchronously
 //
-// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation.
+// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -60247,6 +60420,13 @@ func ParseAsyncRunInlineResp(rsp *http.Response) (*AsyncRunInlineResp, error) {
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest TooManyActiveOperations
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest N500
 		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
@@ -60277,6 +60457,16 @@ func ParseAsyncRunInlineResp(rsp *http.Response) (*AsyncRunInlineResp, error) {
 			headers.Location = &value
 		}
 		response.Headers202 = &headers
+	case rsp.StatusCode == 429:
+		var headers AsyncRunInlineResp429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
 	}
 
 	return response, nil
@@ -60696,6 +60886,13 @@ func ParseAsyncRunReportByIdResp(rsp *http.Response) (*AsyncRunReportByIdResp, e
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest TooManyActiveOperations
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest N500
 		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
@@ -60726,6 +60923,16 @@ func ParseAsyncRunReportByIdResp(rsp *http.Response) (*AsyncRunReportByIdResp, e
 			headers.Location = &value
 		}
 		response.Headers202 = &headers
+	case rsp.StatusCode == 429:
+		var headers AsyncRunReportByIdResp429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
 	}
 
 	return response, nil

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider"
@@ -16,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
+	"golang.org/x/sync/semaphore"
 )
 
 // TestMain runs after all tests complete. It sweeps orphaned test allocations
@@ -108,6 +110,57 @@ var (
 		tfversion.RequireAbove(tfversion.Version1_10_0),
 	}
 )
+
+// reportRunSlotCount is how many acceptance tests may run report data sources at
+// the same time. The API allows each user 3 pending or running report
+// operations, and every test shares one token.
+const reportRunSlotCount = 3
+
+// reportRunSlots holds one unit per acceptance test currently running a report.
+var reportRunSlots = semaphore.NewWeighted(reportRunSlotCount)
+
+// acquireReportRunSlots blocks until n units of sem are free and holds them
+// until the test ends, destroy included. Weighted acquisition keeps two tests
+// that each need several units from deadlocking on partial holds.
+//
+// This gate stands in for "one user at a time" across the test binary, where
+// dozens of Terraform runs share one token and would otherwise start every
+// report at once. It must not be the reason a single configuration works: the
+// provider queues the reports of one Terraform run itself (reportRunLimiter),
+// and the tests of that behavior take every unit, so the config runs alone
+// against the API's cap.
+func acquireReportRunSlots(t *testing.T, sem *semaphore.Weighted, n int64) {
+	t.Helper()
+	if err := sem.Acquire(t.Context(), n); err != nil {
+		t.Fatalf("waiting for a report run slot: %v", err)
+	}
+	t.Cleanup(func() { sem.Release(n) })
+}
+
+// testAccReportPreCheckFunc is testAccPreCheckFunc for tests that run report
+// data sources. It also takes one report run slot; see acquireReportRunSlots.
+//
+// PreCheck runs inside the test, after resource.ParallelTest has called
+// t.Parallel(), so the tests still start together and only wait here.
+func testAccReportPreCheckFunc(t *testing.T) func() {
+	return gatedPreCheck(t, 1)
+}
+
+// testAccExclusiveReportPreCheckFunc is testAccReportPreCheckFunc for a test
+// that needs the API's whole report cap to itself, so that what it checks is
+// not helped or hindered by other tests' reports.
+func testAccExclusiveReportPreCheckFunc(t *testing.T) func() {
+	return gatedPreCheck(t, reportRunSlotCount)
+}
+
+func gatedPreCheck(t *testing.T, n int64) func() {
+	check := testAccPreCheckFunc(t)
+	var once sync.Once
+	return func() {
+		check()
+		once.Do(func() { acquireReportRunSlots(t, reportRunSlots, n) })
+	}
+}
 
 func testAccPreCheckFunc(t *testing.T) func() {
 	return func() {

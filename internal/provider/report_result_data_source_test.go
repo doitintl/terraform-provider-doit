@@ -25,7 +25,7 @@ func TestAccReportResultDataSource(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -64,7 +64,7 @@ func TestAccReportResultDataSource_FileOutput(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{{
 			Config: config,
@@ -95,7 +95,7 @@ func TestAccReportResultDataSource_FileOutputCSV(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{{
 			Config: config,
@@ -133,7 +133,7 @@ func TestAccReportResultDataSource_FileOutputJSON(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{{
 			Config: config,
@@ -172,7 +172,7 @@ func TestAccReportResultDataSource_InvalidFileOutput(t *testing.T) {
 		"id = \"non-existent-report-id\"", "id = \"non-existent-report-id\"\n    file_output = \"xlsx\"", 1)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{{
 			Config:      config,
@@ -188,7 +188,7 @@ func TestAccReportResultDataSource_WithDateRange(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -216,7 +216,7 @@ func TestAccReportResultDataSource_ReApply(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -236,7 +236,7 @@ func TestAccReportResultDataSource_ReApply(t *testing.T) {
 func TestAccReportResultDataSource_NotFound(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -260,7 +260,7 @@ func TestAccReportResultDataSource_WithTimeout(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -364,7 +364,7 @@ func TestAccReportResultDataSource_WithTimeRange(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -432,7 +432,7 @@ func TestAccReportResultDataSource_AllocationSchemaFieldID(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -540,7 +540,7 @@ func TestAccReportResultDataSource_SchemaFieldMetadata(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -626,7 +626,7 @@ func TestAccReportResultDataSource_ForecastSettings(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -657,7 +657,7 @@ func TestAccReportResultDataSource_ForecastFileOutput(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-rr-fc-file")
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{{
 			Config: testAccReportResultDataSourceForecastFileOutputConfig(rName),

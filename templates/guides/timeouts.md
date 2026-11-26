@@ -145,7 +145,7 @@ Seeing `context deadline exceeded` instead of `524` on a request you expect to b
 
 The `doit_report_result` and `doit_report_query` data sources execute reports **asynchronously**: the provider submits the run, then polls until it finishes and fetches the result. Because no single HTTP request stays open for the duration, these two data sources are not affected by the API's 120-second edge timeout, and `request_timeout` has essentially no bearing on them.
 
-What bounds them instead is the data source's own `read` timeout, which covers the entire submit-poll-fetch cycle and defaults to 5 minutes. A report that needs longer needs a larger value:
+What bounds them instead is the data source's own `read` timeout, which covers the entire submit-poll-fetch cycle of one report and defaults to 5 minutes. It starts once the report has a free run slot; see [Concurrent Reports](#concurrent-reports). A report that needs longer needs a larger value:
 
 ```hcl
 data "doit_report_result" "large" {
@@ -158,6 +158,14 @@ data "doit_report_result" "large" {
 ```
 
 When the `read` timeout is reached, the provider **cancels the report run** before returning the error, so an abandoned query does not keep consuming capacity. The same applies if you interrupt Terraform with Ctrl-C. The error names the operation that was cancelled; if the cancellation itself fails, a warning reports the operation ID so you can cancel it from the DoiT console.
+
+#### Concurrent Reports
+
+The API limits how many reports can run at once: each user can have at most 3 pending or running report operations, and each customer at most 5 across all of its users.
+
+The provider keeps one Terraform run within the per-user limit by itself. Terraform reads independent data sources in parallel (`-parallelism` defaults to 10), so a configuration with more than three report data sources runs them three at a time and queues the rest in the order they arrived. The `read` timeout starts when a report starts running, so waiting for an earlier report does not use it up, and a report only needs a `read` timeout that fits itself. Interrupting Terraform ends the wait without submitting anything.
+
+The limit is shared with everything else that uses the same account: other Terraform runs, provider aliases, other users and the DoiT console. When the API refuses a run with `429` and `Retry-After: 30`, the provider retries every 30 seconds until a slot frees, and that wait **does** count against `read`. If the limit is still reached when `read` elapses, the error quotes the API's response, including the IDs of your own active operations. Operations left behind by an interrupted run (for example Terraform killed with `SIGKILL`, which gives the provider no chance to cancel) keep their slot for up to 6 hours unless cancelled.
 
 ### Large Allocations
 

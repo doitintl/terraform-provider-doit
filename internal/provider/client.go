@@ -232,6 +232,12 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 		}
 	}
 
+	// lastFailure is the most recent retryable response (429, 502, 503, 504).
+	// The retry loop reports only the context error when the deadline ends it,
+	// which hides why every attempt was refused, so it is attached to that error
+	// below. The operation closure runs sequentially, so no lock is needed.
+	var lastFailure error
+
 	operation := func() (*http.Response, error) {
 		// Reset the body for each retry attempt
 		if bodyBytes != nil {
@@ -253,9 +259,7 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 		case http.StatusTooManyRequests:
 			// Respect Retry-After header if present
 			retryAfter := resp.Header.Get("Retry-After")
-			if closeErr := resp.Body.Close(); closeErr != nil {
-				log.Printf("[WARN] Error closing response body: %v", closeErr)
-			}
+			lastFailure = retryableFailure(resp)
 
 			if wait, ok := parseRetryAfter(retryAfter, time.Now()); ok {
 				tflog.Debug(req.Context(), "Rate limited, honoring Retry-After", map[string]any{
@@ -275,9 +279,7 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 			// Some endpoints (e.g. Slack channel discovery) send Retry-After on a
 			// 503. Honor it when usable; otherwise fall back to exponential backoff.
 			retryAfter := resp.Header.Get("Retry-After")
-			if closeErr := resp.Body.Close(); closeErr != nil {
-				log.Printf("[WARN] Error closing response body: %v", closeErr)
-			}
+			lastFailure = retryableFailure(resp)
 			if wait, ok := parseRetryAfter(retryAfter, time.Now()); ok {
 				tflog.Debug(req.Context(), "Service unavailable, honoring Retry-After", map[string]any{
 					"url":         req.URL.String(),
@@ -290,9 +292,7 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 
 		case http.StatusBadGateway, http.StatusGatewayTimeout:
 			// Temporary server errors - retry with backoff
-			if closeErr := resp.Body.Close(); closeErr != nil {
-				log.Printf("[WARN] Error closing response body: %v", closeErr)
-			}
+			lastFailure = retryableFailure(resp)
 			return nil, fmt.Errorf("temporary server error: %d", resp.StatusCode)
 
 		case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent,
@@ -351,10 +351,34 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 	// Retry with exponential backoff. MaxElapsedTime is disabled (0) so the
 	// retry loop defers entirely to the provided context's deadline
 	// (e.g., Terraform's timeouts {} block).
-	return backoff.Retry(req.Context(), operation,
+	resp, err := backoff.Retry(req.Context(), operation,
 		backoff.WithBackOff(newBackOff()),
 		backoff.WithMaxElapsedTime(0),
 	)
+	if err != nil && lastFailure != nil && req.Context().Err() != nil {
+		// The deadline or a cancellation ended the retries. Say what the API was
+		// answering, so a 429 that held every attempt (for example the cap on
+		// active report operations) is not reported as a bare timeout.
+		return resp, fmt.Errorf("%w (last response before giving up: %w)", err, lastFailure)
+	}
+	return resp, err
+}
+
+// maxRetryableFailureBody bounds how much of a retryable response is kept for
+// the error that reports it.
+const maxRetryableFailureBody = 4096
+
+// retryableFailure consumes and closes the body of a response that is about to
+// be retried and describes it as an error: its status and what the API said.
+func retryableFailure(resp *http.Response) error {
+	body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxRetryableFailureBody))
+	if closeErr := resp.Body.Close(); closeErr != nil {
+		log.Printf("[WARN] Error closing response body: %v", closeErr)
+	}
+	if readErr != nil {
+		return fmt.Errorf("status: %d, failed to read body: %w", resp.StatusCode, readErr)
+	}
+	return fmt.Errorf("status: %d, body: %s", resp.StatusCode, string(body))
 }
 
 // NewClient creates a new API client with retry logic.

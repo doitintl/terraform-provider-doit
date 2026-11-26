@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/oapi-codegen/nullable"
 )
@@ -32,6 +33,31 @@ import (
 // makes this work at all — its in-memory network is durably blocking, where a
 // real TCP listener would not be.
 
+// awaitAsyncReport polls operationID to a terminal state and returns its result:
+// runAsyncReport without the submit step and the queue, for tests that start
+// from an operation the fake API already has.
+//
+//nolint:unparam // the fake API serves one operation, "op-1", in most tests
+func awaitAsyncReport(
+	ctx context.Context,
+	client *models.ClientWithResponses,
+	what, operationID string,
+	fileOutput *models.GetAsyncOperationResultsParamsFileOutput,
+) (*models.GetAsyncOperationResults200Response, diag.Diagnostics) {
+	if diags := pollAsyncOperation(ctx, client, what, operationID); diags.HasError() {
+		return nil, diags
+	}
+	return fetchAsyncReportResults(ctx, client, what, operationID, fileOutput)
+}
+
+// activeOperationsLimitBody is the 429 body the API sends when a caller already
+// has the maximum number of pending or running report operations (3).
+const activeOperationsLimitBody = `{"type":"https://developer.doit.com/errors/too_many_active_operations_for_user",` +
+	`"title":"Too Many Active Operations","status":429,` +
+	`"detail":"You have reached the limit of 3 active report operations. Wait for one of the listed operations to finish, or cancel it, then retry.",` +
+	`"code":"too_many_active_operations_for_user","scope":"actor","limit":3,` +
+	`"operationIds":["op-a","op-b","op-c"]}`
+
 // asyncTestServer is a scriptable stand-in for the async report API.
 type asyncTestServer struct {
 	*httptest.Server
@@ -47,6 +73,7 @@ type asyncTestServer struct {
 	resultsErrBody string // if set, returned (as problem+json) on a non-OK results status
 	submitStatus   int
 	submitEmpty    int           // number of initial submits answered with a 202 carrying no operation ID
+	submitLimited  int           // number of initial submits answered with the active-operations 429
 	submitDelay    time.Duration // how long the submit handler withholds its response
 	cancelStatus   int           // status returned by the cancel endpoint
 	cancelOpState  string        // operation status reported in the cancel response body
@@ -110,6 +137,17 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 
 		if seenBefore {
 			w.Header().Set("Idempotency-Replayed", "true")
+		}
+
+		// The per-caller cap on pending or running operations, as the API
+		// answers it (captured from the CI tenant): a problem+json body naming
+		// the caller's active operations, and a Retry-After of 30 seconds.
+		if len(s.submitKeys) <= s.submitLimited {
+			w.Header().Set("Content-Type", "application/problem+json")
+			w.Header().Set("Retry-After", "30")
+			w.WriteHeader(http.StatusTooManyRequests)
+			_, _ = w.Write([]byte(activeOperationsLimitBody))
+			return
 		}
 
 		if s.submitStatus != http.StatusAccepted {
@@ -1247,6 +1285,85 @@ func TestSubmitAsyncReport_NotFound(t *testing.T) {
 		for _, want := range []string{"404", "not found"} {
 			if !strings.Contains(err.Error(), want) {
 				t.Errorf("error missing %q: %v", want, err)
+			}
+		}
+	})
+}
+
+// TestSubmitAsyncReport_ActiveOperationLimitWaitsForASlot covers the per-caller
+// cap on pending or running operations. Terraform reads data sources in
+// parallel (-parallelism defaults to 10), so a configuration with more than
+// three report data sources trips the cap by itself. The API answers the
+// surplus runs with a 429 carrying Retry-After: 30; the submit must ride that
+// out and succeed once a slot frees, not fail the read.
+func TestSubmitAsyncReport_ActiveOperationLimitWaitsForASlot(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv := newAsyncTestServer(t, &asyncTestServer{submitLimited: 2})
+		client := newAsyncTestClient(t, srv.Server)
+
+		ctx, stop := context.WithTimeout(t.Context(), DefaultReadTimeout)
+		defer stop()
+
+		start := time.Now()
+		operationID, err := submitViaInline(ctx, client)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if operationID != "op-1" {
+			t.Errorf("operationID = %q, want %q", operationID, "op-1")
+		}
+		// Two 429s, each honored at the API's own 30s Retry-After.
+		if elapsed := time.Since(start); elapsed != 60*time.Second {
+			t.Errorf("elapsed = %v, want 60s (two Retry-After waits)", elapsed)
+		}
+
+		submits, cancels, _, _, _ := srv.snapshot()
+		if len(submits) != 3 {
+			t.Fatalf("submits = %d, want 3 (two limited, one accepted)", len(submits))
+		}
+		// Every attempt is the same request, so one key covers all of them: a
+		// rejected run was never created, and the accepted one is created once.
+		if submits[0] != submits[1] || submits[1] != submits[2] {
+			t.Errorf("attempts used different Idempotency-Keys: %q", submits)
+		}
+		if len(cancels) != 0 {
+			t.Errorf("cancel calls = %d, want 0: nothing was created until the last attempt", len(cancels))
+		}
+	})
+}
+
+// TestSubmitAsyncReport_ActiveOperationLimitOutlastsReadTimeout covers a cap
+// that never frees within the read timeout (other callers hold the customer
+// cap, or operations orphaned by a killed run hold the caller's slots for up
+// to 6 hours). The submit has to fail at the deadline, create nothing, and
+// tell the user why: a bare "context deadline exceeded" gives no hint that the
+// concurrency cap was the cause, and that something other than this Terraform
+// run holds the slots.
+func TestSubmitAsyncReport_ActiveOperationLimitOutlastsReadTimeout(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv := newAsyncTestServer(t, &asyncTestServer{submitLimited: 1_000})
+		client := newAsyncTestClient(t, srv.Server)
+
+		ctx, stop := context.WithTimeout(t.Context(), DefaultReadTimeout)
+		defer stop()
+
+		_, err := submitViaInline(ctx, client)
+		if err == nil {
+			t.Fatal("expected the submit to fail once the read timeout elapsed")
+		}
+
+		_, cancels, _, _, _ := srv.snapshot()
+		if len(cancels) != 0 {
+			t.Errorf("cancel calls = %d, want 0: no operation was ever created", len(cancels))
+		}
+		// The status and body the API sent (naming the caller's own active
+		// operations), the deadline that ended the wait, and what to do about it.
+		for _, want := range []string{
+			"context deadline exceeded", "status: 429", "too_many_active_operations_for_user",
+			"op-a", "other Terraform runs, other users",
+		} {
+			if !strings.Contains(err.Error(), want) {
+				t.Errorf("error should explain the cap, missing %q: %v", want, err)
 			}
 		}
 	})

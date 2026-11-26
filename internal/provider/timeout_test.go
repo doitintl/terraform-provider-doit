@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -374,6 +376,85 @@ func TestDCIRetryClient_429NoRetryAfter_Retries(t *testing.T) {
 		// One policy interval between each pair of attempts.
 		if want := failures * retryInitialInterval; elapsed != want {
 			t.Errorf("elapsed = %v, want %v", elapsed, want)
+		}
+	})
+}
+
+// TestDCIRetryClient_DeadlineReportsLastRetryableResponse pins what the caller
+// is told when the deadline ends a retry loop that never got a usable answer.
+// The loop's own error is only the context error, which hides why every attempt
+// was refused; the status and body of the last refusal (for a 429, the API's
+// explanation, such as the cap on active report operations) ride along, and the
+// context error stays matchable.
+func TestDCIRetryClient_DeadlineReportsLastRetryableResponse(t *testing.T) {
+	tests := []struct {
+		name       string
+		status     int
+		retryAfter string
+		body       string
+	}{
+		{"429 with Retry-After", http.StatusTooManyRequests, "30", `{"code":"too_many_active_operations_for_user","limit":3}`},
+		{"429 without Retry-After", http.StatusTooManyRequests, "", `{"code":"rate_limited"}`},
+		{"503 with Retry-After", http.StatusServiceUnavailable, "30", `{"detail":"overloaded"}`},
+		{"503 without Retry-After", http.StatusServiceUnavailable, "", `{"detail":"overloaded"}`},
+		{"502", http.StatusBadGateway, "", "bad gateway"},
+		{"504", http.StatusGatewayTimeout, "", "gateway timeout"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				var requestCount atomic.Int64
+				server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
+					if tt.retryAfter != "" {
+						w.Header().Set("Retry-After", tt.retryAfter)
+					}
+					w.WriteHeader(tt.status)
+					_, _ = w.Write([]byte(tt.body))
+				})
+
+				client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+				ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+				defer cancel()
+
+				_, err := doGet(ctx, t, client, server.URL)
+				if err == nil {
+					t.Fatal("expected the deadline to end the retries with an error")
+				}
+				if !errors.Is(err, context.DeadlineExceeded) {
+					t.Errorf("error should still match context.DeadlineExceeded: %v", err)
+				}
+				want := fmt.Sprintf("status: %d, body: %s", tt.status, tt.body)
+				if !strings.Contains(err.Error(), want) {
+					t.Errorf("error missing the last response %q: %v", want, err)
+				}
+			})
+		})
+	}
+}
+
+// TestDCIRetryClient_DeadlineWithoutRetryableResponseAddsNothing guards the
+// other side: a deadline that hits while no refusal was ever received (a slow
+// server) keeps its plain error rather than naming a response that never came.
+func TestDCIRetryClient_DeadlineWithoutRetryableResponseAddsNothing(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount atomic.Int64
+		server := countingServer(t, &requestCount, func(_ http.ResponseWriter, r *http.Request) {
+			<-r.Context().Done()
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
+		defer cancel()
+
+		_, err := doGet(ctx, t, client, server.URL)
+		if err == nil {
+			t.Fatal("expected an error once the deadline elapsed")
+		}
+		if strings.Contains(err.Error(), "last response") {
+			t.Errorf("no response was received, yet the error names one: %v", err)
 		}
 	})
 }

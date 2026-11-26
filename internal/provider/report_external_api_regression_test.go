@@ -28,7 +28,7 @@ import (
 func TestAccReportQueryDataSource_CustomTimeRangeWithoutUnit(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -54,7 +54,7 @@ func TestAccReportQueryDataSource_CustomTimeRangeWithoutUnit(t *testing.T) {
 func TestAccReportQueryDataSource_CustomTimeRangeUnitRejected(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -139,7 +139,7 @@ func TestAccReport_CustomTimeRangeWithoutUnit(t *testing.T) {
 func TestAccReportQueryDataSource_MultiMetricReturnsAllColumns(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
@@ -166,7 +166,7 @@ func TestAccReportResultDataSource_MultiMetricReturnsAllColumns(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
