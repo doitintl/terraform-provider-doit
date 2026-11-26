@@ -44,7 +44,7 @@ func awaitAsyncReport(
 	what, operationID string,
 	fileOutput *models.GetAsyncOperationResultsParamsFileOutput,
 ) (*models.GetAsyncOperationResults200Response, diag.Diagnostics) {
-	if diags := pollAsyncOperation(ctx, client, what, operationID); diags.HasError() {
+	if _, diags := pollAsyncOperation(ctx, client, what, operationID); diags.HasError() {
 		return nil, diags
 	}
 	return fetchAsyncReportResults(ctx, client, what, operationID, fileOutput)
@@ -1059,6 +1059,161 @@ func TestAwaitAsyncReport_OperationFailed(t *testing.T) {
 	})
 }
 
+// interruptedError is the failure the API gives an operation whose server run
+// went away. Every call builds a new one, so a test cannot change another's.
+func interruptedError() *models.AsyncOperationError {
+	detail := "Run the report again."
+	return &models.AsyncOperationError{
+		Title:  "Report run interrupted",
+		Code:   "operation_interrupted",
+		Status: http.StatusServiceUnavailable,
+		Detail: &detail,
+	}
+}
+
+// TestAwaitAsyncReport_OperationInterrupted pins what reaches the user when the
+// API fails an operation as interrupted: the code, status and the API's hint,
+// and no cancel, since the operation is already terminal.
+func TestAwaitAsyncReport_OperationInterrupted(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv := newAsyncTestServer(t, &asyncTestServer{
+			pollStatuses: []string{"failed"},
+			failureError: interruptedError(),
+		})
+		client := newAsyncTestClient(t, srv.Server)
+
+		_, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", nil)
+		if !diags.HasError() {
+			t.Fatal("expected an error")
+		}
+
+		got := diags.Errors()[0].Detail()
+		for _, want := range []string{"op-1", "Report run interrupted", "operation_interrupted", "503", "Run the report again."} {
+			if !strings.Contains(got, want) {
+				t.Errorf("detail missing %q:\n%s", want, got)
+			}
+		}
+		if _, cancels, _, _, _ := srv.snapshot(); len(cancels) != 0 {
+			t.Errorf("cancel calls = %d, want 0: the operation was already terminal", len(cancels))
+		}
+	})
+}
+
+// TestRunAsyncReport_RetriesAnInterruptedOperation covers the whole run: only an
+// operation the API failed as interrupted is submitted again, once, and the
+// second interruption is reported rather than retried.
+func TestRunAsyncReport_RetriesAnInterruptedOperation(t *testing.T) {
+	notRetried := func(code string) *models.AsyncOperationError {
+		return &models.AsyncOperationError{Title: "Failed", Code: code, Status: 413}
+	}
+	for _, tc := range []struct {
+		name         string
+		statuses     []string
+		failure      *models.AsyncOperationError
+		wantSubmits  int
+		wantCancels  int
+		wantErr      []string // all must be in the error detail; none expected when empty
+		wantNotInErr []string
+	}{
+		{
+			name:        "interrupted once then succeeds",
+			statuses:    []string{"failed", "succeeded"},
+			failure:     interruptedError(),
+			wantSubmits: 2,
+		},
+		{
+			name:         "interrupted twice is reported, not retried again",
+			statuses:     []string{"failed", "failed"},
+			failure:      interruptedError(),
+			wantSubmits:  2,
+			wantErr:      []string{"operation_interrupted", "Run the report again.", "ran it again once"},
+			wantNotInErr: nil,
+		},
+		{
+			name:         "another failure is not retried",
+			statuses:     []string{"failed", "succeeded"},
+			failure:      notRetried("result_too_large"),
+			wantSubmits:  1,
+			wantErr:      []string{"result_too_large"},
+			wantNotInErr: []string{"ran it again"},
+		},
+		{
+			name:         "failure without detail is not retried",
+			statuses:     []string{"failed", "succeeded"},
+			failure:      nil,
+			wantSubmits:  1,
+			wantErr:      []string{"no error detail"},
+			wantNotInErr: []string{"ran it again"},
+		},
+		{
+			name:         "canceled is not retried",
+			statuses:     []string{"canceled", "succeeded"},
+			wantSubmits:  1,
+			wantErr:      []string{"was canceled"},
+			wantNotInErr: []string{"ran it again"},
+		},
+		{
+			name:         "the retry is cancelled when the read timeout ends it",
+			statuses:     []string{"failed", "running"},
+			failure:      interruptedError(),
+			wantSubmits:  2,
+			wantCancels:  1,
+			wantErr:      []string{"did not finish within the read timeout"},
+			wantNotInErr: []string{"ran it again"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				srv := newAsyncTestServer(t, &asyncTestServer{pollStatuses: tc.statuses, failureError: tc.failure})
+				client := newAsyncTestClient(t, srv.Server)
+
+				// Half a second past a whole number of seconds, so the deadline
+				// does not fall on the same virtual instant as a 1s poll wait ends.
+				result, diags := runAsyncReportWith(t.Context(), newReportRunLimiter(1), client, "query",
+					10*time.Minute+500*time.Millisecond, inlineSubmit(client), nil)
+
+				submits, cancels, _, _, _ := srv.snapshot()
+				if len(submits) != tc.wantSubmits {
+					t.Errorf("submits = %d, want %d", len(submits), tc.wantSubmits)
+				}
+				if len(cancels) != tc.wantCancels {
+					t.Errorf("cancel calls = %d, want %d", len(cancels), tc.wantCancels)
+				}
+				if len(submits) == 2 && submits[0] == submits[1] {
+					t.Errorf("the retry reused Idempotency-Key %q; a replay would hand back the failed operation", submits[0])
+				}
+
+				if len(tc.wantErr) == 0 {
+					if diags.HasError() {
+						t.Fatalf("unexpected error: %v", diags)
+					}
+					if result == nil {
+						t.Fatal("no result after the retry succeeded")
+					}
+					return
+				}
+				if !diags.HasError() {
+					t.Fatal("expected an error")
+				}
+				if got := len(diags.Errors()); got != 1 {
+					t.Errorf("errors = %d, want 1: %v", got, diags)
+				}
+				got := diags.Errors()[0].Detail()
+				for _, want := range tc.wantErr {
+					if !strings.Contains(got, want) {
+						t.Errorf("detail missing %q:\n%s", want, got)
+					}
+				}
+				for _, notWant := range tc.wantNotInErr {
+					if strings.Contains(got, notWant) {
+						t.Errorf("detail should not contain %q:\n%s", notWant, got)
+					}
+				}
+			})
+		})
+	}
+}
+
 func TestAwaitAsyncReport_TerminalStatesAndErrors(t *testing.T) {
 	pdf := models.GetAsyncOperationResultsParamsFileOutputPdf
 	// Pointers, not values: asyncTestServer carries a mutex and must not be copied.
@@ -1341,7 +1496,7 @@ func TestSubmitAsyncReport_ActiveOperationLimitWaitsForASlot(t *testing.T) {
 // TestSubmitAsyncReport_ActiveOperationLimitOutlastsReadTimeout covers a cap
 // that never frees within the read timeout (other callers hold the customer
 // cap, or operations orphaned by a killed run hold the caller's slots for up
-// to 6 hours). The submit has to fail at the deadline, create nothing, and
+// to 30 minutes). The submit has to fail at the deadline, create nothing, and
 // tell the user why: a bare "context deadline exceeded" gives no hint that the
 // concurrency cap was the cause, and that something other than this Terraform
 // run holds the slots.

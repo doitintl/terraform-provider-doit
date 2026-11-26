@@ -18482,7 +18482,7 @@ type ClientInterface interface {
 
 	// GetAsyncOperation Poll an async report run operation
 	//
-	// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
+	// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. An operation whose run was interrupted on the server fails with error code "operation_interrupted"; submit the run again. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
 	//
 	// Corresponds with GET /analytics/v1/reports/operations/{operationId} (the `GetAsyncOperation` operationId).
 	GetAsyncOperation(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -21508,7 +21508,7 @@ func (c *Client) AsyncRunInline(ctx context.Context, params *AsyncRunInlineParam
 
 // GetAsyncOperation Poll an async report run operation
 //
-// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
+// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. An operation whose run was interrupted on the server fails with error code "operation_interrupted"; submit the run again. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
 //
 // Corresponds with GET /analytics/v1/reports/operations/{operationId} (the `GetAsyncOperation` operationId).
 func (c *Client) GetAsyncOperation(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -35153,7 +35153,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetAsyncOperationWithResponse Poll an async report run operation
 	//
-	// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
+	// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. An operation whose run was interrupted on the server fails with error code "operation_interrupted"; submit the run again. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -53301,7 +53301,7 @@ func (c *ClientWithResponses) AsyncRunInlineWithResponse(ctx context.Context, pa
 
 // GetAsyncOperationWithResponse Poll an async report run operation
 //
-// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
+// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. An operation whose run was interrupted on the server fails with error code "operation_interrupted"; submit the run again. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
 //
 // Returns a wrapper object for the known response body format(s).
 //
