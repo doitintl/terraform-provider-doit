@@ -1146,8 +1146,14 @@ func TestAwaitAsyncReport_UnrecognizedStatus(t *testing.T) {
 		if polls != 1 {
 			t.Errorf("polls = %d, want 1", polls)
 		}
-		if len(cancels) != 0 {
-			t.Errorf("cancel calls = %d, want 0 — nothing timed out", len(cancels))
+		// The operation is in a state the provider does not know, so it may
+		// still be running and counting against the API's cap. Giving up on it
+		// without cancelling would leave it there.
+		if len(cancels) != 1 {
+			t.Errorf("cancel calls = %d, want 1 — the abandoned operation must not keep running", len(cancels))
+		}
+		if detail := diags.Errors()[0].Detail(); !strings.Contains(detail, "was canceled") {
+			t.Errorf("error should say what became of the operation:\n%s", detail)
 		}
 	})
 }
@@ -1364,6 +1370,31 @@ func TestSubmitAsyncReport_ActiveOperationLimitOutlastsReadTimeout(t *testing.T)
 		} {
 			if !strings.Contains(err.Error(), want) {
 				t.Errorf("error should explain the cap, missing %q: %v", want, err)
+			}
+		}
+	})
+}
+
+// TestSubmitAsyncReport_InterruptedWhileWaitingOnTheLimit covers the user
+// stopping Terraform (Ctrl-C) during the wait on the active-operation cap. The
+// run was stopped on purpose, so the error must not say that the read timeout
+// elapsed or tell the user to raise it.
+func TestSubmitAsyncReport_InterruptedWhileWaitingOnTheLimit(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv := newAsyncTestServer(t, &asyncTestServer{submitLimited: 1_000})
+		client := newAsyncTestClient(t, srv.Server)
+
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		time.AfterFunc(45*time.Second, cancel)
+
+		_, err := submitViaInline(ctx, client)
+		if err == nil {
+			t.Fatal("expected the submit to fail once the context was cancelled")
+		}
+		for _, notWant := range []string{"read timeout", "raise the read timeout"} {
+			if strings.Contains(err.Error(), notWant) {
+				t.Errorf("an interrupted run was told about the timeout (%q): %v", notWant, err)
 			}
 		}
 	})

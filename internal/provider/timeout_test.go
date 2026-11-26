@@ -459,6 +459,85 @@ func TestDCIRetryClient_DeadlineWithoutRetryableResponseAddsNothing(t *testing.T
 	})
 }
 
+// TestDCIRetryClient_StalledRetryableBodyDoesNotDelayTheRetry covers a 429 or
+// 503 whose headers arrive and whose body then stalls. The body is only read to
+// quote it in an error, so waiting on it must not hold the retry back: the
+// request timeout (150s by default) is far longer than any wait the retry
+// policy would otherwise make.
+func TestDCIRetryClient_StalledRetryableBodyDoesNotDelayTheRetry(t *testing.T) {
+	for _, status := range []int{http.StatusTooManyRequests, http.StatusServiceUnavailable} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				var requestCount atomic.Int64
+				server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
+					if requestCount.Load() == 1 {
+						w.WriteHeader(status)
+						_, _ = w.Write([]byte(`{"detail":"`)) // a body that never ends
+						w.(http.Flusher).Flush()
+						<-r.Context().Done()
+						return
+					}
+					w.WriteHeader(http.StatusOK)
+				})
+
+				client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+				ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+				defer cancel()
+
+				start := time.Now()
+				resp, err := doGet(ctx, t, client, server.URL)
+				elapsed := time.Since(start)
+
+				if err != nil {
+					t.Fatalf("expected success on the retry, got: %v", err)
+				}
+				if resp.StatusCode != http.StatusOK {
+					t.Errorf("StatusCode = %d, want %d", resp.StatusCode, http.StatusOK)
+				}
+				// The policy waits 2s; capturing the body may add a few seconds at
+				// most, never the 150s request timeout.
+				if elapsed > 10*time.Second {
+					t.Errorf("elapsed = %v: the stalled body held the retry back, want well under the request timeout (%v)",
+						elapsed, DefaultRequestTimeout)
+				}
+			})
+		})
+	}
+}
+
+// TestDCIRetryClient_DeadlineDoesNotBlameAnEarlierResponse covers a 429 followed
+// by attempts that fail differently: the server stops answering. The error is
+// there to say why the retries ended, so it must not present the old 429 as the
+// last thing the API said while later attempts failed on the transport.
+func TestDCIRetryClient_DeadlineDoesNotBlameAnEarlierResponse(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
+			if requestCount.Load() == 1 {
+				w.Header().Set("Retry-After", "30")
+				w.WriteHeader(http.StatusTooManyRequests)
+				_, _ = w.Write([]byte(`{"code":"too_many_active_operations_for_user"}`))
+				return
+			}
+			<-r.Context().Done() // never answers again
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+		defer cancel()
+
+		_, err := doGet(ctx, t, client, server.URL)
+		if err == nil {
+			t.Fatal("expected the deadline to end the retries with an error")
+		}
+		if strings.Contains(err.Error(), "too_many_active_operations") {
+			t.Errorf("the error blames the first response, but the later attempts timed out: %v", err)
+		}
+	})
+}
+
 // TestDCIRetryClient_429WithRetryAfter_Honored verifies a server-supplied
 // Retry-After takes precedence over the exponential policy. The injected policy
 // would wait the entire operation budget, so completing in exactly the header's

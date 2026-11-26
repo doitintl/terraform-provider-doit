@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -41,6 +42,7 @@ type capServer struct {
 	resultsStatus int
 	submitStatus  int           // non-zero: every submit is refused with it
 	pollNotFound  bool          // the poll endpoint answers 404
+	pollFailFirst int           // the poll endpoint answers 500 for the first n operations
 	heldByOthers  int           // operations other callers hold against the cap...
 	heldFor       time.Duration // ...for this long after the server starts
 
@@ -127,6 +129,11 @@ func newCapServer(t *testing.T, s *capServer) *capServer {
 		}
 
 		id := r.PathValue("operationId")
+		if n, err := strconv.Atoi(strings.TrimPrefix(id, "op-")); err == nil && n <= s.pollFailFirst {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"error":"internal error"}`))
+			return
+		}
 		op := s.ops[id]
 		status := s.finalStatus
 		switch {
@@ -605,6 +612,82 @@ func TestRunAsyncReport_ReleasesItsSlotBeforeFetchingResults(t *testing.T) {
 		// the first has also fetched its slow result.
 		if got := obs.acceptedAt[1]; got != runFor {
 			t.Errorf("second run submitted at %v, want %v", got, runFor)
+		}
+	})
+}
+
+// TestRunAsyncReport_FailedPollDoesNotLeaveARunningOperationBehind covers a run
+// that gives up on an operation it cannot poll, for example after a 500. The
+// operation keeps running on the API and keeps counting against the cap, so
+// returning the slot and leaving it there lets a run's own abandoned operations
+// fill the cap and make the reports after it wait on 429s. The operation has to
+// be cancelled, as it already is when the read timeout or Ctrl-C ends a run.
+func TestRunAsyncReport_FailedPollDoesNotLeaveARunningOperationBehind(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const readTimeout = 30 * time.Minute
+
+		// Three operations that cannot be polled, then one that can. Each
+		// operation runs for 10 minutes unless it is cancelled.
+		srv := newCapServer(t, &capServer{runFor: 10 * time.Minute, pollFailFirst: maxConcurrentReportRuns})
+		client := newAsyncTestClient(t, srv.Server)
+
+		abandoned := runMany(maxConcurrentReportRuns, func(int) diag.Diagnostics {
+			_, diags := runAsyncReport(t.Context(), client, "query", readTimeout, inlineSubmit(client), nil)
+			return diags
+		})
+		if failed := failedRuns(abandoned); len(failed) != maxConcurrentReportRuns {
+			t.Fatalf("failed runs = %d, want %d: every poll of those operations is a 500", len(failed), maxConcurrentReportRuns)
+		}
+
+		_, diags := runAsyncReport(t.Context(), client, "query", readTimeout, inlineSubmit(client), nil)
+		if diags.HasError() {
+			t.Fatalf("the next run failed: %v", diags)
+		}
+
+		obs := srv.observe()
+		if obs.cancels != maxConcurrentReportRuns {
+			t.Errorf("cancel calls = %d, want %d: the abandoned operations are still running", obs.cancels, maxConcurrentReportRuns)
+		}
+		if obs.limited != 0 {
+			t.Errorf("the next run was turned away %d times by the cap: the abandoned operations still count against it", obs.limited)
+		}
+	})
+}
+
+// TestRunAsyncReport_PollNotFoundDoesNotCancel pins the one poll failure that
+// needs no cancel: a 404 says the operation no longer exists, so there is
+// nothing left running to count against the cap.
+func TestRunAsyncReport_PollNotFoundDoesNotCancel(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv := newCapServer(t, &capServer{pollNotFound: true})
+		client := newAsyncTestClient(t, srv.Server)
+
+		_, diags := runAsyncReport(t.Context(), client, "query", DefaultReadTimeout, inlineSubmit(client), nil)
+		if !diags.HasError() {
+			t.Fatal("expected an error when the operation cannot be found")
+		}
+		if got := srv.observe().cancels; got != 0 {
+			t.Errorf("cancel calls = %d, want 0: the operation is gone", got)
+		}
+	})
+}
+
+// TestRunAsyncReport_FailedPollSaysTheOperationWasCancelled checks that the
+// error tells the user what became of the operation it gave up on.
+func TestRunAsyncReport_FailedPollSaysTheOperationWasCancelled(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv := newCapServer(t, &capServer{runFor: time.Hour, pollFailFirst: 1})
+		client := newAsyncTestClient(t, srv.Server)
+
+		_, diags := runAsyncReport(t.Context(), client, "query", DefaultReadTimeout, inlineSubmit(client), nil)
+		if !diags.HasError() {
+			t.Fatal("expected an error")
+		}
+		detail := diags.Errors()[0].Detail()
+		for _, want := range []string{"Could not poll operation op-1", "Operation op-1 was canceled"} {
+			if !strings.Contains(detail, want) {
+				t.Errorf("error missing %q:\n%s", want, detail)
+			}
 		}
 	})
 }

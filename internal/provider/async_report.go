@@ -88,8 +88,8 @@ const activeOperationsLimitAdvice = "The API currently allows each user at most 
 	"operations and each customer at most 5, counting every caller. The provider waited for a slot " +
 	"until the read timeout elapsed, and it already keeps one Terraform run within the limit, so " +
 	"other Terraform runs, other users or operations left over from an earlier interrupted run " +
-	"are holding the slots. Wait for them to finish, cancel the leftover operations, or raise " +
-	"the read timeout."
+	"are probably holding the slots. Wait for them to finish, cancel the leftover operations, " +
+	"or raise the read timeout."
 
 // submitAsyncReport submits a report run and returns the operation ID.
 //
@@ -110,7 +110,9 @@ func submitAsyncReport(
 	sub, err := submit(ctx, idempotencyKey)
 	if err != nil {
 		detail := fmt.Sprintf("Could not submit the %s run: %s", what, err.Error())
-		if strings.Contains(err.Error(), activeOperationsLimitMarker) {
+		// A run the user stopped (Ctrl-C) did not time out, so the advice about
+		// the timeout does not apply to it.
+		if errors.Is(err, context.DeadlineExceeded) && strings.Contains(err.Error(), activeOperationsLimitMarker) {
 			detail += "\n\n" + activeOperationsLimitAdvice
 		}
 		if ctx.Err() != nil {
@@ -372,27 +374,27 @@ func pollAsyncOperation(
 			if ctx.Err() != nil {
 				return asyncRunAborted(ctx, client, what, operationID)
 			}
-			diags.AddError(
-				"Error Running "+what,
-				fmt.Sprintf("Could not poll operation %s: %s", operationID, err.Error()),
-			)
-			return diags
+			return abandonedOperationDiags(ctx, client, what, operationID,
+				fmt.Sprintf("Could not poll operation %s: %s", operationID, err.Error()))
 		}
 
 		if pollResp.StatusCode() != http.StatusOK || pollResp.JSON200 == nil {
 			// A 404 is the one status here with a non-obvious cause, so it gets
 			// an explanation appended to the raw status and body.
-			var hint string
 			if pollResp.StatusCode() == http.StatusNotFound {
-				hint = "\n\nThe operation no longer exists — it may have expired, " +
-					"or it belongs to a different user or tenant."
+				// Gone, so there is nothing left to cancel.
+				diags.AddError(
+					"Error Running "+what,
+					fmt.Sprintf("Could not poll operation %s, status: %d, body: %s\n\n"+
+						"The operation no longer exists — it may have expired, "+
+						"or it belongs to a different user or tenant.",
+						operationID, pollResp.StatusCode(), string(pollResp.Body)),
+				)
+				return diags
 			}
-			diags.AddError(
-				"Error Running "+what,
-				fmt.Sprintf("Could not poll operation %s, status: %d, body: %s%s",
-					operationID, pollResp.StatusCode(), string(pollResp.Body), hint),
-			)
-			return diags
+			return abandonedOperationDiags(ctx, client, what, operationID,
+				fmt.Sprintf("Could not poll operation %s, status: %d, body: %s",
+					operationID, pollResp.StatusCode(), string(pollResp.Body)))
 		}
 
 		switch pollResp.JSON200.Status {
@@ -422,12 +424,9 @@ func pollAsyncOperation(
 			// an unexpected value lands here rather than being rejected earlier.
 			// Treating it as non-terminal would poll until the read timeout and
 			// then cancel, turning a contract violation into a silent stall.
-			diags.AddError(
-				"Error Running "+what,
+			return abandonedOperationDiags(ctx, client, what, operationID,
 				fmt.Sprintf("Operation %s reported an unrecognized status %q, status: %d, body: %s",
-					operationID, pollResp.JSON200.Status, pollResp.StatusCode(), string(pollResp.Body)),
-			)
-			return diags
+					operationID, pollResp.JSON200.Status, pollResp.StatusCode(), string(pollResp.Body)))
 		}
 
 		// Still pending or running — wait, honoring the API's own guidance.
@@ -586,6 +585,25 @@ func asyncRunAborted(
 			"  timeouts = {\n    read = \"30m\"\n  }",
 			what, ctx.Err(), outcome),
 	)
+	return diags
+}
+
+// abandonedOperationDiags reports a run that gives up on an operation it cannot
+// follow to a terminal state (a poll that fails, or a status it does not know).
+// The operation keeps running and keeps counting against the API's cap on
+// active operations, so the run's own abandoned operations could fill that cap
+// and make the reports after it wait. Cancel it, as asyncRunAborted does, and
+// say what became of it.
+func abandonedOperationDiags(
+	ctx context.Context,
+	client *models.ClientWithResponses,
+	what, operationID, detail string,
+) diag.Diagnostics {
+	outcome, diags := cancelAsyncOperation(ctx, client, operationID)
+	if outcome != "" {
+		detail += "\n\n" + outcome
+	}
+	diags.AddError("Error Running "+what, detail)
 	return diags
 }
 
