@@ -3320,8 +3320,10 @@ paths:
         when to poll again. This endpoint does not return result data — once
         status is "succeeded", fetch the result from the operation's results
         endpoint. When status is "failed", the error field contains an RFC
-        9457-shaped error. Returns 404 if the operationId does not exist,
-        belongs to a different tenant, or has expired.
+        9457-shaped error. An operation whose run was interrupted on the
+        server fails with error code "operation_interrupted"; submit the run
+        again. Returns 404 if the operationId does not exist, belongs to a
+        different tenant, or has expired.
       operationId: getAsyncOperation
       parameters:
         - name: operationId

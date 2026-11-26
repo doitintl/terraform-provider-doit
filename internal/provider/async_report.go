@@ -16,6 +16,10 @@
 // maxConcurrentReportRuns). The runs of one client queue behind that cap before
 // they submit, and the Read timeout starts only once a run holds a slot, so a
 // report is never timed out for waiting its turn.
+//
+// The API fails an operation whose server run went away with the error code
+// operation_interrupted, and tells the caller to run the report again. A run
+// that meets it submits the report once more (see maxAsyncRunAttempts).
 package provider
 
 import (
@@ -88,8 +92,22 @@ const activeOperationsLimitAdvice = "The API currently allows each user at most 
 	"operations and each customer at most 5, counting every caller. The provider waited for a slot " +
 	"until the read timeout elapsed, and it already keeps one Terraform run within the limit, so " +
 	"other Terraform runs, other users or operations left over from an earlier interrupted run " +
-	"are probably holding the slots. Wait for them to finish, cancel the leftover operations, " +
-	"or raise the read timeout."
+	"are probably holding the slots. The API fails an operation whose run stopped reporting progress " +
+	"(for example after Terraform was killed) and stops counting it after about 30 minutes. " +
+	"Wait for the slots to free, cancel the leftover operations, or raise the read timeout."
+
+// operationInterruptedCode is the error code of an operation the API failed
+// because the server run that owned it went away (a deploy, a crash or a
+// scale-down) or stopped reporting progress. It is the API's "run the report
+// again" case, so a run that meets it is submitted once more.
+const operationInterruptedCode = "operation_interrupted"
+
+// maxAsyncRunAttempts is how many times one run submits its report when the
+// server interrupts the operation: the first submission and one retry. The Read
+// timeout bounds both together, and a second interruption in a row is reported
+// rather than retried again, so a server that keeps interrupting runs is not
+// hidden behind a loop.
+const maxAsyncRunAttempts = 2
 
 // submitAsyncReport submits a report run and returns the operation ID.
 //
@@ -329,15 +347,34 @@ func runAsyncReportWith(
 	runCtx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	operationID, submitDiags := submitAsyncReport(runCtx, client, what, submit)
-	diags.Append(submitDiags...)
-	if diags.HasError() {
-		return nil, diags
-	}
+	// The slot stays held across a retry: the interrupted operation is failed,
+	// so the API no longer counts it, and the retry takes its place.
+	var operationID string
+	for attempt := 1; ; attempt++ {
+		var submitDiags diag.Diagnostics
+		operationID, submitDiags = submitAsyncReport(runCtx, client, what, submit)
+		diags.Append(submitDiags...)
+		if diags.HasError() {
+			return nil, diags
+		}
 
-	pollDiags := pollAsyncOperation(runCtx, client, what, operationID)
-	diags.Append(pollDiags...)
-	if diags.HasError() {
+		interrupted, pollDiags := pollAsyncOperation(runCtx, client, what, operationID)
+		if !interrupted {
+			diags.Append(pollDiags...)
+			if diags.HasError() {
+				return nil, diags
+			}
+			break
+		}
+
+		if attempt < maxAsyncRunAttempts {
+			tflog.Warn(ctx, "The API interrupted a report operation; running the report again", map[string]any{
+				"operation_id": operationID,
+				"attempt":      attempt,
+			})
+			continue
+		}
+		diags.Append(interruptedAgainDiags(pollDiags)...)
 		return nil, diags
 	}
 
@@ -355,7 +392,9 @@ func runAsyncReportWith(
 
 // pollAsyncOperation polls operationID until it reaches a terminal state. It
 // returns no error diagnostics only when the operation succeeded, so the result
-// is ready to fetch.
+// is ready to fetch. interrupted is true when the API failed the operation with
+// operation_interrupted, the one failure that is worth submitting again; the
+// failure is still in the diagnostics for the caller to report or discard.
 //
 // If ctx expires or is cancelled while the operation is still running, the
 // operation is cancelled server-side before returning, so an abandoned run does
@@ -365,16 +404,15 @@ func pollAsyncOperation(
 	ctx context.Context,
 	client *models.ClientWithResponses,
 	what, operationID string,
-) diag.Diagnostics {
-	var diags diag.Diagnostics
+) (interrupted bool, diags diag.Diagnostics) {
 
 	for {
 		pollResp, err := client.GetAsyncOperationWithResponse(ctx, operationID)
 		if err != nil {
 			if ctx.Err() != nil {
-				return asyncRunAborted(ctx, client, what, operationID)
+				return false, asyncRunAborted(ctx, client, what, operationID)
 			}
-			return abandonedOperationDiags(ctx, client, what, operationID,
+			return false, abandonedOperationDiags(ctx, client, what, operationID,
 				fmt.Sprintf("Could not poll operation %s: %s", operationID, err.Error()))
 		}
 
@@ -390,30 +428,34 @@ func pollAsyncOperation(
 						"or it belongs to a different user or tenant.",
 						operationID, pollResp.StatusCode(), string(pollResp.Body)),
 				)
-				return diags
+				return false, diags
 			}
-			return abandonedOperationDiags(ctx, client, what, operationID,
+			return false, abandonedOperationDiags(ctx, client, what, operationID,
 				fmt.Sprintf("Could not poll operation %s, status: %d, body: %s",
 					operationID, pollResp.StatusCode(), string(pollResp.Body)))
 		}
 
 		switch pollResp.JSON200.Status {
 		case models.AsyncOperationPollResponseStatusSucceeded:
-			return diags
+			return false, diags
 
 		case models.AsyncOperationPollResponseStatusFailed:
 			diags.AddError(
 				"Error Running "+what,
 				asyncFailureDetail(operationID, pollResp.JSON200.Error),
 			)
-			return diags
+			// Only the API's own "run it again" failure is retried; any other
+			// failure (a result that is too large, a bad query) would fail
+			// the same way again.
+			opErr := pollResp.JSON200.Error
+			return opErr != nil && opErr.Code == operationInterruptedCode, diags
 
 		case models.AsyncOperationPollResponseStatusCanceled:
 			diags.AddError(
 				"Error Running "+what,
 				fmt.Sprintf("Operation %s was canceled before it produced a result.", operationID),
 			)
-			return diags
+			return false, diags
 
 		case models.AsyncOperationPollResponseStatusPending,
 			models.AsyncOperationPollResponseStatusRunning:
@@ -424,7 +466,7 @@ func pollAsyncOperation(
 			// an unexpected value lands here rather than being rejected earlier.
 			// Treating it as non-terminal would poll until the read timeout and
 			// then cancel, turning a contract violation into a silent stall.
-			return abandonedOperationDiags(ctx, client, what, operationID,
+			return false, abandonedOperationDiags(ctx, client, what, operationID,
 				fmt.Sprintf("Operation %s reported an unrecognized status %q, status: %d, body: %s",
 					operationID, pollResp.JSON200.Status, pollResp.StatusCode(), string(pollResp.Body)))
 		}
@@ -444,7 +486,7 @@ func pollAsyncOperation(
 		select {
 		case <-ctx.Done():
 			timer.Stop()
-			return asyncRunAborted(ctx, client, what, operationID)
+			return false, asyncRunAborted(ctx, client, what, operationID)
 		case <-timer.C:
 		}
 	}
@@ -604,6 +646,23 @@ func abandonedOperationDiags(
 		detail += "\n\n" + outcome
 	}
 	diags.AddError("Error Running "+what, detail)
+	return diags
+}
+
+// interruptedAgainDiags reports an operation the API interrupted on the retry
+// as well. The failure is the one the poll built, with a line saying the run
+// was already submitted a second time.
+func interruptedAgainDiags(pollDiags diag.Diagnostics) diag.Diagnostics {
+	var diags diag.Diagnostics
+	for _, d := range pollDiags {
+		if d.Severity() != diag.SeverityError {
+			diags = append(diags, d)
+			continue
+		}
+		diags.AddError(d.Summary(), d.Detail()+"\n\nThe API interrupted the report run, and the provider "+
+			"already ran it again once. The server instance running the report keeps going away, "+
+			"so run the report again later.")
+	}
 	return diags
 }
 
