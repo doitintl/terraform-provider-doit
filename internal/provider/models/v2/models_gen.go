@@ -4,11 +4,2308 @@
 package modelsv2
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
+
+	"github.com/oapi-codegen/nullable"
+	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// Defines values for BaselineChecksStatus.
+const (
+	BaselineChecksStatusFailed     BaselineChecksStatus = "failed"
+	BaselineChecksStatusNotChecked BaselineChecksStatus = "not_checked"
+	BaselineChecksStatusPartial    BaselineChecksStatus = "partial"
+	BaselineChecksStatusPassed     BaselineChecksStatus = "passed"
+)
+
+// Valid indicates whether the value is a known member of the BaselineChecksStatus enum.
+func (e BaselineChecksStatus) Valid() bool {
+	switch e {
+	case BaselineChecksStatusFailed:
+		return true
+	case BaselineChecksStatusNotChecked:
+		return true
+	case BaselineChecksStatusPartial:
+		return true
+	case BaselineChecksStatusPassed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudCleanupScope.
+const (
+	CloudCleanupScopeDoitOnly CloudCleanupScope = "doit_only"
+)
+
+// Valid indicates whether the value is a known member of the CloudCleanupScope enum.
+func (e CloudCleanupScope) Valid() bool {
+	switch e {
+	case CloudCleanupScopeDoitOnly:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FollowUpStatus.
+const (
+	FollowUpStatusFailed     FollowUpStatus = "failed"
+	FollowUpStatusNotStarted FollowUpStatus = "not_started"
+	FollowUpStatusRunning    FollowUpStatus = "running"
+	FollowUpStatusSucceeded  FollowUpStatus = "succeeded"
+	FollowUpStatusWouldRun   FollowUpStatus = "would_run"
+)
+
+// Valid indicates whether the value is a known member of the FollowUpStatus enum.
+func (e FollowUpStatus) Valid() bool {
+	switch e {
+	case FollowUpStatusFailed:
+		return true
+	case FollowUpStatusNotStarted:
+		return true
+	case FollowUpStatusRunning:
+		return true
+	case FollowUpStatusSucceeded:
+		return true
+	case FollowUpStatusWouldRun:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpBillingAccountStatus.
+const (
+	GcpBillingAccountStatusActive  GcpBillingAccountStatus = "active"
+	GcpBillingAccountStatusFailed  GcpBillingAccountStatus = "failed"
+	GcpBillingAccountStatusPending GcpBillingAccountStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the GcpBillingAccountStatus enum.
+func (e GcpBillingAccountStatus) Valid() bool {
+	switch e {
+	case GcpBillingAccountStatusActive:
+		return true
+	case GcpBillingAccountStatusFailed:
+		return true
+	case GcpBillingAccountStatusPending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpBillingGrantTarget.
+const (
+	GcpBillingGrantTargetBillingAccount GcpBillingGrantTarget = "billing_account"
+	GcpBillingGrantTargetExportDataset  GcpBillingGrantTarget = "export_dataset"
+)
+
+// Valid indicates whether the value is a known member of the GcpBillingGrantTarget enum.
+func (e GcpBillingGrantTarget) Valid() bool {
+	switch e {
+	case GcpBillingGrantTargetBillingAccount:
+		return true
+	case GcpBillingGrantTargetExportDataset:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpCloudConnectConnectionRegisteredVia.
+const (
+	GcpCloudConnectConnectionRegisteredViaApi                    GcpCloudConnectConnectionRegisteredVia = "api"
+	GcpCloudConnectConnectionRegisteredViaCloudformationCallback GcpCloudConnectConnectionRegisteredVia = "cloudformation_callback"
+	GcpCloudConnectConnectionRegisteredViaConsole                GcpCloudConnectConnectionRegisteredVia = "console"
+)
+
+// Valid indicates whether the value is a known member of the GcpCloudConnectConnectionRegisteredVia enum.
+func (e GcpCloudConnectConnectionRegisteredVia) Valid() bool {
+	switch e {
+	case GcpCloudConnectConnectionRegisteredViaApi:
+		return true
+	case GcpCloudConnectConnectionRegisteredViaCloudformationCallback:
+		return true
+	case GcpCloudConnectConnectionRegisteredViaConsole:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpCloudConnectConnectionScopeKind.
+const (
+	GcpCloudConnectConnectionScopeKindGcpDataset      GcpCloudConnectConnectionScopeKind = "gcp_dataset"
+	GcpCloudConnectConnectionScopeKindGcpOrganization GcpCloudConnectConnectionScopeKind = "gcp_organization"
+	GcpCloudConnectConnectionScopeKindGcpProject      GcpCloudConnectConnectionScopeKind = "gcp_project"
+)
+
+// Valid indicates whether the value is a known member of the GcpCloudConnectConnectionScopeKind enum.
+func (e GcpCloudConnectConnectionScopeKind) Valid() bool {
+	switch e {
+	case GcpCloudConnectConnectionScopeKindGcpDataset:
+		return true
+	case GcpCloudConnectConnectionScopeKindGcpOrganization:
+		return true
+	case GcpCloudConnectConnectionScopeKindGcpProject:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpCloudConnectConnectionCreateScopeKind.
+const (
+	GcpCloudConnectConnectionCreateScopeKindGcpDataset      GcpCloudConnectConnectionCreateScopeKind = "gcp_dataset"
+	GcpCloudConnectConnectionCreateScopeKindGcpOrganization GcpCloudConnectConnectionCreateScopeKind = "gcp_organization"
+	GcpCloudConnectConnectionCreateScopeKindGcpProject      GcpCloudConnectConnectionCreateScopeKind = "gcp_project"
+)
+
+// Valid indicates whether the value is a known member of the GcpCloudConnectConnectionCreateScopeKind enum.
+func (e GcpCloudConnectConnectionCreateScopeKind) Valid() bool {
+	switch e {
+	case GcpCloudConnectConnectionCreateScopeKindGcpDataset:
+		return true
+	case GcpCloudConnectConnectionCreateScopeKindGcpOrganization:
+		return true
+	case GcpCloudConnectConnectionCreateScopeKindGcpProject:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpCloudConnectConnectionPreviewRegisteredVia.
+const (
+	GcpCloudConnectConnectionPreviewRegisteredViaApi                    GcpCloudConnectConnectionPreviewRegisteredVia = "api"
+	GcpCloudConnectConnectionPreviewRegisteredViaCloudformationCallback GcpCloudConnectConnectionPreviewRegisteredVia = "cloudformation_callback"
+	GcpCloudConnectConnectionPreviewRegisteredViaConsole                GcpCloudConnectConnectionPreviewRegisteredVia = "console"
+)
+
+// Valid indicates whether the value is a known member of the GcpCloudConnectConnectionPreviewRegisteredVia enum.
+func (e GcpCloudConnectConnectionPreviewRegisteredVia) Valid() bool {
+	switch e {
+	case GcpCloudConnectConnectionPreviewRegisteredViaApi:
+		return true
+	case GcpCloudConnectConnectionPreviewRegisteredViaCloudformationCallback:
+		return true
+	case GcpCloudConnectConnectionPreviewRegisteredViaConsole:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpCloudConnectConnectionPreviewScopeKind.
+const (
+	GcpCloudConnectConnectionPreviewScopeKindGcpDataset      GcpCloudConnectConnectionPreviewScopeKind = "gcp_dataset"
+	GcpCloudConnectConnectionPreviewScopeKindGcpOrganization GcpCloudConnectConnectionPreviewScopeKind = "gcp_organization"
+	GcpCloudConnectConnectionPreviewScopeKindGcpProject      GcpCloudConnectConnectionPreviewScopeKind = "gcp_project"
+)
+
+// Valid indicates whether the value is a known member of the GcpCloudConnectConnectionPreviewScopeKind enum.
+func (e GcpCloudConnectConnectionPreviewScopeKind) Valid() bool {
+	switch e {
+	case GcpCloudConnectConnectionPreviewScopeKindGcpDataset:
+		return true
+	case GcpCloudConnectConnectionPreviewScopeKindGcpOrganization:
+		return true
+	case GcpCloudConnectConnectionPreviewScopeKindGcpProject:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpRequirementsRequestScopeKind.
+const (
+	GcpRequirementsRequestScopeKindGcpDataset      GcpRequirementsRequestScopeKind = "gcp_dataset"
+	GcpRequirementsRequestScopeKindGcpOrganization GcpRequirementsRequestScopeKind = "gcp_organization"
+	GcpRequirementsRequestScopeKindGcpProject      GcpRequirementsRequestScopeKind = "gcp_project"
+)
+
+// Valid indicates whether the value is a known member of the GcpRequirementsRequestScopeKind enum.
+func (e GcpRequirementsRequestScopeKind) Valid() bool {
+	switch e {
+	case GcpRequirementsRequestScopeKindGcpDataset:
+		return true
+	case GcpRequirementsRequestScopeKindGcpOrganization:
+		return true
+	case GcpRequirementsRequestScopeKindGcpProject:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpRequirementsResponseScopeKind.
+const (
+	GcpRequirementsResponseScopeKindGcpDataset      GcpRequirementsResponseScopeKind = "gcp_dataset"
+	GcpRequirementsResponseScopeKindGcpOrganization GcpRequirementsResponseScopeKind = "gcp_organization"
+	GcpRequirementsResponseScopeKindGcpProject      GcpRequirementsResponseScopeKind = "gcp_project"
+)
+
+// Valid indicates whether the value is a known member of the GcpRequirementsResponseScopeKind enum.
+func (e GcpRequirementsResponseScopeKind) Valid() bool {
+	switch e {
+	case GcpRequirementsResponseScopeKindGcpDataset:
+		return true
+	case GcpRequirementsResponseScopeKindGcpOrganization:
+		return true
+	case GcpRequirementsResponseScopeKindGcpProject:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MutationPreviewOperation.
+const (
+	MutationPreviewOperationCreate MutationPreviewOperation = "create"
+	MutationPreviewOperationDelete MutationPreviewOperation = "delete"
+	MutationPreviewOperationUpdate MutationPreviewOperation = "update"
+)
+
+// Valid indicates whether the value is a known member of the MutationPreviewOperation enum.
+func (e MutationPreviewOperation) Valid() bool {
+	switch e {
+	case MutationPreviewOperationCreate:
+		return true
+	case MutationPreviewOperationDelete:
+		return true
+	case MutationPreviewOperationUpdate:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PlannedFollowUpStatus.
+const (
+	PlannedFollowUpStatusWouldRun PlannedFollowUpStatus = "would_run"
+)
+
+// Valid indicates whether the value is a known member of the PlannedFollowUpStatus enum.
+func (e PlannedFollowUpStatus) Valid() bool {
+	switch e {
+	case PlannedFollowUpStatusWouldRun:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PreconditionStatus.
+const (
+	PreconditionStatusFailed     PreconditionStatus = "failed"
+	PreconditionStatusNotChecked PreconditionStatus = "not_checked"
+	PreconditionStatusSatisfied  PreconditionStatus = "satisfied"
+)
+
+// Valid indicates whether the value is a known member of the PreconditionStatus enum.
+func (e PreconditionStatus) Valid() bool {
+	switch e {
+	case PreconditionStatusFailed:
+		return true
+	case PreconditionStatusNotChecked:
+		return true
+	case PreconditionStatusSatisfied:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RegistrationStatus.
+const (
+	RegistrationStatusRegistered RegistrationStatus = "registered"
+)
+
+// Valid indicates whether the value is a known member of the RegistrationStatus enum.
+func (e RegistrationStatus) Valid() bool {
+	switch e {
+	case RegistrationStatusRegistered:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RegistrationHandoffMethod.
+const (
+	RegistrationHandoffMethodApiRegister RegistrationHandoffMethod = "api_register"
+	RegistrationHandoffMethodApiUpdate   RegistrationHandoffMethod = "api_update"
+)
+
+// Valid indicates whether the value is a known member of the RegistrationHandoffMethod enum.
+func (e RegistrationHandoffMethod) Valid() bool {
+	switch e {
+	case RegistrationHandoffMethodApiRegister:
+		return true
+	case RegistrationHandoffMethodApiUpdate:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RequiredInputType.
+const (
+	RequiredInputTypeEnum   RequiredInputType = "enum"
+	RequiredInputTypeString RequiredInputType = "string"
+)
+
+// Valid indicates whether the value is a known member of the RequiredInputType enum.
+func (e RequiredInputType) Valid() bool {
+	switch e {
+	case RequiredInputTypeEnum:
+		return true
+	case RequiredInputTypeString:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RequirementsArtifactKind.
+const (
+	RequirementsArtifactKindCloudformation RequirementsArtifactKind = "cloudformation"
+	RequirementsArtifactKindShell          RequirementsArtifactKind = "shell"
+	RequirementsArtifactKindTerraform      RequirementsArtifactKind = "terraform"
+)
+
+// Valid indicates whether the value is a known member of the RequirementsArtifactKind enum.
+func (e RequirementsArtifactKind) Valid() bool {
+	switch e {
+	case RequirementsArtifactKindCloudformation:
+		return true
+	case RequirementsArtifactKindShell:
+		return true
+	case RequirementsArtifactKindTerraform:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RequirementsArtifactRegistration.
+const (
+	RequirementsArtifactRegistrationCallback RequirementsArtifactRegistration = "callback"
+	RequirementsArtifactRegistrationManual   RequirementsArtifactRegistration = "manual"
+	RequirementsArtifactRegistrationProvider RequirementsArtifactRegistration = "provider"
+)
+
+// Valid indicates whether the value is a known member of the RequirementsArtifactRegistration enum.
+func (e RequirementsArtifactRegistration) Valid() bool {
+	switch e {
+	case RequirementsArtifactRegistrationCallback:
+		return true
+	case RequirementsArtifactRegistrationManual:
+		return true
+	case RequirementsArtifactRegistrationProvider:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RequirementsFeatureStatus.
+const (
+	RequirementsFeatureStatusAvailable      RequirementsFeatureStatus = "available"
+	RequirementsFeatureStatusInputsRequired RequirementsFeatureStatus = "inputs_required"
+	RequirementsFeatureStatusNotEntitled    RequirementsFeatureStatus = "not_entitled"
+)
+
+// Valid indicates whether the value is a known member of the RequirementsFeatureStatus enum.
+func (e RequirementsFeatureStatus) Valid() bool {
+	switch e {
+	case RequirementsFeatureStatusAvailable:
+		return true
+	case RequirementsFeatureStatusInputsRequired:
+		return true
+	case RequirementsFeatureStatusNotEntitled:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RequirementsFollowUpExecutor.
+const (
+	RequirementsFollowUpExecutorCustomerController RequirementsFollowUpExecutor = "customer_controller"
+	RequirementsFollowUpExecutorDoitBackend        RequirementsFollowUpExecutor = "doit_backend"
+)
+
+// Valid indicates whether the value is a known member of the RequirementsFollowUpExecutor enum.
+func (e RequirementsFollowUpExecutor) Valid() bool {
+	switch e {
+	case RequirementsFollowUpExecutorCustomerController:
+		return true
+	case RequirementsFollowUpExecutorDoitBackend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RequirementsIdentityKind.
+const (
+	RequirementsIdentityKindAwsIamRole            RequirementsIdentityKind = "aws_iam_role"
+	RequirementsIdentityKindAzureServicePrincipal RequirementsIdentityKind = "azure_service_principal"
+	RequirementsIdentityKindGcpServiceAccount     RequirementsIdentityKind = "gcp_service_account"
+)
+
+// Valid indicates whether the value is a known member of the RequirementsIdentityKind enum.
+func (e RequirementsIdentityKind) Valid() bool {
+	switch e {
+	case RequirementsIdentityKindAwsIamRole:
+		return true
+	case RequirementsIdentityKindAzureServicePrincipal:
+		return true
+	case RequirementsIdentityKindGcpServiceAccount:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RequirementsIdentityStatus.
+const (
+	RequirementsIdentityStatusError      RequirementsIdentityStatus = "error"
+	RequirementsIdentityStatusResolved   RequirementsIdentityStatus = "resolved"
+	RequirementsIdentityStatusUnresolved RequirementsIdentityStatus = "unresolved"
+)
+
+// Valid indicates whether the value is a known member of the RequirementsIdentityStatus enum.
+func (e RequirementsIdentityStatus) Valid() bool {
+	switch e {
+	case RequirementsIdentityStatusError:
+		return true
+	case RequirementsIdentityStatusResolved:
+		return true
+	case RequirementsIdentityStatusUnresolved:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RequirementsPreconditionsStatus.
+const (
+	RequirementsPreconditionsStatusBlocked   RequirementsPreconditionsStatus = "blocked"
+	RequirementsPreconditionsStatusSatisfied RequirementsPreconditionsStatus = "satisfied"
+)
+
+// Valid indicates whether the value is a known member of the RequirementsPreconditionsStatus enum.
+func (e RequirementsPreconditionsStatus) Valid() bool {
+	switch e {
+	case RequirementsPreconditionsStatusBlocked:
+		return true
+	case RequirementsPreconditionsStatusSatisfied:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationSummaryStatus.
+const (
+	VerificationSummaryStatusFailed     VerificationSummaryStatus = "failed"
+	VerificationSummaryStatusNotChecked VerificationSummaryStatus = "not_checked"
+	VerificationSummaryStatusPartial    VerificationSummaryStatus = "partial"
+	VerificationSummaryStatusPassed     VerificationSummaryStatus = "passed"
+)
+
+// Valid indicates whether the value is a known member of the VerificationSummaryStatus enum.
+func (e VerificationSummaryStatus) Valid() bool {
+	switch e {
+	case VerificationSummaryStatusFailed:
+		return true
+	case VerificationSummaryStatusNotChecked:
+		return true
+	case VerificationSummaryStatusPartial:
+		return true
+	case VerificationSummaryStatusPassed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CleanupScope.
+const (
+	CleanupScopeDoitOnly CleanupScope = "doit_only"
+)
+
+// Valid indicates whether the value is a known member of the CleanupScope enum.
+func (e CleanupScope) Valid() bool {
+	switch e {
+	case CleanupScopeDoitOnly:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DeleteGcpCloudConnectConnectionParamsCleanupScope.
+const (
+	DeleteGcpCloudConnectConnectionParamsCleanupScopeDoitOnly DeleteGcpCloudConnectConnectionParamsCleanupScope = "doit_only"
+)
+
+// Valid indicates whether the value is a known member of the DeleteGcpCloudConnectConnectionParamsCleanupScope enum.
+func (e DeleteGcpCloudConnectConnectionParamsCleanupScope) Valid() bool {
+	switch e {
+	case DeleteGcpCloudConnectConnectionParamsCleanupScopeDoitOnly:
+		return true
+	default:
+		return false
+	}
+}
+
+// ArtifactChange Declarative customer-side cloud change for IaC reconciliation.
+type ArtifactChange struct {
+	// Action Example: ensure_role_assignment
+	Action string `json:"action"`
+
+	// Member Example: 22222222-2222-4222-8222-222222222222
+	Member *string `json:"member,omitempty"`
+
+	// Resource Example: /providers/Microsoft.Management/managementGroups/example-platform
+	Resource string `json:"resource"`
+
+	// Role Example: acdd72a7-3385-48ef-bd42-f606fba81ae7
+	Role *string `json:"role,omitempty"`
+
+	// Values Example: ["doit-cloud-connect:0123456789abcdef"]
+	Values *[]string `json:"values,omitempty"`
+}
+
+// ArtifactFile Published template or script file referenced by a deployment artifact.
+type ArtifactFile struct {
+	// Path Example: member.yml
+	Path string `json:"path"`
+
+	// Sha256 Example: 3f1b0c9d7e2a4b6c8d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e
+	Sha256 string `json:"sha256"`
+
+	// Url Example: https://example.com/member.yml
+	Url string `json:"url"`
+}
+
+// AzureRoleRequirement Required Azure built-in role at the management group scope.
+type AzureRoleRequirement struct {
+	// Name Example: Reader
+	Name string `json:"name"`
+
+	// RoleDefinitionId Example: acdd72a7-3385-48ef-bd42-f606fba81ae7
+	RoleDefinitionId openapi_types.UUID `json:"roleDefinitionId"`
+}
+
+// BaselineChecks Latest background health check status.
+type BaselineChecks struct {
+	// CheckTime Example: 2026-11-23T12:00:00Z
+	CheckTime nullable.Nullable[time.Time] `json:"checkTime,omitempty"`
+
+	// Status Example: passed
+	Status BaselineChecksStatus `json:"status"`
+}
+
+// BaselineChecksStatus Example: passed
+type BaselineChecksStatus string
+
+// CleanupResource Resource affected by disconnect cleanup.
+type CleanupResource struct {
+	// Kind Example: s3_notification
+	Kind string `json:"kind"`
+
+	// Status Example: would_remove
+	Status *string `json:"status,omitempty"`
+
+	// Target Example: example-cloudtrail-bucket
+	Target string `json:"target"`
+}
+
+// CloudCleanup Summary of DoiT-side cleanup planned for a disconnect preview.
+type CloudCleanup struct {
+	Resources []CleanupResource `json:"resources"`
+
+	// Scope Example: doit_only
+	Scope CloudCleanupScope `json:"scope"`
+}
+
+// CloudCleanupScope Example: doit_only
+type CloudCleanupScope string
+
+// FollowUp Backend follow-up step tracked for a connection revision.
+type FollowUp struct {
+	// BindingId Example: binding_aws_account_123456789012
+	BindingId string `json:"bindingId"`
+
+	// FeatureId Example: real-time-data
+	FeatureId nullable.Nullable[string] `json:"featureId,omitempty"`
+
+	// Kind Example: enable_feature_consumers
+	Kind      string                       `json:"kind"`
+	LastError nullable.Nullable[StepError] `json:"lastError,omitempty"`
+
+	// Status Example: succeeded
+	Status FollowUpStatus `json:"status"`
+}
+
+// FollowUpStatus Example: succeeded
+type FollowUpStatus string
+
+// GcpBigQueryFinOpsInputs BigQuery dataset configuration for the `bigquery-finops` feature.
+//
+// Example: {"location":"US"}
+type GcpBigQueryFinOpsInputs struct {
+	// Location BigQuery location where the FinOps log-sink dataset is created (defaults to `US`). Validated server-side against the active catalog's supported BigQuery locations; pass `null` on `PATCH` to clear the override.
+	//
+	// Example: US
+	Location nullable.Nullable[string] `json:"location,omitempty"`
+}
+
+// GcpBillingAccount Google Cloud billing account connection. It cannot be changed in place,
+// so it carries no `etag` and disconnecting it takes no `If-Match`.
+type GcpBillingAccount struct {
+	// BillingAccountId Google Cloud billing account ID.
+	//
+	// Example: 012345-6789AB-CDEF01
+	BillingAccountId string `json:"billingAccountId"`
+
+	// ExportDatasetId BigQuery dataset the detailed usage cost export writes to. Absent
+	// whenever `exportProjectId` is absent.
+	//
+	//
+	// Example: billing_export
+	ExportDatasetId *string `json:"exportDatasetId,omitempty"`
+
+	// ExportProjectId Google Cloud project holding the detailed usage cost export dataset.
+	// Absent only on a `failed` connection whose export is no longer known,
+	// after a disconnect that removed its records did not complete.
+	//
+	//
+	// Example: example-billing-project
+	ExportProjectId *string `json:"exportProjectId,omitempty"`
+
+	// FailureReason Why the connection is `failed` and what to do next. Present only when `status` is `failed`.
+	//
+	// Example: DoiT could not finish checking the billing export, which is a problem on DoiT's side; connect again in a few minutes
+	FailureReason *string `json:"failureReason,omitempty"`
+
+	// Id Stable resource identifier, equal to `billingAccountId`.
+	//
+	// Example: 012345-6789AB-CDEF01
+	Id *string `json:"id,omitempty"`
+
+	// Status Activation state. `pending` while DoiT activates the connection in
+	// the background, `active` once billing import is set up, `failed`
+	// with `failureReason` when activation or a disconnect did not
+	// finish. A `failed` connection can be connected again.
+	//
+	//
+	// Example: active
+	Status *GcpBillingAccountStatus `json:"status,omitempty"`
+}
+
+// GcpBillingAccountStatus Activation state. `pending` while DoiT activates the connection in
+// the background, `active` once billing import is set up, `failed`
+// with `failureReason` when activation or a disconnect did not
+// finish. A `failed` connection can be connected again.
+//
+// Example: active
+type GcpBillingAccountStatus string
+
+// GcpBillingAccountCreate Request payload to connect a Google Cloud billing account.
+type GcpBillingAccountCreate struct {
+	// BillingAccountId Google Cloud billing account ID. Cannot be changed in place; disconnect and connect again.
+	//
+	// Example: 012345-6789AB-CDEF01
+	BillingAccountId string `json:"billingAccountId"`
+
+	// ExportDatasetId BigQuery dataset the detailed usage cost export writes to. Cannot be changed in place; disconnect and connect again.
+	//
+	// Example: billing_export
+	ExportDatasetId string `json:"exportDatasetId"`
+
+	// ExportProjectId Google Cloud project holding the detailed usage cost export dataset. Cannot be changed in place; disconnect and connect again.
+	//
+	// Example: example-billing-project
+	ExportProjectId string `json:"exportProjectId"`
+}
+
+// GcpBillingGrant IAM role the customer grants to DoiT's service account before connecting.
+type GcpBillingGrant struct {
+	// Role Google Cloud IAM role to grant.
+	//
+	// Example: roles/billing.viewer
+	Role string `json:"role"`
+
+	// Target Where to grant the role. `billing_account` is the billing account being connected; `export_dataset` is the BigQuery dataset holding its detailed usage cost export.
+	//
+	// Example: billing_account
+	Target GcpBillingGrantTarget `json:"target"`
+}
+
+// GcpBillingGrantTarget Where to grant the role. `billing_account` is the billing account being connected; `export_dataset` is the BigQuery dataset holding its detailed usage cost export.
+//
+// Example: billing_account
+type GcpBillingGrantTarget string
+
+// GcpBillingRequirementsResponse GCP billing onboarding requirements for the authenticated customer.
+type GcpBillingRequirementsResponse struct {
+	// Grants IAM roles to grant to `serviceAccountEmail` before connecting, always in this order.
+	//
+	// Example: [{"role":"roles/billing.viewer","target":"billing_account"},{"role":"roles/bigquery.dataViewer","target":"export_dataset"}]
+	Grants []GcpBillingGrant `json:"grants"`
+
+	// Prerequisites Setup steps Google offers no API for, to complete before connecting.
+	//
+	// Example: ["Enable the Cloud Billing detailed usage cost export to a BigQuery dataset before connecting."]
+	Prerequisites []string `json:"prerequisites"`
+
+	// ServiceAccountEmail DoiT service account that reads the billing account and its export.
+	//
+	// Example: billing-reader@example-project.iam.gserviceaccount.com
+	ServiceAccountEmail openapi_types.Email `json:"serviceAccountEmail"`
+}
+
+// GcpCloudConnectConnection Registered Google Cloud Connect resource. Each Google Cloud service account (`serviceAccount.uniqueId`) holds at most one connection (`409 onboarding.connection_exists` when registering a second scope with the same service account).
+type GcpCloudConnectConnection struct {
+	// BaselineChecks Example: {"checkTime":"2026-11-23T12:00:00Z","status":"passed"}
+	BaselineChecks *BaselineChecks `json:"baselineChecks,omitempty"`
+
+	// BindingId Read-only deterministic GCP scope binding key used to correlate entries in `followUps`, `plannedFollowUps`, and verification `checks` back to this connection.
+	//
+	// Example: binding_gcp_project_0123456789abcdef0123456789abcdef
+	BindingId *string `json:"bindingId,omitempty"`
+
+	// CatalogVersion Server catalog version recorded when this GCP connection was last created or patched (unchanged by `verify`, which records its own version under `featureVerification.catalogVersion`), or `null` for legacy records not yet mutated via v2.
+	//
+	// Example: sha256:3f1b0c9d7e2a4b6c8d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e
+	CatalogVersion nullable.Nullable[string] `json:"catalogVersion,omitempty"`
+
+	// ClientUserAgent Bounded User-Agent of the client that last mutated the record.
+	//
+	// Example: terraform-provider-doit/1.6.0
+	ClientUserAgent nullable.Nullable[string] `json:"clientUserAgent,omitempty"`
+
+	// DatasetId BigQuery dataset ID when `scopeKind` is `gcp_dataset`, otherwise `null`.
+	DatasetId nullable.Nullable[string] `json:"datasetId,omitempty"`
+
+	// Etag Strong ETag matching the `ETag` response header for this GCP connection. Derived solely from configuration `revision` and document incarnation; background health checks, `verify` runs, and follow-up transitions do not change `etag`.
+	//
+	// Example: "1.b7c2d9e0"
+	Etag *string `json:"etag,omitempty"`
+
+	// FeatureIds Cloud Connect feature IDs enabled on this GCP scope, returned sorted in lexicographical ascending order (set semantics).
+	//
+	// Example: ["core","cloud-diagrams"]
+	FeatureIds []string `json:"featureIds"`
+
+	// FeatureInputs Typed per-feature inputs stored on this GCP connection, or `null` when none are set.
+	FeatureInputs nullable.Nullable[GcpFeatureInputs] `json:"featureInputs,omitempty"`
+
+	// FeatureVerification Example: {"status":"not_checked"}
+	FeatureVerification *VerificationSummary `json:"featureVerification,omitempty"`
+
+	// FollowUps Example: []
+	FollowUps *[]FollowUp `json:"followUps,omitempty"`
+
+	// Id Opaque connection identifier.
+	//
+	// Example: google-cloud-100000000000000000001
+	Id *string `json:"id,omitempty"`
+
+	// OrganizationId Numeric GCP organization ID when `scopeKind` is `gcp_organization`, otherwise `null`.
+	OrganizationId nullable.Nullable[string] `json:"organizationId,omitempty"`
+
+	// ProjectId GCP project ID when `scopeKind` is `gcp_project` or `gcp_dataset`, otherwise `null`.
+	//
+	// Example: example-project
+	ProjectId nullable.Nullable[string] `json:"projectId,omitempty"`
+
+	// RegisteredVia Writer that created the current record.
+	//
+	// Example: api
+	RegisteredVia *GcpCloudConnectConnectionRegisteredVia `json:"registeredVia,omitempty"`
+
+	// Registration Example: {"registrationTime":"2026-11-23T12:00:00Z","status":"registered"}
+	Registration *Registration `json:"registration,omitempty"`
+
+	// Revision Opaque configuration revision.
+	//
+	// Example: 1
+	Revision *string `json:"revision,omitempty"`
+
+	// RoleId GCP IAM custom role ID associated with this connection, when recorded.
+	//
+	// Example: doit_cmp_role
+	RoleId nullable.Nullable[string] `json:"roleId,omitempty"`
+
+	// ScopeKind Google Cloud resource scope kind.
+	//
+	// Example: gcp_project
+	ScopeKind GcpCloudConnectConnectionScopeKind `json:"scopeKind"`
+
+	// ServiceAccount Keyless Google Cloud service account descriptor authenticated through DoiT workload delegation.
+	ServiceAccount GcpServiceAccount `json:"serviceAccount"`
+}
+
+// GcpCloudConnectConnectionRegisteredVia Writer that created the current record.
+//
+// Example: api
+type GcpCloudConnectConnectionRegisteredVia string
+
+// GcpCloudConnectConnectionScopeKind Google Cloud resource scope kind.
+//
+// Example: gcp_project
+type GcpCloudConnectConnectionScopeKind string
+
+// GcpCloudConnectConnectionCreate Request body to register a Google Cloud Connect connection. Set
+// `organizationId` for `gcp_organization`, `projectId` for `gcp_project`,
+// or `projectId` and `datasetId` for `gcp_dataset`. Scope fields,
+// `serviceAccount`, and `roleId` are immutable after creation.
+type GcpCloudConnectConnectionCreate struct {
+	// CatalogVersion Optional catalog version from `resolveGcpCloudConnectRequirements` for an optimistic freshness check (`409 onboarding.catalog_version_stale` if stale). Whether supplied or omitted, the server persists the current active catalog version on the GCP connection; IaC providers should treat this as a write-only or computed precondition rather than a drift-tracked configured attribute.
+	//
+	// Example: sha256:3f1b0c9d7e2a4b6c8d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e
+	CatalogVersion nullable.Nullable[string] `json:"catalogVersion,omitempty"`
+
+	// DatasetId BigQuery dataset ID when `scopeKind` is `gcp_dataset`.
+	//
+	// Example: billing_export
+	DatasetId nullable.Nullable[string] `json:"datasetId,omitempty"`
+
+	// FeatureIds GCP Cloud Connect feature IDs to enable (set semantics; duplicates return `400 validation_failed`, stored and returned sorted ascending). Valid IDs are dynamic per customer and scope; discover them by calling `resolveGcpCloudConnectRequirements` without `featureIds`.
+	//
+	// Example: ["core","cloud-diagrams"]
+	FeatureIds []string `json:"featureIds"`
+
+	// FeatureInputs Optional typed per-feature inputs (for example `bigqueryFinops.location`).
+	FeatureInputs nullable.Nullable[GcpFeatureInputs] `json:"featureInputs,omitempty"`
+
+	// OrganizationId Numeric GCP organization ID when `scopeKind` is `gcp_organization`.
+	//
+	// Example: 123456789012
+	OrganizationId nullable.Nullable[string] `json:"organizationId,omitempty"`
+
+	// ProjectId GCP project ID when `scopeKind` is `gcp_project` or `gcp_dataset`.
+	//
+	// Example: example-project
+	ProjectId nullable.Nullable[string] `json:"projectId,omitempty"`
+
+	// RoleId Optional custom GCP IAM role ID created for this connection (create-only; immutable on PATCH). Defaults to `doit_cmp_role` for organization/project scopes or a dataset-scoped default for `gcp_dataset`.
+	//
+	// Example: doit_cmp_role
+	RoleId nullable.Nullable[string] `json:"roleId,omitempty"`
+
+	// ScopeKind Google Cloud resource scope kind. Immutable after creation.
+	//
+	// Example: gcp_project
+	ScopeKind GcpCloudConnectConnectionCreateScopeKind `json:"scopeKind"`
+
+	// ServiceAccount Keyless Google Cloud service account descriptor authenticated through DoiT workload delegation.
+	ServiceAccount GcpServiceAccount `json:"serviceAccount"`
+}
+
+// GcpCloudConnectConnectionCreateScopeKind Google Cloud resource scope kind. Immutable after creation.
+//
+// Example: gcp_project
+type GcpCloudConnectConnectionCreateScopeKind string
+
+// GcpCloudConnectConnectionPatch JSON Merge Patch body to update desired features or feature inputs on a GCP Cloud Connect connection.
+type GcpCloudConnectConnectionPatch struct {
+	// CatalogVersion Optional catalog version from `resolveGcpCloudConnectRequirements` for an optimistic freshness check (`409 onboarding.catalog_version_stale` if stale); the server always records its current active catalog version on commit.
+	//
+	// Example: sha256:3f1b0c9d7e2a4b6c8d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e
+	CatalogVersion nullable.Nullable[string] `json:"catalogVersion,omitempty"`
+
+	// FeatureIds Full replacement set of desired GCP feature IDs (duplicates return `400 validation_failed`; stored and returned sorted ascending). Discover valid IDs via `resolveGcpCloudConnectRequirements`.
+	//
+	// Example: ["core","cloud-diagrams"]
+	FeatureIds *[]string `json:"featureIds,omitempty"`
+
+	// FeatureInputs Typed per-feature inputs merged into existing GCP inputs (set a property or `featureInputs` to `null` to clear; inputs for deselected features are dropped).
+	FeatureInputs nullable.Nullable[GcpFeatureInputs] `json:"featureInputs,omitempty"`
+}
+
+// GcpCloudConnectConnectionPreview Dry-run preview of a GCP Cloud Connect connection returned by `createGcpCloudConnectConnection` with `dryRun=true` and `X-Dry-Run: true`. Server-generated identity fields (`id`, `etag`, `revision`) are `null`.
+type GcpCloudConnectConnectionPreview struct {
+	// BaselineChecks Example: {"checkTime":null,"status":"passed"}
+	BaselineChecks *BaselineChecks `json:"baselineChecks,omitempty"`
+
+	// BindingId Deterministic GCP scope binding key for this connection.
+	//
+	// Example: binding_gcp_project_0123456789abcdef0123456789abcdef
+	BindingId *string `json:"bindingId,omitempty"`
+
+	// CatalogVersion Active server catalog version that would be recorded on commit.
+	//
+	// Example: sha256:3f1b0c9d7e2a4b6c8d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e
+	CatalogVersion nullable.Nullable[string] `json:"catalogVersion,omitempty"`
+
+	// ClientUserAgent Bounded User-Agent of the calling client.
+	//
+	// Example: terraform-provider-doit/1.6.0
+	ClientUserAgent nullable.Nullable[string] `json:"clientUserAgent,omitempty"`
+
+	// DatasetId BigQuery dataset ID when `scopeKind` is `gcp_dataset`, otherwise `null`.
+	DatasetId nullable.Nullable[string] `json:"datasetId,omitempty"`
+
+	// Etag Always `null` on a create dry-run preview.
+	Etag nullable.Nullable[string] `json:"etag,omitempty"`
+
+	// FeatureIds GCP Cloud Connect feature IDs that would be enabled, sorted ascending (set semantics).
+	//
+	// Example: ["core","cloud-diagrams"]
+	FeatureIds []string `json:"featureIds"`
+
+	// FeatureInputs Typed per-feature inputs that would be stored, or `null` when none are set.
+	FeatureInputs nullable.Nullable[GcpFeatureInputs] `json:"featureInputs,omitempty"`
+
+	// FeatureVerification Example: {"status":"not_checked"}
+	FeatureVerification *VerificationSummary `json:"featureVerification,omitempty"`
+
+	// FollowUps Example: []
+	FollowUps *[]FollowUp `json:"followUps,omitempty"`
+
+	// Id Always `null` on a create dry-run preview.
+	Id nullable.Nullable[string] `json:"id,omitempty"`
+
+	// OrganizationId Numeric GCP organization ID when `scopeKind` is `gcp_organization`, otherwise `null`.
+	OrganizationId nullable.Nullable[string] `json:"organizationId,omitempty"`
+
+	// ProjectId GCP project ID when `scopeKind` is `gcp_project` or `gcp_dataset`, otherwise `null`.
+	//
+	// Example: example-project
+	ProjectId nullable.Nullable[string] `json:"projectId,omitempty"`
+
+	// RegisteredVia Writer that would create the record.
+	//
+	// Example: api
+	RegisteredVia *GcpCloudConnectConnectionPreviewRegisteredVia `json:"registeredVia,omitempty"`
+
+	// Registration Example: {"registrationTime":null,"status":"registered"}
+	Registration *Registration `json:"registration,omitempty"`
+
+	// Revision Always `null` on a create dry-run preview.
+	Revision nullable.Nullable[string] `json:"revision,omitempty"`
+
+	// RoleId GCP IAM custom role ID associated with this connection, when recorded.
+	//
+	// Example: doit_cmp_role
+	RoleId nullable.Nullable[string] `json:"roleId,omitempty"`
+
+	// ScopeKind Google Cloud resource scope kind.
+	//
+	// Example: gcp_project
+	ScopeKind GcpCloudConnectConnectionPreviewScopeKind `json:"scopeKind"`
+
+	// ServiceAccount Keyless Google Cloud service account descriptor authenticated through DoiT workload delegation.
+	ServiceAccount GcpServiceAccount `json:"serviceAccount"`
+}
+
+// GcpCloudConnectConnectionPreviewRegisteredVia Writer that would create the record.
+//
+// Example: api
+type GcpCloudConnectConnectionPreviewRegisteredVia string
+
+// GcpCloudConnectConnectionPreviewScopeKind Google Cloud resource scope kind.
+//
+// Example: gcp_project
+type GcpCloudConnectConnectionPreviewScopeKind string
+
+// GcpFeatureInputs Typed per-feature inputs for Google Cloud Connect features.
+//
+// Example: {"bigqueryFinops":{"location":"US"}}
+type GcpFeatureInputs struct {
+	// BigqueryFinops BigQuery dataset inputs for the `bigquery-finops` feature, or `null` on `PATCH` to remove them.
+	//
+	// Example: {"location":"US"}
+	BigqueryFinops nullable.Nullable[GcpBigQueryFinOpsInputs] `json:"bigqueryFinops,omitempty"`
+}
+
+// GcpRequirementsRequest Request body to resolve Google Cloud Connect requirements.
+type GcpRequirementsRequest struct {
+	// DatasetId Example: billing_export
+	DatasetId *string `json:"datasetId,omitempty"`
+
+	// FeatureIds Example: ["core","cloud-diagrams"]
+	FeatureIds *[]string `json:"featureIds,omitempty"`
+
+	// FeatureInputs Typed per-feature inputs for Google Cloud Connect features.
+	//
+	// Example: {"bigqueryFinops":{"location":"US"}}
+	FeatureInputs *GcpFeatureInputs `json:"featureInputs,omitempty"`
+
+	// IdentityInputs Optional GCP service-account placement inputs (`projectId` required for organization scope; `serviceAccountId` required for dataset scope).
+	IdentityInputs *GcpRequirementsRequestIdentityInputs `json:"identityInputs,omitempty"`
+
+	// OrganizationId Example: 123456789012
+	OrganizationId *string `json:"organizationId,omitempty"`
+
+	// ProjectId Example: example-project
+	ProjectId *string `json:"projectId,omitempty"`
+
+	// ScopeKind Example: gcp_project
+	ScopeKind GcpRequirementsRequestScopeKind `json:"scopeKind"`
+}
+
+// GcpRequirementsRequestScopeKind Example: gcp_project
+type GcpRequirementsRequestScopeKind string
+
+// GcpRequirementsRequestIdentityInputs Optional GCP service-account placement inputs (`projectId` required for organization scope; `serviceAccountId` required for dataset scope).
+type GcpRequirementsRequestIdentityInputs struct {
+	// ProjectId Example: example-host-project
+	ProjectId *string `json:"projectId,omitempty"`
+
+	// RoleId Example: doit_cmp_role
+	RoleId *string `json:"roleId,omitempty"`
+
+	// ServiceAccountId Example: doit-cmp
+	ServiceAccountId *string `json:"serviceAccountId,omitempty"`
+}
+
+// GcpRequirementsResponse Resolved Google Cloud Connect requirements.
+type GcpRequirementsResponse struct {
+	// Artifacts Example: []
+	Artifacts []RequirementsArtifact `json:"artifacts"`
+
+	// CatalogVersion Example: sha256:3f1b0c9d7e2a4b6c8d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e
+	CatalogVersion string                    `json:"catalogVersion"`
+	DatasetId      nullable.Nullable[string] `json:"datasetId,omitempty"`
+
+	// Features Example: []
+	Features []RequirementsFeature `json:"features"`
+
+	// FollowUps Example: []
+	FollowUps []RequirementsFollowUp `json:"followUps"`
+
+	// Identity Resolved identity details required to grant Cloud Connect access.
+	Identity       RequirementsIdentity      `json:"identity"`
+	OrganizationId nullable.Nullable[string] `json:"organizationId,omitempty"`
+
+	// Preconditions Precondition evaluation summary for the target scope.
+	Preconditions RequirementsPreconditions `json:"preconditions"`
+
+	// ProjectId Example: example-project
+	ProjectId nullable.Nullable[string] `json:"projectId,omitempty"`
+
+	// ScopeKind Example: gcp_project
+	ScopeKind GcpRequirementsResponseScopeKind `json:"scopeKind"`
+}
+
+// GcpRequirementsResponseScopeKind Example: gcp_project
+type GcpRequirementsResponseScopeKind string
+
+// GcpServiceAccount Keyless Google Cloud service account descriptor authenticated through DoiT workload delegation.
+type GcpServiceAccount struct {
+	// Email Customer service account email.
+	//
+	// Example: doit-cmp@example-project.iam.gserviceaccount.com
+	Email string `json:"email"`
+
+	// ProjectId Google Cloud project hosting the service account.
+	//
+	// Example: example-project
+	ProjectId string `json:"projectId"`
+
+	// UniqueId Immutable numeric Google service account unique ID.
+	//
+	// Example: 100000000000000000001
+	UniqueId string `json:"uniqueId"`
+}
+
+// MutationPreview Dry-run mutation preview returned when `dryRun=true` on delete.
+type MutationPreview struct {
+	// CatalogVersion Example: sha256:3f1b0c9d7e2a4b6c8d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e
+	CatalogVersion *string                         `json:"catalogVersion,omitempty"`
+	CloudCleanup   nullable.Nullable[CloudCleanup] `json:"cloudCleanup,omitempty"`
+
+	// Findings Example: []
+	Findings []OnboardingFinding `json:"findings"`
+
+	// Operation Example: delete
+	Operation MutationPreviewOperation `json:"operation"`
+
+	// PlannedFollowUps Example: []
+	PlannedFollowUps []PlannedFollowUp `json:"plannedFollowUps"`
+
+	// Preconditions Example: []
+	Preconditions []Precondition `json:"preconditions"`
+
+	// WouldApply Example: true
+	WouldApply bool `json:"wouldApply"`
+}
+
+// MutationPreviewOperation Example: delete
+type MutationPreviewOperation string
+
+// OnboardingFinding Structured finding reported by a dry-run preview or requirement check.
+type OnboardingFinding struct {
+	// Code Example: required_permission_missing
+	Code string `json:"code"`
+
+	// FeatureId Example: advisor
+	FeatureId *string `json:"featureId,omitempty"`
+
+	// Field Example: featureIds
+	Field *string `json:"field,omitempty"`
+
+	// Message Example: Required permissions are missing on the target scope.
+	Message string `json:"message"`
+
+	// MissingInputs Example: ["bucketName","bucketRegion"]
+	MissingInputs *[]string `json:"missingInputs,omitempty"`
+
+	// MissingPermissions Example: ["iam:GetRole"]
+	MissingPermissions *[]string `json:"missingPermissions,omitempty"`
+}
+
+// PermissionFragment Additional permission prerequisite outside the primary target scope.
+type PermissionFragment struct {
+	// Permissions Example: ["bigquery.jobs.create"]
+	Permissions []string `json:"permissions"`
+
+	// Phase Example: runtime
+	Phase string `json:"phase"`
+
+	// Recipient Example: service_account
+	Recipient string `json:"recipient"`
+
+	// ScopeKind Example: gcp_project
+	ScopeKind string `json:"scopeKind"`
+}
+
+// PlannedFollowUp Follow-up step that a live mutation would execute.
+type PlannedFollowUp struct {
+	// BindingId Example: binding_aws_account_123456789012
+	BindingId string `json:"bindingId"`
+
+	// FeatureId Example: real-time-data
+	FeatureId nullable.Nullable[string] `json:"featureId,omitempty"`
+
+	// Kind Example: enable_feature_consumers
+	Kind string `json:"kind"`
+
+	// Source Example: backend_code
+	Source string `json:"source"`
+
+	// Status Example: would_run
+	Status PlannedFollowUpStatus `json:"status"`
+}
+
+// PlannedFollowUpStatus Example: would_run
+type PlannedFollowUpStatus string
+
+// Precondition Precondition evaluated during a mutation preview.
+type Precondition struct {
+	// Detail Example: Catalog version matches the live catalog.
+	Detail *string `json:"detail,omitempty"`
+
+	// Kind Example: connection_revision
+	Kind string `json:"kind"`
+
+	// Status Example: satisfied
+	Status PreconditionStatus `json:"status"`
+}
+
+// PreconditionStatus Example: satisfied
+type PreconditionStatus string
+
+// ProblemDetails RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type ProblemDetails struct {
+	// Code DoiT extension. Stable machine-readable identifier for the error:
+	// either a core DoiT code (`lower_snake_case`) or a service-specific
+	// code in the `<service>.<code>` namespace (kebab-case service path
+	// segment, dot, `lower_snake_case` suffix).
+	//
+	//
+	// Examples: validation_failed
+	Code string `json:"code"`
+
+	// Detail Human-readable explanation specific to this occurrence. English,
+	// present tense, complete sentence.
+	//
+	//
+	// Examples: sortBy must be one of [create_time, update_time, name, status]; got 'foo'
+	Detail string `json:"detail"`
+
+	// Details DoiT extension. Optional structured breakdown when the top-level `detail`
+	// needs field-level context. Strongly recommended on 400/422 responses;
+	// clients SHOULD treat as advisory. Every diagnostic object carries a
+	// stable snake_case `issue` identifier; objects describing a specific
+	// request field also carry a `field` JSON pointer or dotted path.
+	// Additional properties beyond `issue` and `field` are open so each error
+	// code can attach its own structured context (the unsupported key, the
+	// conflicting blockers, the rejected value).
+	Details *[]ProblemDetailsDetailsItem `json:"details,omitempty"`
+
+	// DocsUrl DoiT extension. Human-facing documentation page explaining causes and
+	// remedies; MAY be more specific than `type` for context-specific
+	// guidance.
+	//
+	//
+	// Examples: https://developer.doit.com/docs/errors/validation_failed
+	DocsUrl nullable.Nullable[string] `json:"docsUrl,omitempty"`
+
+	// Instance Per RFC 9457 §3.1 with a DoiT-specific shape: a URI of the form
+	// `https://api.doit.com/requests/{requestId}`. The trailing path
+	// segment is the DoiT request ID (`req_<ULID>`) and MUST equal the
+	// Request-Id response header — the request ID is derived from
+	// `instance`, never duplicated in a separate payload field. Not
+	// guaranteed to be dereferenceable by external clients.
+	//
+	//
+	// Examples: https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS
+	Instance string `json:"instance"`
+
+	// Retryable DoiT extension. When true, the client SHOULD retry with backoff.
+	// When false, retrying will not succeed without changing the request.
+	//
+	//
+	// Examples: false
+	Retryable bool `json:"retryable"`
+
+	// Status The HTTP status code originally generated by the origin server for
+	// this occurrence of the problem. Matches the response's HTTP status.
+	//
+	//
+	// Examples: 400
+	Status int `json:"status"`
+
+	// Title Short, human-readable summary of the problem class. Stable enough for
+	// docs, but consumers must not branch on it — branch on `code` instead.
+	//
+	//
+	// Examples: The request body or parameters failed validation
+	Title string `json:"title"`
+
+	// Type Per RFC 9457 §3.1. Dereferenceable URI identifying the problem class.
+	// DoiT convention is `https://developer.doit.com/errors/<code>` — for
+	// service-specific codes the dotted code is a single path segment,
+	// e.g. `https://developer.doit.com/errors/cloudflow.execution_deadlock`.
+	//
+	//
+	// Examples: https://developer.doit.com/errors/validation_failed
+	Type                 string         `json:"type"`
+	AdditionalProperties map[string]any `json:"-"`
+}
+
+// ProblemDetailsDetailsItem defines model for ProblemDetailsDetailsItem.
+type ProblemDetailsDetailsItem struct {
+	// Field JSON pointer or dotted path to the offending field, when applicable
+	//
+	// Examples: sortBy
+	Field *string `json:"field,omitempty"`
+
+	// Issue Stable snake_case identifier for the specific diagnostic
+	//
+	// Examples: value_not_in_enum
+	Issue                string         `json:"issue"`
+	AdditionalProperties map[string]any `json:"-"`
+}
+
+// Registration Registration status of the connection record.
+type Registration struct {
+	// RegistrationTime Example: 2026-11-23T12:00:00Z
+	RegistrationTime nullable.Nullable[time.Time] `json:"registrationTime,omitempty"`
+
+	// Status Example: registered
+	Status RegistrationStatus `json:"status"`
+}
+
+// RegistrationStatus Example: registered
+type RegistrationStatus string
+
+// RegistrationHandoff Registration step to call after manual or shell artifact deployment.
+type RegistrationHandoff struct {
+	// ConnectionId Example: microsoft-azure-11111111-1111-4111-8111-111111111111
+	ConnectionId *string `json:"connectionId,omitempty"`
+
+	// DescriptorFile Example: doit-cloud-connect-descriptor.json
+	DescriptorFile *string `json:"descriptorFile,omitempty"`
+
+	// EndpointPath Example: /onboarding/v2/cloud-connect/azure/management-groups
+	EndpointPath string `json:"endpointPath"`
+
+	// FormFields Optional additional registration form fields such as BigQuery location or dataset ID.
+	//
+	// Example: {"location":"EU"}
+	FormFields *map[string]string `json:"formFields,omitempty"`
+
+	// Method Example: api_register
+	Method RegistrationHandoffMethod `json:"method"`
+}
+
+// RegistrationHandoffMethod Example: api_register
+type RegistrationHandoffMethod string
+
+// RequestID DoiT request identifier. Every DoiT API response carries this value in
+// the Request-Id header; on error responses the same value is the trailing
+// path segment of the Problem Details `instance` URI
+// (`https://api.doit.com/requests/{requestId}`). The value has the form
+// `req_<ULID>` — the tag prefix disambiguates from other ID types when
+// both appear in a log line.
+//
+// Examples: req_01H5X8Z2AB3CDEFGHJKMNP0QRS
+type RequestID = string
+
+// RequiredInput Customer input required by a feature.
+type RequiredInput struct {
+	// AllowedValues Example: ["us-east-1"]
+	AllowedValues *[]string `json:"allowedValues,omitempty"`
+
+	// Default Example: US
+	Default *string `json:"default,omitempty"`
+
+	// Description Example: CloudTrail S3 bucket name.
+	Description *string `json:"description,omitempty"`
+
+	// Name Example: bucketName
+	Name string `json:"name"`
+
+	// Required Example: true
+	Required bool `json:"required"`
+
+	// Type Example: string
+	Type RequiredInputType `json:"type"`
+}
+
+// RequiredInputType Example: string
+type RequiredInputType string
+
+// RequirementsArtifact Reference deployment artifact for the resolved requirements.
+type RequirementsArtifact struct {
+	// ArtifactId Example: azure-cli-management-group-setup
+	ArtifactId string            `json:"artifactId"`
+	Changes    *[]ArtifactChange `json:"changes,omitempty"`
+
+	// Entrypoint Example: management.yml
+	Entrypoint *string              `json:"entrypoint,omitempty"`
+	Files      *[]ArtifactFile      `json:"files,omitempty"`
+	Findings   *[]OnboardingFinding `json:"findings,omitempty"`
+
+	// InlineContent Example: #!/usr/bin/env bash
+	InlineContent *string `json:"inlineContent,omitempty"`
+
+	// Kind Example: shell
+	Kind RequirementsArtifactKind `json:"kind"`
+
+	// Parameters Resolved artifact parameters keyed by parameter name.
+	Parameters *map[string]any `json:"parameters,omitempty"`
+
+	// Registration Example: manual
+	Registration        RequirementsArtifactRegistration       `json:"registration"`
+	RegistrationHandoff nullable.Nullable[RegistrationHandoff] `json:"registrationHandoff,omitempty"`
+
+	// RequiredTools Example: ["az"]
+	RequiredTools *[]string `json:"requiredTools,omitempty"`
+
+	// RequirementsSatisfied Example: true
+	RequirementsSatisfied bool `json:"requirementsSatisfied"`
+
+	// Source Example: registry.terraform.io/doitintl/cloudconnect/aws
+	Source *string `json:"source,omitempty"`
+
+	// TemplateUrl Example: https://example.com/member.yml
+	TemplateUrl *string `json:"templateUrl,omitempty"`
+
+	// TrustStatements Cross-account trust statements required by the artifact when declared separately.
+	TrustStatements *[]RequirementsArtifactTrustStatementsItem `json:"trustStatements,omitempty"`
+
+	// Version Example: 1.0.0
+	Version *string `json:"version,omitempty"`
+}
+
+// RequirementsArtifactKind Example: shell
+type RequirementsArtifactKind string
+
+// RequirementsArtifactRegistration Example: manual
+type RequirementsArtifactRegistration string
+
+// RequirementsArtifactTrustStatementsItem defines model for RequirementsArtifactTrustStatementsItem.
+type RequirementsArtifactTrustStatementsItem struct {
+	// ExternalId Example: customer-external-id
+	ExternalId *string `json:"externalId,omitempty"`
+
+	// Principal Example: arn:aws:iam::111111111111:root
+	Principal string `json:"principal"`
+}
+
+// RequirementsFeature Feature evaluation, entitlement, and permission details for the target scope.
+type RequirementsFeature struct {
+	AdditionalScopes *[]PermissionFragment `json:"additionalScopes,omitempty"`
+	Findings         *[]OnboardingFinding  `json:"findings,omitempty"`
+
+	// HealthChecks Health-check kinds evaluated for this feature.
+	//
+	// Example: ["feature_health_check"]
+	HealthChecks *[]string `json:"healthChecks,omitempty"`
+
+	// Id Example: advisor
+	Id string `json:"id"`
+
+	// ManagedPolicies Accepted cloud managed policies for this feature.
+	//
+	// Example: ["arn:aws:iam::aws:policy/SecurityAudit"]
+	ManagedPolicies *[]string `json:"managedPolicies,omitempty"`
+
+	// Permissions Example: ["iam:GetRole"]
+	Permissions    *[]string        `json:"permissions,omitempty"`
+	RequiredInputs *[]RequiredInput `json:"requiredInputs,omitempty"`
+
+	// RequirementsSatisfied Example: true
+	RequirementsSatisfied bool `json:"requirementsSatisfied"`
+
+	// ResolvedInputs Resolved per-input values including catalog defaults.
+	//
+	// Example: {"location":"US"}
+	ResolvedInputs *map[string]string      `json:"resolvedInputs,omitempty"`
+	Roles          *[]AzureRoleRequirement `json:"roles,omitempty"`
+
+	// Status Example: available
+	Status RequirementsFeatureStatus `json:"status"`
+}
+
+// RequirementsFeatureStatus Example: available
+type RequirementsFeatureStatus string
+
+// RequirementsFollowUp Follow-up step expected after deployment.
+type RequirementsFollowUp struct {
+	// Executor Example: doit_backend
+	Executor RequirementsFollowUpExecutor `json:"executor"`
+
+	// Kind Example: enable_feature_consumers
+	Kind string `json:"kind"`
+
+	// RequiredFor Example: ["real-time-data"]
+	RequiredFor []string `json:"requiredFor"`
+}
+
+// RequirementsFollowUpExecutor Example: doit_backend
+type RequirementsFollowUpExecutor string
+
+// RequirementsIdentity Resolved identity details required to grant Cloud Connect access.
+type RequirementsIdentity struct {
+	// ApplicationId DoiT multi-tenant Microsoft Entra application UUID for Azure Cloud Connect.
+	//
+	// Example: 22222222-2222-4222-8222-222222222222
+	ApplicationId *string `json:"applicationId,omitempty"`
+
+	// CustomerBinding Required Azure role assignment description marker (`doit-cloud-connect:<sha256>`).
+	//
+	// Example: doit-cloud-connect:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+	CustomerBinding *string `json:"customerBinding,omitempty"`
+
+	// ExternalId Customer External ID for AWS IAM trust policy.
+	//
+	// Example: example-external-id
+	ExternalId *string              `json:"externalId,omitempty"`
+	Findings   *[]OnboardingFinding `json:"findings,omitempty"`
+
+	// ImpersonationPrincipal Example: serviceAccount:doit-connect@example-doit-project.iam.gserviceaccount.com
+	ImpersonationPrincipal *string `json:"impersonationPrincipal,omitempty"`
+
+	// ImpersonationRole Example: roles/iam.serviceAccountTokenCreator
+	ImpersonationRole *string `json:"impersonationRole,omitempty"`
+
+	// Kind Example: azure_service_principal
+	Kind *RequirementsIdentityKind `json:"kind,omitempty"`
+
+	// RoleName Example: doitintl_dci_cloudconnect
+	RoleName *string `json:"roleName,omitempty"`
+
+	// ServiceAccountEmail Example: doit-cmp@example-project.iam.gserviceaccount.com
+	ServiceAccountEmail *string `json:"serviceAccountEmail,omitempty"`
+
+	// ServiceAccountId Example: doit-cmp
+	ServiceAccountId *string `json:"serviceAccountId,omitempty"`
+
+	// ServiceAccountProjectId Example: example-project
+	ServiceAccountProjectId *string `json:"serviceAccountProjectId,omitempty"`
+
+	// Status Example: resolved
+	Status RequirementsIdentityStatus `json:"status"`
+
+	// TrustedPrincipals Example: ["arn:aws:iam::111111111111:root"]
+	TrustedPrincipals *[]string `json:"trustedPrincipals,omitempty"`
+}
+
+// RequirementsIdentityKind Example: azure_service_principal
+type RequirementsIdentityKind string
+
+// RequirementsIdentityStatus Example: resolved
+type RequirementsIdentityStatus string
+
+// RequirementsPreconditions Precondition evaluation summary for the target scope.
+type RequirementsPreconditions struct {
+	Findings []OnboardingFinding `json:"findings"`
+
+	// Status Example: satisfied
+	Status RequirementsPreconditionsStatus `json:"status"`
+}
+
+// RequirementsPreconditionsStatus Example: satisfied
+type RequirementsPreconditionsStatus string
+
+// StepError Sanitized error reported by a follow-up or verification step.
+type StepError struct {
+	// Code Example: required_permission_missing
+	Code string `json:"code"`
+
+	// Message Example: Required permissions were not found on the role.
+	Message string `json:"message"`
+
+	// Operation Example: enable_feature_consumers
+	Operation *string `json:"operation,omitempty"`
+}
+
+// VerificationSummary Summary of the last synchronous verification check recorded on the connection.
+type VerificationSummary struct {
+	// CatalogVersion Example: sha256:3f1b0c9d7e2a4b6c8d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e
+	CatalogVersion nullable.Nullable[string] `json:"catalogVersion,omitempty"`
+
+	// CheckedRevision Example: 1
+	CheckedRevision nullable.Nullable[string] `json:"checkedRevision,omitempty"`
+
+	// ObservationTime Example: 2026-11-23T12:00:00Z
+	ObservationTime nullable.Nullable[time.Time] `json:"observationTime,omitempty"`
+
+	// Status Example: passed
+	Status VerificationSummaryStatus `json:"status"`
+}
+
+// VerificationSummaryStatus Example: passed
+type VerificationSummaryStatus string
+
+// CleanupScope defines model for CleanupScope.
+type CleanupScope string
+
+// DryRun Examples: true
+type DryRun = bool
+
+// GcpBillingAccountId defines model for GcpBillingAccountId.
+type GcpBillingAccountId = string
+
+// IdempotencyKeyOptional Examples: 01H5X8Z2AB3CDEFGHJKMNP0QRS
+type IdempotencyKeyOptional = string
+
+// IdempotencyKeyRequired Examples: 01H5X8Z2AB3CDEFGHJKMNP0QRS
+type IdempotencyKeyRequired = string
+
+// IfMatchRequired Examples: "7b1c8ff2a3e5"
+type IfMatchRequired = string
+
+// ResourceId defines model for ResourceId.
+type ResourceId = string
+
+// XTenantIDOptional Examples: tenant_01H5X8Z2AB3CDEFGHJKMNP0QRS
+type XTenantIDOptional = string
+
+// BadRequest RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type BadRequest = ProblemDetails
+
+// Conflict RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type Conflict = ProblemDetails
+
+// Forbidden RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type Forbidden = ProblemDetails
+
+// InternalServerError RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type InternalServerError = ProblemDetails
+
+// NotFound RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type NotFound = ProblemDetails
+
+// PreconditionFailed RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type PreconditionFailed = ProblemDetails
+
+// PreconditionRequired RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type PreconditionRequired = ProblemDetails
+
+// RateLimited RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type RateLimited = ProblemDetails
+
+// RequestTooLarge RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type RequestTooLarge = ProblemDetails
+
+// ServiceUnavailable RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type ServiceUnavailable = ProblemDetails
+
+// Unauthorized RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type Unauthorized = ProblemDetails
+
+// UnprocessableContent RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type UnprocessableContent = ProblemDetails
+
+// UnsupportedMediaType RFC 9457 Problem Details envelope with DoiT extensions. Every DoiT API
+// error response body serializes as this shape. DoiT requires several
+// fields that RFC 9457 marks optional (`type`, `detail`, `instance`) and
+// adds the extensions `code`, `retryable`, `details`, `docsUrl`.
+// Consumers MUST tolerate unknown fields — new members may be added in a
+// non-breaking way.
+//
+// Examples: {"code":"validation_failed","detail":"sortBy: field not sortable on this endpoint","details":[{"allowed":["create_time","update_time","name","status"],"field":"sortBy","issue":"value_not_in_enum"}],"docsUrl":"https://developer.doit.com/docs/errors/validation_failed","instance":"https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS","retryable":false,"status":400,"title":"The request body or parameters failed validation","type":"https://developer.doit.com/errors/validation_failed"}
+type UnsupportedMediaType = ProblemDetails
+
+// CreateGcpBillingAccountParams defines parameters for CreateGcpBillingAccount.
+type CreateGcpBillingAccountParams struct {
+	// DryRun When `true`, validate the full effect of the operation (auth, quota,
+	// business rules, downstream feasibility) and return the response body the
+	// real call would have produced — but persist nothing and dispatch no
+	// side-effects.
+	//
+	// A dry-run response ships `X-Dry-Run: true` in its headers.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// XTenantId Identifies which DoiT customer tenant a request applies to. Required when
+	// the caller's auth principal has access to multiple tenants (partners,
+	// resellers, DoiT-internal operators). Optional for single-customer
+	// principals — but harmless to include and matches the value the principal
+	// implicitly resolves to.
+	//
+	// Multi-tenant caller with header absent → `400 tenant_id_required`. Format
+	// is a stable, opaque customer identifier (the service documents its exact
+	// shape in the per-endpoint description).
+	XTenantId *XTenantIDOptional `json:"X-Tenant-Id,omitempty"`
+
+	// IdempotencyKey Required on all side-effecting POST / PATCH / PUT / DELETE operations, and
+	// on `POST /<resource>/actions/<verb>` action endpoints. The key envelopes
+	// the request so retries don't double-execute — the server caches the
+	// response for the key and replays it on subsequent identical requests
+	// within the cache window.
+	//
+	// UUID v4 or ULID recommended for uniqueness. Max length 255.
+	//
+	// Absent → `400 idempotency_key_required`. Reused with a DIFFERENT request
+	// body → `422 idempotency_key_reused`. Concurrent replay while the first is
+	// still processing → `409 idempotency_request_in_progress` (retryable).
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// DeleteGcpBillingAccountParams defines parameters for DeleteGcpBillingAccount.
+type DeleteGcpBillingAccountParams struct {
+	// DryRun When `true`, validate the full effect of the operation (auth, quota,
+	// business rules, downstream feasibility) and return the response body the
+	// real call would have produced — but persist nothing and dispatch no
+	// side-effects.
+	//
+	// A dry-run response ships `X-Dry-Run: true` in its headers.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// XTenantId Identifies which DoiT customer tenant a request applies to. Required when
+	// the caller's auth principal has access to multiple tenants (partners,
+	// resellers, DoiT-internal operators). Optional for single-customer
+	// principals — but harmless to include and matches the value the principal
+	// implicitly resolves to.
+	//
+	// Multi-tenant caller with header absent → `400 tenant_id_required`. Format
+	// is a stable, opaque customer identifier (the service documents its exact
+	// shape in the per-endpoint description).
+	XTenantId *XTenantIDOptional `json:"X-Tenant-Id,omitempty"`
+
+	// IdempotencyKey Required on all side-effecting POST / PATCH / PUT / DELETE operations, and
+	// on `POST /<resource>/actions/<verb>` action endpoints. The key envelopes
+	// the request so retries don't double-execute — the server caches the
+	// response for the key and replays it on subsequent identical requests
+	// within the cache window.
+	//
+	// UUID v4 or ULID recommended for uniqueness. Max length 255.
+	//
+	// Absent → `400 idempotency_key_required`. Reused with a DIFFERENT request
+	// body → `422 idempotency_key_reused`. Concurrent replay while the first is
+	// still processing → `409 idempotency_request_in_progress` (retryable).
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// GetGcpBillingAccountParams defines parameters for GetGcpBillingAccount.
+type GetGcpBillingAccountParams struct {
+	// XTenantId Identifies which DoiT customer tenant a request applies to. Required when
+	// the caller's auth principal has access to multiple tenants (partners,
+	// resellers, DoiT-internal operators). Optional for single-customer
+	// principals — but harmless to include and matches the value the principal
+	// implicitly resolves to.
+	//
+	// Multi-tenant caller with header absent → `400 tenant_id_required`. Format
+	// is a stable, opaque customer identifier (the service documents its exact
+	// shape in the per-endpoint description).
+	XTenantId *XTenantIDOptional `json:"X-Tenant-Id,omitempty"`
+}
+
+// ResolveGcpBillingRequirementsParams defines parameters for ResolveGcpBillingRequirements.
+type ResolveGcpBillingRequirementsParams struct {
+	// DryRun When `true`, validate the full effect of the operation (auth, quota,
+	// business rules, downstream feasibility) and return the response body the
+	// real call would have produced — but persist nothing and dispatch no
+	// side-effects.
+	//
+	// A dry-run response ships `X-Dry-Run: true` in its headers.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// XTenantId Identifies which DoiT customer tenant a request applies to. Required when
+	// the caller's auth principal has access to multiple tenants (partners,
+	// resellers, DoiT-internal operators). Optional for single-customer
+	// principals — but harmless to include and matches the value the principal
+	// implicitly resolves to.
+	//
+	// Multi-tenant caller with header absent → `400 tenant_id_required`. Format
+	// is a stable, opaque customer identifier (the service documents its exact
+	// shape in the per-endpoint description).
+	XTenantId *XTenantIDOptional `json:"X-Tenant-Id,omitempty"`
+
+	// IdempotencyKey Optional variant of the Idempotency-Key envelope for read-like POST
+	// operations (e.g. bulk-read endpoints exposed as POST because they carry
+	// a large request body). When provided, the server caches the response for
+	// a short window and replays it for identical retries; when absent, the
+	// operation is executed fresh each call.
+	//
+	// UUID v4 or ULID recommended for uniqueness. Max length 255.
+	IdempotencyKey *IdempotencyKeyOptional `json:"Idempotency-Key,omitempty"`
+}
+
+// CreateGcpCloudConnectConnectionParams defines parameters for CreateGcpCloudConnectConnection.
+type CreateGcpCloudConnectConnectionParams struct {
+	// DryRun When `true`, validate the full effect of the operation (auth, quota,
+	// business rules, downstream feasibility) and return the response body the
+	// real call would have produced — but persist nothing and dispatch no
+	// side-effects.
+	//
+	// A dry-run response ships `X-Dry-Run: true` in its headers.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// XTenantId Identifies which DoiT customer tenant a request applies to. Required when
+	// the caller's auth principal has access to multiple tenants (partners,
+	// resellers, DoiT-internal operators). Optional for single-customer
+	// principals — but harmless to include and matches the value the principal
+	// implicitly resolves to.
+	//
+	// Multi-tenant caller with header absent → `400 tenant_id_required`. Format
+	// is a stable, opaque customer identifier (the service documents its exact
+	// shape in the per-endpoint description).
+	XTenantId *XTenantIDOptional `json:"X-Tenant-Id,omitempty"`
+
+	// IdempotencyKey Required on all side-effecting POST / PATCH / PUT / DELETE operations, and
+	// on `POST /<resource>/actions/<verb>` action endpoints. The key envelopes
+	// the request so retries don't double-execute — the server caches the
+	// response for the key and replays it on subsequent identical requests
+	// within the cache window.
+	//
+	// UUID v4 or ULID recommended for uniqueness. Max length 255.
+	//
+	// Absent → `400 idempotency_key_required`. Reused with a DIFFERENT request
+	// body → `422 idempotency_key_reused`. Concurrent replay while the first is
+	// still processing → `409 idempotency_request_in_progress` (retryable).
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// DeleteGcpCloudConnectConnectionParams defines parameters for DeleteGcpCloudConnectConnection.
+type DeleteGcpCloudConnectConnectionParams struct {
+	// CleanupScope Scope of cleanup performed by disconnect. Only `doit_only` is supported; customer cloud IAM resources remain untouched.
+	CleanupScope DeleteGcpCloudConnectConnectionParamsCleanupScope `form:"cleanupScope" json:"cleanupScope"`
+
+	// DryRun When `true`, validate the full effect of the operation (auth, quota,
+	// business rules, downstream feasibility) and return the response body the
+	// real call would have produced — but persist nothing and dispatch no
+	// side-effects.
+	//
+	// A dry-run response ships `X-Dry-Run: true` in its headers.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// XTenantId Identifies which DoiT customer tenant a request applies to. Required when
+	// the caller's auth principal has access to multiple tenants (partners,
+	// resellers, DoiT-internal operators). Optional for single-customer
+	// principals — but harmless to include and matches the value the principal
+	// implicitly resolves to.
+	//
+	// Multi-tenant caller with header absent → `400 tenant_id_required`. Format
+	// is a stable, opaque customer identifier (the service documents its exact
+	// shape in the per-endpoint description).
+	XTenantId *XTenantIDOptional `json:"X-Tenant-Id,omitempty"`
+
+	// IfMatch Required on mutations to Terraform-ready resources. Value is a strong ETag
+	// echoed back from a prior GET.
+	//
+	// - Match → mutation proceeds; new ETag in the response
+	// - Mismatch → `412 precondition_failed`
+	// - Absent → `428 precondition_required`
+	IfMatch IfMatchRequired `json:"If-Match"`
+
+	// IdempotencyKey Required on all side-effecting POST / PATCH / PUT / DELETE operations, and
+	// on `POST /<resource>/actions/<verb>` action endpoints. The key envelopes
+	// the request so retries don't double-execute — the server caches the
+	// response for the key and replays it on subsequent identical requests
+	// within the cache window.
+	//
+	// UUID v4 or ULID recommended for uniqueness. Max length 255.
+	//
+	// Absent → `400 idempotency_key_required`. Reused with a DIFFERENT request
+	// body → `422 idempotency_key_reused`. Concurrent replay while the first is
+	// still processing → `409 idempotency_request_in_progress` (retryable).
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// DeleteGcpCloudConnectConnectionParamsCleanupScope defines parameters for DeleteGcpCloudConnectConnection.
+type DeleteGcpCloudConnectConnectionParamsCleanupScope string
+
+// GetGcpCloudConnectConnectionParams defines parameters for GetGcpCloudConnectConnection.
+type GetGcpCloudConnectConnectionParams struct {
+	// XTenantId Identifies which DoiT customer tenant a request applies to. Required when
+	// the caller's auth principal has access to multiple tenants (partners,
+	// resellers, DoiT-internal operators). Optional for single-customer
+	// principals — but harmless to include and matches the value the principal
+	// implicitly resolves to.
+	//
+	// Multi-tenant caller with header absent → `400 tenant_id_required`. Format
+	// is a stable, opaque customer identifier (the service documents its exact
+	// shape in the per-endpoint description).
+	XTenantId *XTenantIDOptional `json:"X-Tenant-Id,omitempty"`
+}
+
+// UpdateGcpCloudConnectConnectionParams defines parameters for UpdateGcpCloudConnectConnection.
+type UpdateGcpCloudConnectConnectionParams struct {
+	// DryRun When `true`, validate the full effect of the operation (auth, quota,
+	// business rules, downstream feasibility) and return the response body the
+	// real call would have produced — but persist nothing and dispatch no
+	// side-effects.
+	//
+	// A dry-run response ships `X-Dry-Run: true` in its headers.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// XTenantId Identifies which DoiT customer tenant a request applies to. Required when
+	// the caller's auth principal has access to multiple tenants (partners,
+	// resellers, DoiT-internal operators). Optional for single-customer
+	// principals — but harmless to include and matches the value the principal
+	// implicitly resolves to.
+	//
+	// Multi-tenant caller with header absent → `400 tenant_id_required`. Format
+	// is a stable, opaque customer identifier (the service documents its exact
+	// shape in the per-endpoint description).
+	XTenantId *XTenantIDOptional `json:"X-Tenant-Id,omitempty"`
+
+	// IfMatch Required on mutations to Terraform-ready resources. Value is a strong ETag
+	// echoed back from a prior GET.
+	//
+	// - Match → mutation proceeds; new ETag in the response
+	// - Mismatch → `412 precondition_failed`
+	// - Absent → `428 precondition_required`
+	IfMatch IfMatchRequired `json:"If-Match"`
+
+	// IdempotencyKey Required on all side-effecting POST / PATCH / PUT / DELETE operations, and
+	// on `POST /<resource>/actions/<verb>` action endpoints. The key envelopes
+	// the request so retries don't double-execute — the server caches the
+	// response for the key and replays it on subsequent identical requests
+	// within the cache window.
+	//
+	// UUID v4 or ULID recommended for uniqueness. Max length 255.
+	//
+	// Absent → `400 idempotency_key_required`. Reused with a DIFFERENT request
+	// body → `422 idempotency_key_reused`. Concurrent replay while the first is
+	// still processing → `409 idempotency_request_in_progress` (retryable).
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// ResolveGcpCloudConnectRequirementsParams defines parameters for ResolveGcpCloudConnectRequirements.
+type ResolveGcpCloudConnectRequirementsParams struct {
+	// DryRun When `true`, validate the full effect of the operation (auth, quota,
+	// business rules, downstream feasibility) and return the response body the
+	// real call would have produced — but persist nothing and dispatch no
+	// side-effects.
+	//
+	// A dry-run response ships `X-Dry-Run: true` in its headers.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// XTenantId Identifies which DoiT customer tenant a request applies to. Required when
+	// the caller's auth principal has access to multiple tenants (partners,
+	// resellers, DoiT-internal operators). Optional for single-customer
+	// principals — but harmless to include and matches the value the principal
+	// implicitly resolves to.
+	//
+	// Multi-tenant caller with header absent → `400 tenant_id_required`. Format
+	// is a stable, opaque customer identifier (the service documents its exact
+	// shape in the per-endpoint description).
+	XTenantId *XTenantIDOptional `json:"X-Tenant-Id,omitempty"`
+
+	// IdempotencyKey Optional variant of the Idempotency-Key envelope for read-like POST
+	// operations (e.g. bulk-read endpoints exposed as POST because they carry
+	// a large request body). When provided, the server caches the response for
+	// a short window and replays it for identical retries; when absent, the
+	// operation is executed fresh each call.
+	//
+	// UUID v4 or ULID recommended for uniqueness. Max length 255.
+	IdempotencyKey *IdempotencyKeyOptional `json:"Idempotency-Key,omitempty"`
+}
+
+// CreateGcpBillingAccountJSONRequestBody defines body for CreateGcpBillingAccount for application/json ContentType.
+type CreateGcpBillingAccountJSONRequestBody = GcpBillingAccountCreate
+
+// CreateGcpCloudConnectConnectionJSONRequestBody defines body for CreateGcpCloudConnectConnection for application/json ContentType.
+type CreateGcpCloudConnectConnectionJSONRequestBody = GcpCloudConnectConnectionCreate
+
+// UpdateGcpCloudConnectConnectionApplicationMergePatchPlusJSONRequestBody defines body for UpdateGcpCloudConnectConnection for application/merge-patch+json ContentType.
+type UpdateGcpCloudConnectConnectionApplicationMergePatchPlusJSONRequestBody = GcpCloudConnectConnectionPatch
+
+// ResolveGcpCloudConnectRequirementsJSONRequestBody defines body for ResolveGcpCloudConnectRequirements for application/json ContentType.
+type ResolveGcpCloudConnectRequirementsJSONRequestBody = GcpRequirementsRequest
+
+// Getter for additional properties for ProblemDetails. Returns the specified
+// element and whether it was found
+func (a ProblemDetails) Get(fieldName string) (value any, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ProblemDetails
+func (a *ProblemDetails) Set(fieldName string, value any) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]any)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ProblemDetails to handle AdditionalProperties
+func (a *ProblemDetails) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := runtime.JSONUnmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["code"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.Code)
+		if err != nil {
+			return fmt.Errorf("error reading 'code': %w", err)
+		}
+		delete(object, "code")
+	}
+
+	if raw, found := object["detail"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.Detail)
+		if err != nil {
+			return fmt.Errorf("error reading 'detail': %w", err)
+		}
+		delete(object, "detail")
+	}
+
+	if raw, found := object["details"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.Details)
+		if err != nil {
+			return fmt.Errorf("error reading 'details': %w", err)
+		}
+		delete(object, "details")
+	}
+
+	if raw, found := object["docsUrl"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.DocsUrl)
+		if err != nil {
+			return fmt.Errorf("error reading 'docsUrl': %w", err)
+		}
+		delete(object, "docsUrl")
+	}
+
+	if raw, found := object["instance"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.Instance)
+		if err != nil {
+			return fmt.Errorf("error reading 'instance': %w", err)
+		}
+		delete(object, "instance")
+	}
+
+	if raw, found := object["retryable"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.Retryable)
+		if err != nil {
+			return fmt.Errorf("error reading 'retryable': %w", err)
+		}
+		delete(object, "retryable")
+	}
+
+	if raw, found := object["status"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["title"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
+		}
+		delete(object, "title")
+	}
+
+	if raw, found := object["type"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+		delete(object, "type")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]any)
+		for fieldName, fieldBuf := range object {
+			var fieldVal any
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ProblemDetails to handle AdditionalProperties
+func (a ProblemDetails) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["code"], err = runtime.JSONMarshal(a.Code)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'code': %w", err)
+	}
+
+	object["detail"], err = runtime.JSONMarshal(a.Detail)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'detail': %w", err)
+	}
+
+	if a.Details != nil {
+		object["details"], err = runtime.JSONMarshal(a.Details)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'details': %w", err)
+		}
+	}
+
+	if a.DocsUrl != nil {
+		object["docsUrl"], err = runtime.JSONMarshal(a.DocsUrl)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'docsUrl': %w", err)
+		}
+	}
+
+	object["instance"], err = runtime.JSONMarshal(a.Instance)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'instance': %w", err)
+	}
+
+	object["retryable"], err = runtime.JSONMarshal(a.Retryable)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'retryable': %w", err)
+	}
+
+	object["status"], err = runtime.JSONMarshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	object["title"], err = runtime.JSONMarshal(a.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
+	}
+
+	object["type"], err = runtime.JSONMarshal(a.Type)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'type': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = runtime.JSONMarshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return runtime.JSONMarshal(object)
+}
+
+// Getter for additional properties for ProblemDetailsDetailsItem. Returns the specified
+// element and whether it was found
+func (a ProblemDetailsDetailsItem) Get(fieldName string) (value any, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ProblemDetailsDetailsItem
+func (a *ProblemDetailsDetailsItem) Set(fieldName string, value any) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]any)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ProblemDetailsDetailsItem to handle AdditionalProperties
+func (a *ProblemDetailsDetailsItem) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := runtime.JSONUnmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["field"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.Field)
+		if err != nil {
+			return fmt.Errorf("error reading 'field': %w", err)
+		}
+		delete(object, "field")
+	}
+
+	if raw, found := object["issue"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.Issue)
+		if err != nil {
+			return fmt.Errorf("error reading 'issue': %w", err)
+		}
+		delete(object, "issue")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]any)
+		for fieldName, fieldBuf := range object {
+			var fieldVal any
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ProblemDetailsDetailsItem to handle AdditionalProperties
+func (a ProblemDetailsDetailsItem) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Field != nil {
+		object["field"], err = runtime.JSONMarshal(a.Field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'field': %w", err)
+		}
+	}
+
+	object["issue"], err = runtime.JSONMarshal(a.Issue)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'issue': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = runtime.JSONMarshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return runtime.JSONMarshal(object)
+}
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -83,6 +2380,1277 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+
+	// CreateGcpBillingAccountWithBody Connect a GCP billing account
+	//
+	// Checks that DoiT's service account can read the billing account and
+	// the detailed usage cost export table, records the connection as
+	// `pending`, and activates it in the background. Poll the item until
+	// `status` is `active` or `failed`; a connection reads `failed` at the
+	// latest about 40 minutes after connect (up to 15 minutes before the
+	// activation starts and up to 25 minutes while it runs). The billing
+	// export's table layout is checked during the activation, so a wrong
+	// table ends `failed` rather than refusing the connect.
+	//
+	// Connect is idempotent on the billing account and export: it returns
+	// the existing `pending` or `active` connection, including one made in
+	// the Console, with `201`. A different
+	// export returns `409 onboarding.billing_connection_activating`
+	// (retryable) while the connection is `pending`, and
+	// `409 onboarding.billing_connection_export_mismatch` once it is
+	// `active`, until it is disconnected. A `failed` connection can be
+	// connected again with any export. The billing account and export cannot
+	// be changed in place: disconnect and connect again.
+	//
+	// With `dryRun=true` the call answers `200` with what it would return,
+	// after the same checks, without recording the connection or queuing its
+	// activation. Like requirements, it reserves the customer's DoiT service
+	// account when none is reserved yet.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /onboarding/v2/billing/gcp/accounts (the `CreateGcpBillingAccount` operationId).
+	CreateGcpBillingAccountWithBody(ctx context.Context, params *CreateGcpBillingAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateGcpBillingAccount Connect a GCP billing account
+	//
+	// Checks that DoiT's service account can read the billing account and
+	// the detailed usage cost export table, records the connection as
+	// `pending`, and activates it in the background. Poll the item until
+	// `status` is `active` or `failed`; a connection reads `failed` at the
+	// latest about 40 minutes after connect (up to 15 minutes before the
+	// activation starts and up to 25 minutes while it runs). The billing
+	// export's table layout is checked during the activation, so a wrong
+	// table ends `failed` rather than refusing the connect.
+	//
+	// Connect is idempotent on the billing account and export: it returns
+	// the existing `pending` or `active` connection, including one made in
+	// the Console, with `201`. A different
+	// export returns `409 onboarding.billing_connection_activating`
+	// (retryable) while the connection is `pending`, and
+	// `409 onboarding.billing_connection_export_mismatch` once it is
+	// `active`, until it is disconnected. A `failed` connection can be
+	// connected again with any export. The billing account and export cannot
+	// be changed in place: disconnect and connect again.
+	//
+	// With `dryRun=true` the call answers `200` with what it would return,
+	// after the same checks, without recording the connection or queuing its
+	// activation. Like requirements, it reserves the customer's DoiT service
+	// account when none is reserved yet.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /onboarding/v2/billing/gcp/accounts (the `CreateGcpBillingAccount` operationId).
+	CreateGcpBillingAccount(ctx context.Context, params *CreateGcpBillingAccountParams, body CreateGcpBillingAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteGcpBillingAccount Disconnect a GCP billing account
+	//
+	// Disconnects the billing account with the same effect as the Console
+	// offboarding. Returns `409 onboarding.billing_connection_activating`
+	// (retryable) while the activation is still running. After a partial
+	// failure the connection reads `failed` and the disconnect can be
+	// repeated. Customer IAM grants and the export dataset remain untouched.
+	//
+	// With `dryRun=true` the connection that would be disconnected comes back
+	// with `200`, refused the same way, without removing anything. A
+	// leftover DoiT asset of the billing account that a disconnect would
+	// remove previews as a `failed` connection without `exportProjectId` and
+	// `exportDatasetId`.
+	//
+	// `422 idempotency_key_reused` means the `Idempotency-Key` was already
+	// used with a different request; retry with a new key.
+	//
+	// Corresponds with DELETE /onboarding/v2/billing/gcp/accounts/{id} (the `DeleteGcpBillingAccount` operationId).
+	DeleteGcpBillingAccount(ctx context.Context, id GcpBillingAccountId, params *DeleteGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetGcpBillingAccount Get a GCP billing account connection
+	//
+	// Returns the billing account connection and its activation `status`
+	// (`pending`, `active` or `failed`, with `failureReason` when failed).
+	//
+	// Corresponds with GET /onboarding/v2/billing/gcp/accounts/{id} (the `GetGcpBillingAccount` operationId).
+	GetGcpBillingAccount(ctx context.Context, id GcpBillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResolveGcpBillingRequirements Resolve GCP billing onboarding requirements
+	//
+	// Returns the DoiT service account the customer grants read access to,
+	// the two IAM roles to grant and where, and the export prerequisite.
+	// The first call for a customer reserves its DoiT service account, as
+	// the Console does when onboarding starts; every later call, dry run or
+	// not, returns the same account and changes nothing.
+	//
+	// Corresponds with POST /onboarding/v2/billing/gcp/requirements (the `ResolveGcpBillingRequirements` operationId).
+	ResolveGcpBillingRequirements(ctx context.Context, params *ResolveGcpBillingRequirementsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateGcpCloudConnectConnectionWithBody Register a GCP Cloud Connect connection
+	//
+	// Registers a keyless Google Cloud service account for organization,
+	// project, or BigQuery dataset Cloud Connect access. Each Google Cloud
+	// service account (`serviceAccount.uniqueId`) holds at most one GCP
+	// connection; registering a second scope with the same service account
+	// returns `409 onboarding.connection_exists`. `scopeKind`,
+	// `organizationId`, `projectId`, `datasetId`, and `serviceAccount` are
+	// immutable after creation. With `dryRun=true`, runs the live
+	// authentication and permission checks without persisting and returns
+	// `200` with `GcpCloudConnectConnectionPreview` and `X-Dry-Run: true`, or
+	// `422 onboarding.registration_gate_failed` if a gate fails.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /onboarding/v2/cloud-connect/gcp/connections (the `CreateGcpCloudConnectConnection` operationId).
+	CreateGcpCloudConnectConnectionWithBody(ctx context.Context, params *CreateGcpCloudConnectConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateGcpCloudConnectConnection Register a GCP Cloud Connect connection
+	//
+	// Registers a keyless Google Cloud service account for organization,
+	// project, or BigQuery dataset Cloud Connect access. Each Google Cloud
+	// service account (`serviceAccount.uniqueId`) holds at most one GCP
+	// connection; registering a second scope with the same service account
+	// returns `409 onboarding.connection_exists`. `scopeKind`,
+	// `organizationId`, `projectId`, `datasetId`, and `serviceAccount` are
+	// immutable after creation. With `dryRun=true`, runs the live
+	// authentication and permission checks without persisting and returns
+	// `200` with `GcpCloudConnectConnectionPreview` and `X-Dry-Run: true`, or
+	// `422 onboarding.registration_gate_failed` if a gate fails.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /onboarding/v2/cloud-connect/gcp/connections (the `CreateGcpCloudConnectConnection` operationId).
+	CreateGcpCloudConnectConnection(ctx context.Context, params *CreateGcpCloudConnectConnectionParams, body CreateGcpCloudConnectConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteGcpCloudConnectConnection Disconnect a GCP Cloud Connect connection
+	//
+	// Removes DoiT's GCP Cloud Connect record using `cleanupScope=doit_only`.
+	// Does not delete customer GCP service accounts or IAM bindings. Requires
+	// `If-Match`.
+	//
+	// Corresponds with DELETE /onboarding/v2/cloud-connect/gcp/connections/{id} (the `DeleteGcpCloudConnectConnection` operationId).
+	DeleteGcpCloudConnectConnection(ctx context.Context, id ResourceId, params *DeleteGcpCloudConnectConnectionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetGcpCloudConnectConnection Get a GCP Cloud Connect connection
+	//
+	// Returns the stored state, desired features, and latest verification summary for a GCP Cloud Connect connection.
+	//
+	// Corresponds with GET /onboarding/v2/cloud-connect/gcp/connections/{id} (the `GetGcpCloudConnectConnection` operationId).
+	GetGcpCloudConnectConnection(ctx context.Context, id ResourceId, params *GetGcpCloudConnectConnectionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateGcpCloudConnectConnectionWithBody Update a GCP Cloud Connect connection
+	//
+	// Updates desired features for a GCP Cloud Connect connection using RFC
+	// 7396 JSON Merge Patch. Requires `If-Match`. When `dryRun=true`, returns
+	// the projected resource with `X-Dry-Run: true` without mutating state.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /onboarding/v2/cloud-connect/gcp/connections/{id} (the `UpdateGcpCloudConnectConnection` operationId).
+	UpdateGcpCloudConnectConnectionWithBody(ctx context.Context, id ResourceId, params *UpdateGcpCloudConnectConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateGcpCloudConnectConnectionWithApplicationMergePatchPlusJSONBody Update a GCP Cloud Connect connection
+	//
+	// Updates desired features for a GCP Cloud Connect connection using RFC
+	// 7396 JSON Merge Patch. Requires `If-Match`. When `dryRun=true`, returns
+	// the projected resource with `X-Dry-Run: true` without mutating state.
+	//
+	// Takes a body of the `application/merge-patch+json` content type.
+	//
+	// Corresponds with PATCH /onboarding/v2/cloud-connect/gcp/connections/{id} (the `UpdateGcpCloudConnectConnection` operationId).
+	UpdateGcpCloudConnectConnectionWithApplicationMergePatchPlusJSONBody(ctx context.Context, id ResourceId, params *UpdateGcpCloudConnectConnectionParams, body UpdateGcpCloudConnectConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResolveGcpCloudConnectRequirementsWithBody Resolve GCP Cloud Connect requirements
+	//
+	// Resolves customer-specific Google Cloud prerequisites, keyless service
+	// account delegation, scoped IAM permissions, and setup artifacts for a
+	// GCP organization, project, or BigQuery dataset. Read-only.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /onboarding/v2/cloud-connect/gcp/requirements (the `ResolveGcpCloudConnectRequirements` operationId).
+	ResolveGcpCloudConnectRequirementsWithBody(ctx context.Context, params *ResolveGcpCloudConnectRequirementsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResolveGcpCloudConnectRequirements Resolve GCP Cloud Connect requirements
+	//
+	// Resolves customer-specific Google Cloud prerequisites, keyless service
+	// account delegation, scoped IAM permissions, and setup artifacts for a
+	// GCP organization, project, or BigQuery dataset. Read-only.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /onboarding/v2/cloud-connect/gcp/requirements (the `ResolveGcpCloudConnectRequirements` operationId).
+	ResolveGcpCloudConnectRequirements(ctx context.Context, params *ResolveGcpCloudConnectRequirementsParams, body ResolveGcpCloudConnectRequirementsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+// CreateGcpBillingAccountWithBody Connect a GCP billing account
+//
+// Checks that DoiT's service account can read the billing account and
+// the detailed usage cost export table, records the connection as
+// `pending`, and activates it in the background. Poll the item until
+// `status` is `active` or `failed`; a connection reads `failed` at the
+// latest about 40 minutes after connect (up to 15 minutes before the
+// activation starts and up to 25 minutes while it runs). The billing
+// export's table layout is checked during the activation, so a wrong
+// table ends `failed` rather than refusing the connect.
+//
+// Connect is idempotent on the billing account and export: it returns
+// the existing `pending` or `active` connection, including one made in
+// the Console, with `201`. A different
+// export returns `409 onboarding.billing_connection_activating`
+// (retryable) while the connection is `pending`, and
+// `409 onboarding.billing_connection_export_mismatch` once it is
+// `active`, until it is disconnected. A `failed` connection can be
+// connected again with any export. The billing account and export cannot
+// be changed in place: disconnect and connect again.
+//
+// With `dryRun=true` the call answers `200` with what it would return,
+// after the same checks, without recording the connection or queuing its
+// activation. Like requirements, it reserves the customer's DoiT service
+// account when none is reserved yet.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /onboarding/v2/billing/gcp/accounts (the `CreateGcpBillingAccount` operationId).
+func (c *Client) CreateGcpBillingAccountWithBody(ctx context.Context, params *CreateGcpBillingAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateGcpBillingAccountRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateGcpBillingAccount Connect a GCP billing account
+//
+// Checks that DoiT's service account can read the billing account and
+// the detailed usage cost export table, records the connection as
+// `pending`, and activates it in the background. Poll the item until
+// `status` is `active` or `failed`; a connection reads `failed` at the
+// latest about 40 minutes after connect (up to 15 minutes before the
+// activation starts and up to 25 minutes while it runs). The billing
+// export's table layout is checked during the activation, so a wrong
+// table ends `failed` rather than refusing the connect.
+//
+// Connect is idempotent on the billing account and export: it returns
+// the existing `pending` or `active` connection, including one made in
+// the Console, with `201`. A different
+// export returns `409 onboarding.billing_connection_activating`
+// (retryable) while the connection is `pending`, and
+// `409 onboarding.billing_connection_export_mismatch` once it is
+// `active`, until it is disconnected. A `failed` connection can be
+// connected again with any export. The billing account and export cannot
+// be changed in place: disconnect and connect again.
+//
+// With `dryRun=true` the call answers `200` with what it would return,
+// after the same checks, without recording the connection or queuing its
+// activation. Like requirements, it reserves the customer's DoiT service
+// account when none is reserved yet.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /onboarding/v2/billing/gcp/accounts (the `CreateGcpBillingAccount` operationId).
+func (c *Client) CreateGcpBillingAccount(ctx context.Context, params *CreateGcpBillingAccountParams, body CreateGcpBillingAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateGcpBillingAccountRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteGcpBillingAccount Disconnect a GCP billing account
+//
+// Disconnects the billing account with the same effect as the Console
+// offboarding. Returns `409 onboarding.billing_connection_activating`
+// (retryable) while the activation is still running. After a partial
+// failure the connection reads `failed` and the disconnect can be
+// repeated. Customer IAM grants and the export dataset remain untouched.
+//
+// With `dryRun=true` the connection that would be disconnected comes back
+// with `200`, refused the same way, without removing anything. A
+// leftover DoiT asset of the billing account that a disconnect would
+// remove previews as a `failed` connection without `exportProjectId` and
+// `exportDatasetId`.
+//
+// `422 idempotency_key_reused` means the `Idempotency-Key` was already
+// used with a different request; retry with a new key.
+//
+// Corresponds with DELETE /onboarding/v2/billing/gcp/accounts/{id} (the `DeleteGcpBillingAccount` operationId).
+func (c *Client) DeleteGcpBillingAccount(ctx context.Context, id GcpBillingAccountId, params *DeleteGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteGcpBillingAccountRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetGcpBillingAccount Get a GCP billing account connection
+//
+// Returns the billing account connection and its activation `status`
+// (`pending`, `active` or `failed`, with `failureReason` when failed).
+//
+// Corresponds with GET /onboarding/v2/billing/gcp/accounts/{id} (the `GetGcpBillingAccount` operationId).
+func (c *Client) GetGcpBillingAccount(ctx context.Context, id GcpBillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetGcpBillingAccountRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ResolveGcpBillingRequirements Resolve GCP billing onboarding requirements
+//
+// Returns the DoiT service account the customer grants read access to,
+// the two IAM roles to grant and where, and the export prerequisite.
+// The first call for a customer reserves its DoiT service account, as
+// the Console does when onboarding starts; every later call, dry run or
+// not, returns the same account and changes nothing.
+//
+// Corresponds with POST /onboarding/v2/billing/gcp/requirements (the `ResolveGcpBillingRequirements` operationId).
+func (c *Client) ResolveGcpBillingRequirements(ctx context.Context, params *ResolveGcpBillingRequirementsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResolveGcpBillingRequirementsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateGcpCloudConnectConnectionWithBody Register a GCP Cloud Connect connection
+//
+// Registers a keyless Google Cloud service account for organization,
+// project, or BigQuery dataset Cloud Connect access. Each Google Cloud
+// service account (`serviceAccount.uniqueId`) holds at most one GCP
+// connection; registering a second scope with the same service account
+// returns `409 onboarding.connection_exists`. `scopeKind`,
+// `organizationId`, `projectId`, `datasetId`, and `serviceAccount` are
+// immutable after creation. With `dryRun=true`, runs the live
+// authentication and permission checks without persisting and returns
+// `200` with `GcpCloudConnectConnectionPreview` and `X-Dry-Run: true`, or
+// `422 onboarding.registration_gate_failed` if a gate fails.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /onboarding/v2/cloud-connect/gcp/connections (the `CreateGcpCloudConnectConnection` operationId).
+func (c *Client) CreateGcpCloudConnectConnectionWithBody(ctx context.Context, params *CreateGcpCloudConnectConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateGcpCloudConnectConnectionRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateGcpCloudConnectConnection Register a GCP Cloud Connect connection
+//
+// Registers a keyless Google Cloud service account for organization,
+// project, or BigQuery dataset Cloud Connect access. Each Google Cloud
+// service account (`serviceAccount.uniqueId`) holds at most one GCP
+// connection; registering a second scope with the same service account
+// returns `409 onboarding.connection_exists`. `scopeKind`,
+// `organizationId`, `projectId`, `datasetId`, and `serviceAccount` are
+// immutable after creation. With `dryRun=true`, runs the live
+// authentication and permission checks without persisting and returns
+// `200` with `GcpCloudConnectConnectionPreview` and `X-Dry-Run: true`, or
+// `422 onboarding.registration_gate_failed` if a gate fails.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /onboarding/v2/cloud-connect/gcp/connections (the `CreateGcpCloudConnectConnection` operationId).
+func (c *Client) CreateGcpCloudConnectConnection(ctx context.Context, params *CreateGcpCloudConnectConnectionParams, body CreateGcpCloudConnectConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateGcpCloudConnectConnectionRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteGcpCloudConnectConnection Disconnect a GCP Cloud Connect connection
+//
+// Removes DoiT's GCP Cloud Connect record using `cleanupScope=doit_only`.
+// Does not delete customer GCP service accounts or IAM bindings. Requires
+// `If-Match`.
+//
+// Corresponds with DELETE /onboarding/v2/cloud-connect/gcp/connections/{id} (the `DeleteGcpCloudConnectConnection` operationId).
+func (c *Client) DeleteGcpCloudConnectConnection(ctx context.Context, id ResourceId, params *DeleteGcpCloudConnectConnectionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteGcpCloudConnectConnectionRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetGcpCloudConnectConnection Get a GCP Cloud Connect connection
+//
+// Returns the stored state, desired features, and latest verification summary for a GCP Cloud Connect connection.
+//
+// Corresponds with GET /onboarding/v2/cloud-connect/gcp/connections/{id} (the `GetGcpCloudConnectConnection` operationId).
+func (c *Client) GetGcpCloudConnectConnection(ctx context.Context, id ResourceId, params *GetGcpCloudConnectConnectionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetGcpCloudConnectConnectionRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateGcpCloudConnectConnectionWithBody Update a GCP Cloud Connect connection
+//
+// Updates desired features for a GCP Cloud Connect connection using RFC
+// 7396 JSON Merge Patch. Requires `If-Match`. When `dryRun=true`, returns
+// the projected resource with `X-Dry-Run: true` without mutating state.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /onboarding/v2/cloud-connect/gcp/connections/{id} (the `UpdateGcpCloudConnectConnection` operationId).
+func (c *Client) UpdateGcpCloudConnectConnectionWithBody(ctx context.Context, id ResourceId, params *UpdateGcpCloudConnectConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateGcpCloudConnectConnectionRequestWithBody(c.Server, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateGcpCloudConnectConnectionWithApplicationMergePatchPlusJSONBody Update a GCP Cloud Connect connection
+//
+// Updates desired features for a GCP Cloud Connect connection using RFC
+// 7396 JSON Merge Patch. Requires `If-Match`. When `dryRun=true`, returns
+// the projected resource with `X-Dry-Run: true` without mutating state.
+//
+// Takes a body of the `application/merge-patch+json` content type.
+//
+// Corresponds with PATCH /onboarding/v2/cloud-connect/gcp/connections/{id} (the `UpdateGcpCloudConnectConnection` operationId).
+func (c *Client) UpdateGcpCloudConnectConnectionWithApplicationMergePatchPlusJSONBody(ctx context.Context, id ResourceId, params *UpdateGcpCloudConnectConnectionParams, body UpdateGcpCloudConnectConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateGcpCloudConnectConnectionRequestWithApplicationMergePatchPlusJSONBody(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ResolveGcpCloudConnectRequirementsWithBody Resolve GCP Cloud Connect requirements
+//
+// Resolves customer-specific Google Cloud prerequisites, keyless service
+// account delegation, scoped IAM permissions, and setup artifacts for a
+// GCP organization, project, or BigQuery dataset. Read-only.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /onboarding/v2/cloud-connect/gcp/requirements (the `ResolveGcpCloudConnectRequirements` operationId).
+func (c *Client) ResolveGcpCloudConnectRequirementsWithBody(ctx context.Context, params *ResolveGcpCloudConnectRequirementsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResolveGcpCloudConnectRequirementsRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ResolveGcpCloudConnectRequirements Resolve GCP Cloud Connect requirements
+//
+// Resolves customer-specific Google Cloud prerequisites, keyless service
+// account delegation, scoped IAM permissions, and setup artifacts for a
+// GCP organization, project, or BigQuery dataset. Read-only.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /onboarding/v2/cloud-connect/gcp/requirements (the `ResolveGcpCloudConnectRequirements` operationId).
+func (c *Client) ResolveGcpCloudConnectRequirements(ctx context.Context, params *ResolveGcpCloudConnectRequirementsParams, body ResolveGcpCloudConnectRequirementsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResolveGcpCloudConnectRequirementsRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// NewCreateGcpBillingAccountRequest calls the generic CreateGcpBillingAccount builder with application/json body
+func NewCreateGcpBillingAccountRequest(server string, params *CreateGcpBillingAccountParams, body CreateGcpBillingAccountJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := runtime.JSONMarshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateGcpBillingAccountRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewCreateGcpBillingAccountRequestWithBody constructs an http.Request for the CreateGcpBillingAccount method, with any body, and a specified content type
+func NewCreateGcpBillingAccountRequestWithBody(server string, params *CreateGcpBillingAccountParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/onboarding/v2/billing/gcp/accounts"
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewDeleteGcpBillingAccountRequest constructs an http.Request for the DeleteGcpBillingAccount method
+func NewDeleteGcpBillingAccountRequest(server string, id GcpBillingAccountId, params *DeleteGcpBillingAccountParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/onboarding/v2/billing/gcp/accounts/" + pathParam0
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewGetGcpBillingAccountRequest constructs an http.Request for the GetGcpBillingAccount method
+func NewGetGcpBillingAccountRequest(server string, id GcpBillingAccountId, params *GetGcpBillingAccountParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/onboarding/v2/billing/gcp/accounts/" + pathParam0
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewResolveGcpBillingRequirementsRequest constructs an http.Request for the ResolveGcpBillingRequirements method
+func NewResolveGcpBillingRequirementsRequest(server string, params *ResolveGcpBillingRequirementsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/onboarding/v2/billing/gcp/requirements"
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+		if params.IdempotencyKey != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", *params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Idempotency-Key", headerParam1)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewCreateGcpCloudConnectConnectionRequest calls the generic CreateGcpCloudConnectConnection builder with application/json body
+func NewCreateGcpCloudConnectConnectionRequest(server string, params *CreateGcpCloudConnectConnectionParams, body CreateGcpCloudConnectConnectionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := runtime.JSONMarshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateGcpCloudConnectConnectionRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewCreateGcpCloudConnectConnectionRequestWithBody constructs an http.Request for the CreateGcpCloudConnectConnection method, with any body, and a specified content type
+func NewCreateGcpCloudConnectConnectionRequestWithBody(server string, params *CreateGcpCloudConnectConnectionParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/onboarding/v2/cloud-connect/gcp/connections"
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewDeleteGcpCloudConnectConnectionRequest constructs an http.Request for the DeleteGcpCloudConnectConnection method
+func NewDeleteGcpCloudConnectConnectionRequest(server string, id ResourceId, params *DeleteGcpCloudConnectConnectionParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/onboarding/v2/cloud-connect/gcp/connections/" + pathParam0
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cleanupScope", params.CleanupScope, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam1)
+
+		var headerParam2 string
+
+		headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam2)
+
+	}
+
+	return req, nil
+}
+
+// NewGetGcpCloudConnectConnectionRequest constructs an http.Request for the GetGcpCloudConnectConnection method
+func NewGetGcpCloudConnectConnectionRequest(server string, id ResourceId, params *GetGcpCloudConnectConnectionParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/onboarding/v2/cloud-connect/gcp/connections/" + pathParam0
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewUpdateGcpCloudConnectConnectionRequestWithApplicationMergePatchPlusJSONBody calls the generic UpdateGcpCloudConnectConnection builder with application/merge-patch+json body
+func NewUpdateGcpCloudConnectConnectionRequestWithApplicationMergePatchPlusJSONBody(server string, id ResourceId, params *UpdateGcpCloudConnectConnectionParams, body UpdateGcpCloudConnectConnectionApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := runtime.JSONMarshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateGcpCloudConnectConnectionRequestWithBody(server, id, params, "application/merge-patch+json", bodyReader)
+}
+
+// NewUpdateGcpCloudConnectConnectionRequestWithBody constructs an http.Request for the UpdateGcpCloudConnectConnection method, with any body, and a specified content type
+func NewUpdateGcpCloudConnectConnectionRequestWithBody(server string, id ResourceId, params *UpdateGcpCloudConnectConnectionParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/onboarding/v2/cloud-connect/gcp/connections/" + pathParam0
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam1)
+
+		var headerParam2 string
+
+		headerParam2, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam2)
+
+	}
+
+	return req, nil
+}
+
+// NewResolveGcpCloudConnectRequirementsRequest calls the generic ResolveGcpCloudConnectRequirements builder with application/json body
+func NewResolveGcpCloudConnectRequirementsRequest(server string, params *ResolveGcpCloudConnectRequirementsParams, body ResolveGcpCloudConnectRequirementsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := runtime.JSONMarshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewResolveGcpCloudConnectRequirementsRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewResolveGcpCloudConnectRequirementsRequestWithBody constructs an http.Request for the ResolveGcpCloudConnectRequirements method, with any body, and a specified content type
+func NewResolveGcpCloudConnectRequirementsRequestWithBody(server string, params *ResolveGcpCloudConnectRequirementsParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/onboarding/v2/cloud-connect/gcp/requirements"
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+		if params.IdempotencyKey != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", *params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Idempotency-Key", headerParam1)
+		}
+
+	}
+
+	return req, nil
 }
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
@@ -128,4 +3696,7023 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+
+	// CreateGcpBillingAccountWithBodyWithResponse Connect a GCP billing account
+	//
+	// Checks that DoiT's service account can read the billing account and
+	// the detailed usage cost export table, records the connection as
+	// `pending`, and activates it in the background. Poll the item until
+	// `status` is `active` or `failed`; a connection reads `failed` at the
+	// latest about 40 minutes after connect (up to 15 minutes before the
+	// activation starts and up to 25 minutes while it runs). The billing
+	// export's table layout is checked during the activation, so a wrong
+	// table ends `failed` rather than refusing the connect.
+	//
+	// Connect is idempotent on the billing account and export: it returns
+	// the existing `pending` or `active` connection, including one made in
+	// the Console, with `201`. A different
+	// export returns `409 onboarding.billing_connection_activating`
+	// (retryable) while the connection is `pending`, and
+	// `409 onboarding.billing_connection_export_mismatch` once it is
+	// `active`, until it is disconnected. A `failed` connection can be
+	// connected again with any export. The billing account and export cannot
+	// be changed in place: disconnect and connect again.
+	//
+	// With `dryRun=true` the call answers `200` with what it would return,
+	// after the same checks, without recording the connection or queuing its
+	// activation. Like requirements, it reserves the customer's DoiT service
+	// account when none is reserved yet.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /onboarding/v2/billing/gcp/accounts (the `CreateGcpBillingAccount` operationId).
+	CreateGcpBillingAccountWithBodyWithResponse(ctx context.Context, params *CreateGcpBillingAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGcpBillingAccountResp, error)
+
+	// CreateGcpBillingAccountWithResponse Connect a GCP billing account
+	//
+	// Checks that DoiT's service account can read the billing account and
+	// the detailed usage cost export table, records the connection as
+	// `pending`, and activates it in the background. Poll the item until
+	// `status` is `active` or `failed`; a connection reads `failed` at the
+	// latest about 40 minutes after connect (up to 15 minutes before the
+	// activation starts and up to 25 minutes while it runs). The billing
+	// export's table layout is checked during the activation, so a wrong
+	// table ends `failed` rather than refusing the connect.
+	//
+	// Connect is idempotent on the billing account and export: it returns
+	// the existing `pending` or `active` connection, including one made in
+	// the Console, with `201`. A different
+	// export returns `409 onboarding.billing_connection_activating`
+	// (retryable) while the connection is `pending`, and
+	// `409 onboarding.billing_connection_export_mismatch` once it is
+	// `active`, until it is disconnected. A `failed` connection can be
+	// connected again with any export. The billing account and export cannot
+	// be changed in place: disconnect and connect again.
+	//
+	// With `dryRun=true` the call answers `200` with what it would return,
+	// after the same checks, without recording the connection or queuing its
+	// activation. Like requirements, it reserves the customer's DoiT service
+	// account when none is reserved yet.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /onboarding/v2/billing/gcp/accounts (the `CreateGcpBillingAccount` operationId).
+	CreateGcpBillingAccountWithResponse(ctx context.Context, params *CreateGcpBillingAccountParams, body CreateGcpBillingAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGcpBillingAccountResp, error)
+
+	// DeleteGcpBillingAccountWithResponse Disconnect a GCP billing account
+	//
+	// Disconnects the billing account with the same effect as the Console
+	// offboarding. Returns `409 onboarding.billing_connection_activating`
+	// (retryable) while the activation is still running. After a partial
+	// failure the connection reads `failed` and the disconnect can be
+	// repeated. Customer IAM grants and the export dataset remain untouched.
+	//
+	// With `dryRun=true` the connection that would be disconnected comes back
+	// with `200`, refused the same way, without removing anything. A
+	// leftover DoiT asset of the billing account that a disconnect would
+	// remove previews as a `failed` connection without `exportProjectId` and
+	// `exportDatasetId`.
+	//
+	// `422 idempotency_key_reused` means the `Idempotency-Key` was already
+	// used with a different request; retry with a new key.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /onboarding/v2/billing/gcp/accounts/{id} (the `DeleteGcpBillingAccount` operationId).
+	DeleteGcpBillingAccountWithResponse(ctx context.Context, id GcpBillingAccountId, params *DeleteGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*DeleteGcpBillingAccountResp, error)
+
+	// GetGcpBillingAccountWithResponse Get a GCP billing account connection
+	//
+	// Returns the billing account connection and its activation `status`
+	// (`pending`, `active` or `failed`, with `failureReason` when failed).
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /onboarding/v2/billing/gcp/accounts/{id} (the `GetGcpBillingAccount` operationId).
+	GetGcpBillingAccountWithResponse(ctx context.Context, id GcpBillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*GetGcpBillingAccountResp, error)
+
+	// ResolveGcpBillingRequirementsWithResponse Resolve GCP billing onboarding requirements
+	//
+	// Returns the DoiT service account the customer grants read access to,
+	// the two IAM roles to grant and where, and the export prerequisite.
+	// The first call for a customer reserves its DoiT service account, as
+	// the Console does when onboarding starts; every later call, dry run or
+	// not, returns the same account and changes nothing.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /onboarding/v2/billing/gcp/requirements (the `ResolveGcpBillingRequirements` operationId).
+	ResolveGcpBillingRequirementsWithResponse(ctx context.Context, params *ResolveGcpBillingRequirementsParams, reqEditors ...RequestEditorFn) (*ResolveGcpBillingRequirementsResp, error)
+
+	// CreateGcpCloudConnectConnectionWithBodyWithResponse Register a GCP Cloud Connect connection
+	//
+	// Registers a keyless Google Cloud service account for organization,
+	// project, or BigQuery dataset Cloud Connect access. Each Google Cloud
+	// service account (`serviceAccount.uniqueId`) holds at most one GCP
+	// connection; registering a second scope with the same service account
+	// returns `409 onboarding.connection_exists`. `scopeKind`,
+	// `organizationId`, `projectId`, `datasetId`, and `serviceAccount` are
+	// immutable after creation. With `dryRun=true`, runs the live
+	// authentication and permission checks without persisting and returns
+	// `200` with `GcpCloudConnectConnectionPreview` and `X-Dry-Run: true`, or
+	// `422 onboarding.registration_gate_failed` if a gate fails.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /onboarding/v2/cloud-connect/gcp/connections (the `CreateGcpCloudConnectConnection` operationId).
+	CreateGcpCloudConnectConnectionWithBodyWithResponse(ctx context.Context, params *CreateGcpCloudConnectConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGcpCloudConnectConnectionResp, error)
+
+	// CreateGcpCloudConnectConnectionWithResponse Register a GCP Cloud Connect connection
+	//
+	// Registers a keyless Google Cloud service account for organization,
+	// project, or BigQuery dataset Cloud Connect access. Each Google Cloud
+	// service account (`serviceAccount.uniqueId`) holds at most one GCP
+	// connection; registering a second scope with the same service account
+	// returns `409 onboarding.connection_exists`. `scopeKind`,
+	// `organizationId`, `projectId`, `datasetId`, and `serviceAccount` are
+	// immutable after creation. With `dryRun=true`, runs the live
+	// authentication and permission checks without persisting and returns
+	// `200` with `GcpCloudConnectConnectionPreview` and `X-Dry-Run: true`, or
+	// `422 onboarding.registration_gate_failed` if a gate fails.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /onboarding/v2/cloud-connect/gcp/connections (the `CreateGcpCloudConnectConnection` operationId).
+	CreateGcpCloudConnectConnectionWithResponse(ctx context.Context, params *CreateGcpCloudConnectConnectionParams, body CreateGcpCloudConnectConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGcpCloudConnectConnectionResp, error)
+
+	// DeleteGcpCloudConnectConnectionWithResponse Disconnect a GCP Cloud Connect connection
+	//
+	// Removes DoiT's GCP Cloud Connect record using `cleanupScope=doit_only`.
+	// Does not delete customer GCP service accounts or IAM bindings. Requires
+	// `If-Match`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /onboarding/v2/cloud-connect/gcp/connections/{id} (the `DeleteGcpCloudConnectConnection` operationId).
+	DeleteGcpCloudConnectConnectionWithResponse(ctx context.Context, id ResourceId, params *DeleteGcpCloudConnectConnectionParams, reqEditors ...RequestEditorFn) (*DeleteGcpCloudConnectConnectionResp, error)
+
+	// GetGcpCloudConnectConnectionWithResponse Get a GCP Cloud Connect connection
+	//
+	// Returns the stored state, desired features, and latest verification summary for a GCP Cloud Connect connection.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /onboarding/v2/cloud-connect/gcp/connections/{id} (the `GetGcpCloudConnectConnection` operationId).
+	GetGcpCloudConnectConnectionWithResponse(ctx context.Context, id ResourceId, params *GetGcpCloudConnectConnectionParams, reqEditors ...RequestEditorFn) (*GetGcpCloudConnectConnectionResp, error)
+
+	// UpdateGcpCloudConnectConnectionWithBodyWithResponse Update a GCP Cloud Connect connection
+	//
+	// Updates desired features for a GCP Cloud Connect connection using RFC
+	// 7396 JSON Merge Patch. Requires `If-Match`. When `dryRun=true`, returns
+	// the projected resource with `X-Dry-Run: true` without mutating state.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /onboarding/v2/cloud-connect/gcp/connections/{id} (the `UpdateGcpCloudConnectConnection` operationId).
+	UpdateGcpCloudConnectConnectionWithBodyWithResponse(ctx context.Context, id ResourceId, params *UpdateGcpCloudConnectConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateGcpCloudConnectConnectionResp, error)
+
+	// UpdateGcpCloudConnectConnectionWithApplicationMergePatchPlusJSONBodyWithResponse Update a GCP Cloud Connect connection
+	//
+	// Updates desired features for a GCP Cloud Connect connection using RFC
+	// 7396 JSON Merge Patch. Requires `If-Match`. When `dryRun=true`, returns
+	// the projected resource with `X-Dry-Run: true` without mutating state.
+	//
+	// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /onboarding/v2/cloud-connect/gcp/connections/{id} (the `UpdateGcpCloudConnectConnection` operationId).
+	UpdateGcpCloudConnectConnectionWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id ResourceId, params *UpdateGcpCloudConnectConnectionParams, body UpdateGcpCloudConnectConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateGcpCloudConnectConnectionResp, error)
+
+	// ResolveGcpCloudConnectRequirementsWithBodyWithResponse Resolve GCP Cloud Connect requirements
+	//
+	// Resolves customer-specific Google Cloud prerequisites, keyless service
+	// account delegation, scoped IAM permissions, and setup artifacts for a
+	// GCP organization, project, or BigQuery dataset. Read-only.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /onboarding/v2/cloud-connect/gcp/requirements (the `ResolveGcpCloudConnectRequirements` operationId).
+	ResolveGcpCloudConnectRequirementsWithBodyWithResponse(ctx context.Context, params *ResolveGcpCloudConnectRequirementsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResolveGcpCloudConnectRequirementsResp, error)
+
+	// ResolveGcpCloudConnectRequirementsWithResponse Resolve GCP Cloud Connect requirements
+	//
+	// Resolves customer-specific Google Cloud prerequisites, keyless service
+	// account delegation, scoped IAM permissions, and setup artifacts for a
+	// GCP organization, project, or BigQuery dataset. Read-only.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /onboarding/v2/cloud-connect/gcp/requirements (the `ResolveGcpCloudConnectRequirements` operationId).
+	ResolveGcpCloudConnectRequirementsWithResponse(ctx context.Context, params *ResolveGcpCloudConnectRequirementsParams, body ResolveGcpCloudConnectRequirementsJSONRequestBody, reqEditors ...RequestEditorFn) (*ResolveGcpCloudConnectRequirementsResp, error)
+}
+
+// CreateGcpBillingAccountResp200Headers the declared response headers of an HTTP 200 response for CreateGcpBillingAccount
+type CreateGcpBillingAccountResp200Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XDryRun             *bool
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpBillingAccountResp201Headers the declared response headers of an HTTP 201 response for CreateGcpBillingAccount
+type CreateGcpBillingAccountResp201Headers struct {
+	ContentLanguage     *string
+	Location            *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpBillingAccountResp400Headers the declared response headers of an HTTP 400 response for CreateGcpBillingAccount
+type CreateGcpBillingAccountResp400Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpBillingAccountResp401Headers the declared response headers of an HTTP 401 response for CreateGcpBillingAccount
+type CreateGcpBillingAccountResp401Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	WWWAuthenticate     *string
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpBillingAccountResp403Headers the declared response headers of an HTTP 403 response for CreateGcpBillingAccount
+type CreateGcpBillingAccountResp403Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpBillingAccountResp409Headers the declared response headers of an HTTP 409 response for CreateGcpBillingAccount
+type CreateGcpBillingAccountResp409Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpBillingAccountResp413Headers the declared response headers of an HTTP 413 response for CreateGcpBillingAccount
+type CreateGcpBillingAccountResp413Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpBillingAccountResp422Headers the declared response headers of an HTTP 422 response for CreateGcpBillingAccount
+type CreateGcpBillingAccountResp422Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpBillingAccountResp429Headers the declared response headers of an HTTP 429 response for CreateGcpBillingAccount
+type CreateGcpBillingAccountResp429Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpBillingAccountResp500Headers the declared response headers of an HTTP 500 response for CreateGcpBillingAccount
+type CreateGcpBillingAccountResp500Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpBillingAccountResp503Headers the declared response headers of an HTTP 503 response for CreateGcpBillingAccount
+type CreateGcpBillingAccountResp503Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+type CreateGcpBillingAccountResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GcpBillingAccount
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *GcpBillingAccount
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *RequestTooLarge
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableContent
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *CreateGcpBillingAccountResp200Headers
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateGcpBillingAccountResp201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateGcpBillingAccountResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreateGcpBillingAccountResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateGcpBillingAccountResp403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateGcpBillingAccountResp409Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreateGcpBillingAccountResp413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *CreateGcpBillingAccountResp422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreateGcpBillingAccountResp429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateGcpBillingAccountResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *CreateGcpBillingAccountResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CreateGcpBillingAccountResp) GetJSON200() *GcpBillingAccount {
+	return r.JSON200
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateGcpBillingAccountResp) GetJSON201() *GcpBillingAccount {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateGcpBillingAccountResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateGcpBillingAccountResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateGcpBillingAccountResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateGcpBillingAccountResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r CreateGcpBillingAccountResp) GetApplicationproblemJSON413() *RequestTooLarge {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateGcpBillingAccountResp) GetApplicationproblemJSON422() *UnprocessableContent {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreateGcpBillingAccountResp) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateGcpBillingAccountResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r CreateGcpBillingAccountResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateGcpBillingAccountResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateGcpBillingAccountResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateGcpBillingAccountResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateGcpBillingAccountResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteGcpBillingAccountResp200Headers the declared response headers of an HTTP 200 response for DeleteGcpBillingAccount
+type DeleteGcpBillingAccountResp200Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XDryRun             *bool
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpBillingAccountResp204Headers the declared response headers of an HTTP 204 response for DeleteGcpBillingAccount
+type DeleteGcpBillingAccountResp204Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpBillingAccountResp400Headers the declared response headers of an HTTP 400 response for DeleteGcpBillingAccount
+type DeleteGcpBillingAccountResp400Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpBillingAccountResp401Headers the declared response headers of an HTTP 401 response for DeleteGcpBillingAccount
+type DeleteGcpBillingAccountResp401Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	WWWAuthenticate     *string
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpBillingAccountResp403Headers the declared response headers of an HTTP 403 response for DeleteGcpBillingAccount
+type DeleteGcpBillingAccountResp403Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpBillingAccountResp404Headers the declared response headers of an HTTP 404 response for DeleteGcpBillingAccount
+type DeleteGcpBillingAccountResp404Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpBillingAccountResp409Headers the declared response headers of an HTTP 409 response for DeleteGcpBillingAccount
+type DeleteGcpBillingAccountResp409Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpBillingAccountResp422Headers the declared response headers of an HTTP 422 response for DeleteGcpBillingAccount
+type DeleteGcpBillingAccountResp422Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpBillingAccountResp429Headers the declared response headers of an HTTP 429 response for DeleteGcpBillingAccount
+type DeleteGcpBillingAccountResp429Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpBillingAccountResp500Headers the declared response headers of an HTTP 500 response for DeleteGcpBillingAccount
+type DeleteGcpBillingAccountResp500Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpBillingAccountResp503Headers the declared response headers of an HTTP 503 response for DeleteGcpBillingAccount
+type DeleteGcpBillingAccountResp503Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+type DeleteGcpBillingAccountResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GcpBillingAccount
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableContent
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *DeleteGcpBillingAccountResp200Headers
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteGcpBillingAccountResp204Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DeleteGcpBillingAccountResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *DeleteGcpBillingAccountResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DeleteGcpBillingAccountResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteGcpBillingAccountResp404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *DeleteGcpBillingAccountResp409Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *DeleteGcpBillingAccountResp422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *DeleteGcpBillingAccountResp429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *DeleteGcpBillingAccountResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *DeleteGcpBillingAccountResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r DeleteGcpBillingAccountResp) GetJSON200() *GcpBillingAccount {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DeleteGcpBillingAccountResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r DeleteGcpBillingAccountResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DeleteGcpBillingAccountResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteGcpBillingAccountResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DeleteGcpBillingAccountResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r DeleteGcpBillingAccountResp) GetApplicationproblemJSON422() *UnprocessableContent {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r DeleteGcpBillingAccountResp) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r DeleteGcpBillingAccountResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r DeleteGcpBillingAccountResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteGcpBillingAccountResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteGcpBillingAccountResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteGcpBillingAccountResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteGcpBillingAccountResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetGcpBillingAccountResp200Headers the declared response headers of an HTTP 200 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp200Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpBillingAccountResp401Headers the declared response headers of an HTTP 401 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp401Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	WWWAuthenticate     *string
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpBillingAccountResp403Headers the declared response headers of an HTTP 403 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp403Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpBillingAccountResp404Headers the declared response headers of an HTTP 404 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp404Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpBillingAccountResp429Headers the declared response headers of an HTTP 429 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp429Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpBillingAccountResp500Headers the declared response headers of an HTTP 500 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp500Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpBillingAccountResp503Headers the declared response headers of an HTTP 503 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp503Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+type GetGcpBillingAccountResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GcpBillingAccount
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetGcpBillingAccountResp200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetGcpBillingAccountResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetGcpBillingAccountResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetGcpBillingAccountResp404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetGcpBillingAccountResp429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetGcpBillingAccountResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetGcpBillingAccountResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetGcpBillingAccountResp) GetJSON200() *GcpBillingAccount {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetGcpBillingAccountResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetGcpBillingAccountResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetGcpBillingAccountResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetGcpBillingAccountResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ResolveGcpBillingRequirementsResp200Headers the declared response headers of an HTTP 200 response for ResolveGcpBillingRequirements
+type ResolveGcpBillingRequirementsResp200Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XDryRun             *bool
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpBillingRequirementsResp400Headers the declared response headers of an HTTP 400 response for ResolveGcpBillingRequirements
+type ResolveGcpBillingRequirementsResp400Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpBillingRequirementsResp401Headers the declared response headers of an HTTP 401 response for ResolveGcpBillingRequirements
+type ResolveGcpBillingRequirementsResp401Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	WWWAuthenticate     *string
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpBillingRequirementsResp403Headers the declared response headers of an HTTP 403 response for ResolveGcpBillingRequirements
+type ResolveGcpBillingRequirementsResp403Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpBillingRequirementsResp429Headers the declared response headers of an HTTP 429 response for ResolveGcpBillingRequirements
+type ResolveGcpBillingRequirementsResp429Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpBillingRequirementsResp500Headers the declared response headers of an HTTP 500 response for ResolveGcpBillingRequirements
+type ResolveGcpBillingRequirementsResp500Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpBillingRequirementsResp503Headers the declared response headers of an HTTP 503 response for ResolveGcpBillingRequirements
+type ResolveGcpBillingRequirementsResp503Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+type ResolveGcpBillingRequirementsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GcpBillingRequirementsResponse
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ResolveGcpBillingRequirementsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ResolveGcpBillingRequirementsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ResolveGcpBillingRequirementsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ResolveGcpBillingRequirementsResp403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ResolveGcpBillingRequirementsResp429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ResolveGcpBillingRequirementsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ResolveGcpBillingRequirementsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ResolveGcpBillingRequirementsResp) GetJSON200() *GcpBillingRequirementsResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ResolveGcpBillingRequirementsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ResolveGcpBillingRequirementsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ResolveGcpBillingRequirementsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ResolveGcpBillingRequirementsResp) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ResolveGcpBillingRequirementsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ResolveGcpBillingRequirementsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ResolveGcpBillingRequirementsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ResolveGcpBillingRequirementsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResolveGcpBillingRequirementsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ResolveGcpBillingRequirementsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateGcpCloudConnectConnectionResp200Headers the declared response headers of an HTTP 200 response for CreateGcpCloudConnectConnection
+type CreateGcpCloudConnectConnectionResp200Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XDryRun             *bool
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpCloudConnectConnectionResp201Headers the declared response headers of an HTTP 201 response for CreateGcpCloudConnectConnection
+type CreateGcpCloudConnectConnectionResp201Headers struct {
+	ContentLanguage     *string
+	ETag                *string
+	Location            *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpCloudConnectConnectionResp400Headers the declared response headers of an HTTP 400 response for CreateGcpCloudConnectConnection
+type CreateGcpCloudConnectConnectionResp400Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpCloudConnectConnectionResp401Headers the declared response headers of an HTTP 401 response for CreateGcpCloudConnectConnection
+type CreateGcpCloudConnectConnectionResp401Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	WWWAuthenticate     *string
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpCloudConnectConnectionResp403Headers the declared response headers of an HTTP 403 response for CreateGcpCloudConnectConnection
+type CreateGcpCloudConnectConnectionResp403Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpCloudConnectConnectionResp409Headers the declared response headers of an HTTP 409 response for CreateGcpCloudConnectConnection
+type CreateGcpCloudConnectConnectionResp409Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpCloudConnectConnectionResp413Headers the declared response headers of an HTTP 413 response for CreateGcpCloudConnectConnection
+type CreateGcpCloudConnectConnectionResp413Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpCloudConnectConnectionResp422Headers the declared response headers of an HTTP 422 response for CreateGcpCloudConnectConnection
+type CreateGcpCloudConnectConnectionResp422Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpCloudConnectConnectionResp429Headers the declared response headers of an HTTP 429 response for CreateGcpCloudConnectConnection
+type CreateGcpCloudConnectConnectionResp429Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpCloudConnectConnectionResp500Headers the declared response headers of an HTTP 500 response for CreateGcpCloudConnectConnection
+type CreateGcpCloudConnectConnectionResp500Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// CreateGcpCloudConnectConnectionResp503Headers the declared response headers of an HTTP 503 response for CreateGcpCloudConnectConnection
+type CreateGcpCloudConnectConnectionResp503Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+type CreateGcpCloudConnectConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GcpCloudConnectConnectionPreview
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *GcpCloudConnectConnection
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *RequestTooLarge
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableContent
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *CreateGcpCloudConnectConnectionResp200Headers
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateGcpCloudConnectConnectionResp201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateGcpCloudConnectConnectionResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreateGcpCloudConnectConnectionResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateGcpCloudConnectConnectionResp403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateGcpCloudConnectConnectionResp409Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreateGcpCloudConnectConnectionResp413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *CreateGcpCloudConnectConnectionResp422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreateGcpCloudConnectConnectionResp429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateGcpCloudConnectConnectionResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *CreateGcpCloudConnectConnectionResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CreateGcpCloudConnectConnectionResp) GetJSON200() *GcpCloudConnectConnectionPreview {
+	return r.JSON200
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateGcpCloudConnectConnectionResp) GetJSON201() *GcpCloudConnectConnection {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateGcpCloudConnectConnectionResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateGcpCloudConnectConnectionResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateGcpCloudConnectConnectionResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateGcpCloudConnectConnectionResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r CreateGcpCloudConnectConnectionResp) GetApplicationproblemJSON413() *RequestTooLarge {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateGcpCloudConnectConnectionResp) GetApplicationproblemJSON422() *UnprocessableContent {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreateGcpCloudConnectConnectionResp) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateGcpCloudConnectConnectionResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r CreateGcpCloudConnectConnectionResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateGcpCloudConnectConnectionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateGcpCloudConnectConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateGcpCloudConnectConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateGcpCloudConnectConnectionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteGcpCloudConnectConnectionResp200Headers the declared response headers of an HTTP 200 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp200Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XDryRun             *bool
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp204Headers the declared response headers of an HTTP 204 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp204Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp400Headers the declared response headers of an HTTP 400 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp400Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp401Headers the declared response headers of an HTTP 401 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp401Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	WWWAuthenticate     *string
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp403Headers the declared response headers of an HTTP 403 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp403Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp404Headers the declared response headers of an HTTP 404 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp404Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp409Headers the declared response headers of an HTTP 409 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp409Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp412Headers the declared response headers of an HTTP 412 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp412Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp422Headers the declared response headers of an HTTP 422 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp422Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp428Headers the declared response headers of an HTTP 428 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp428Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp429Headers the declared response headers of an HTTP 429 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp429Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp500Headers the declared response headers of an HTTP 500 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp500Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// DeleteGcpCloudConnectConnectionResp503Headers the declared response headers of an HTTP 503 response for DeleteGcpCloudConnectConnection
+type DeleteGcpCloudConnectConnectionResp503Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+type DeleteGcpCloudConnectConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *MutationPreview
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableContent
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *DeleteGcpCloudConnectConnectionResp200Headers
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteGcpCloudConnectConnectionResp204Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DeleteGcpCloudConnectConnectionResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *DeleteGcpCloudConnectConnectionResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DeleteGcpCloudConnectConnectionResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteGcpCloudConnectConnectionResp404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *DeleteGcpCloudConnectConnectionResp409Headers
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *DeleteGcpCloudConnectConnectionResp412Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *DeleteGcpCloudConnectConnectionResp422Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *DeleteGcpCloudConnectConnectionResp428Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *DeleteGcpCloudConnectConnectionResp429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *DeleteGcpCloudConnectConnectionResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *DeleteGcpCloudConnectConnectionResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetJSON200() *MutationPreview {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetApplicationproblemJSON422() *UnprocessableContent {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r DeleteGcpCloudConnectConnectionResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteGcpCloudConnectConnectionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteGcpCloudConnectConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteGcpCloudConnectConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteGcpCloudConnectConnectionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetGcpCloudConnectConnectionResp200Headers the declared response headers of an HTTP 200 response for GetGcpCloudConnectConnection
+type GetGcpCloudConnectConnectionResp200Headers struct {
+	ContentLanguage     *string
+	ETag                *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpCloudConnectConnectionResp400Headers the declared response headers of an HTTP 400 response for GetGcpCloudConnectConnection
+type GetGcpCloudConnectConnectionResp400Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpCloudConnectConnectionResp401Headers the declared response headers of an HTTP 401 response for GetGcpCloudConnectConnection
+type GetGcpCloudConnectConnectionResp401Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	WWWAuthenticate     *string
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpCloudConnectConnectionResp403Headers the declared response headers of an HTTP 403 response for GetGcpCloudConnectConnection
+type GetGcpCloudConnectConnectionResp403Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpCloudConnectConnectionResp404Headers the declared response headers of an HTTP 404 response for GetGcpCloudConnectConnection
+type GetGcpCloudConnectConnectionResp404Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpCloudConnectConnectionResp429Headers the declared response headers of an HTTP 429 response for GetGcpCloudConnectConnection
+type GetGcpCloudConnectConnectionResp429Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpCloudConnectConnectionResp500Headers the declared response headers of an HTTP 500 response for GetGcpCloudConnectConnection
+type GetGcpCloudConnectConnectionResp500Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// GetGcpCloudConnectConnectionResp503Headers the declared response headers of an HTTP 503 response for GetGcpCloudConnectConnection
+type GetGcpCloudConnectConnectionResp503Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+type GetGcpCloudConnectConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GcpCloudConnectConnection
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetGcpCloudConnectConnectionResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetGcpCloudConnectConnectionResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetGcpCloudConnectConnectionResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetGcpCloudConnectConnectionResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetGcpCloudConnectConnectionResp404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetGcpCloudConnectConnectionResp429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetGcpCloudConnectConnectionResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetGcpCloudConnectConnectionResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetGcpCloudConnectConnectionResp) GetJSON200() *GcpCloudConnectConnection {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetGcpCloudConnectConnectionResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetGcpCloudConnectConnectionResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetGcpCloudConnectConnectionResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetGcpCloudConnectConnectionResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetGcpCloudConnectConnectionResp) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetGcpCloudConnectConnectionResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetGcpCloudConnectConnectionResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetGcpCloudConnectConnectionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetGcpCloudConnectConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetGcpCloudConnectConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetGcpCloudConnectConnectionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateGcpCloudConnectConnectionResp200Headers the declared response headers of an HTTP 200 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp200Headers struct {
+	ContentLanguage     *string
+	ETag                *string
+	RequestId           *RequestID
+	XDryRun             *bool
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp400Headers the declared response headers of an HTTP 400 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp400Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp401Headers the declared response headers of an HTTP 401 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp401Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	WWWAuthenticate     *string
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp403Headers the declared response headers of an HTTP 403 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp403Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp404Headers the declared response headers of an HTTP 404 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp404Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp409Headers the declared response headers of an HTTP 409 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp409Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp412Headers the declared response headers of an HTTP 412 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp412Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp413Headers the declared response headers of an HTTP 413 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp413Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp415Headers the declared response headers of an HTTP 415 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp415Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp422Headers the declared response headers of an HTTP 422 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp422Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp428Headers the declared response headers of an HTTP 428 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp428Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp429Headers the declared response headers of an HTTP 429 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp429Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp500Headers the declared response headers of an HTTP 500 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp500Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// UpdateGcpCloudConnectConnectionResp503Headers the declared response headers of an HTTP 503 response for UpdateGcpCloudConnectConnection
+type UpdateGcpCloudConnectConnectionResp503Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+type UpdateGcpCloudConnectConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GcpCloudConnectConnection
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *RequestTooLarge
+	// ApplicationproblemJSON415 the response for an HTTP 415 `application/problem+json` response
+	ApplicationproblemJSON415 *UnsupportedMediaType
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableContent
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateGcpCloudConnectConnectionResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateGcpCloudConnectConnectionResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *UpdateGcpCloudConnectConnectionResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *UpdateGcpCloudConnectConnectionResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateGcpCloudConnectConnectionResp404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *UpdateGcpCloudConnectConnectionResp409Headers
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *UpdateGcpCloudConnectConnectionResp412Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *UpdateGcpCloudConnectConnectionResp413Headers
+	// Headers415 the parsed response headers for an HTTP 415 response
+	Headers415 *UpdateGcpCloudConnectConnectionResp415Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *UpdateGcpCloudConnectConnectionResp422Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *UpdateGcpCloudConnectConnectionResp428Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *UpdateGcpCloudConnectConnectionResp429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *UpdateGcpCloudConnectConnectionResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *UpdateGcpCloudConnectConnectionResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetJSON200() *GcpCloudConnectConnection {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON413() *RequestTooLarge {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON415 returns the response for an HTTP 415 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON415() *UnsupportedMediaType {
+	return r.ApplicationproblemJSON415
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON422() *UnprocessableContent {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r UpdateGcpCloudConnectConnectionResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateGcpCloudConnectConnectionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateGcpCloudConnectConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateGcpCloudConnectConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateGcpCloudConnectConnectionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ResolveGcpCloudConnectRequirementsResp200Headers the declared response headers of an HTTP 200 response for ResolveGcpCloudConnectRequirements
+type ResolveGcpCloudConnectRequirementsResp200Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XDryRun             *bool
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpCloudConnectRequirementsResp400Headers the declared response headers of an HTTP 400 response for ResolveGcpCloudConnectRequirements
+type ResolveGcpCloudConnectRequirementsResp400Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpCloudConnectRequirementsResp401Headers the declared response headers of an HTTP 401 response for ResolveGcpCloudConnectRequirements
+type ResolveGcpCloudConnectRequirementsResp401Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	WWWAuthenticate     *string
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpCloudConnectRequirementsResp403Headers the declared response headers of an HTTP 403 response for ResolveGcpCloudConnectRequirements
+type ResolveGcpCloudConnectRequirementsResp403Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpCloudConnectRequirementsResp409Headers the declared response headers of an HTTP 409 response for ResolveGcpCloudConnectRequirements
+type ResolveGcpCloudConnectRequirementsResp409Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpCloudConnectRequirementsResp413Headers the declared response headers of an HTTP 413 response for ResolveGcpCloudConnectRequirements
+type ResolveGcpCloudConnectRequirementsResp413Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpCloudConnectRequirementsResp429Headers the declared response headers of an HTTP 429 response for ResolveGcpCloudConnectRequirements
+type ResolveGcpCloudConnectRequirementsResp429Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpCloudConnectRequirementsResp500Headers the declared response headers of an HTTP 500 response for ResolveGcpCloudConnectRequirements
+type ResolveGcpCloudConnectRequirementsResp500Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+// ResolveGcpCloudConnectRequirementsResp503Headers the declared response headers of an HTTP 503 response for ResolveGcpCloudConnectRequirements
+type ResolveGcpCloudConnectRequirementsResp503Headers struct {
+	ContentLanguage     *string
+	RequestId           *RequestID
+	RetryAfter          *int
+	XRateLimitLimit     *int
+	XRateLimitRemaining *int
+	XRateLimitReset     *int
+}
+
+type ResolveGcpCloudConnectRequirementsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GcpRequirementsResponse
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *RequestTooLarge
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ResolveGcpCloudConnectRequirementsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ResolveGcpCloudConnectRequirementsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ResolveGcpCloudConnectRequirementsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ResolveGcpCloudConnectRequirementsResp403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *ResolveGcpCloudConnectRequirementsResp409Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *ResolveGcpCloudConnectRequirementsResp413Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ResolveGcpCloudConnectRequirementsResp429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ResolveGcpCloudConnectRequirementsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ResolveGcpCloudConnectRequirementsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ResolveGcpCloudConnectRequirementsResp) GetJSON200() *GcpRequirementsResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ResolveGcpCloudConnectRequirementsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ResolveGcpCloudConnectRequirementsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ResolveGcpCloudConnectRequirementsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r ResolveGcpCloudConnectRequirementsResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r ResolveGcpCloudConnectRequirementsResp) GetApplicationproblemJSON413() *RequestTooLarge {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ResolveGcpCloudConnectRequirementsResp) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ResolveGcpCloudConnectRequirementsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ResolveGcpCloudConnectRequirementsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ResolveGcpCloudConnectRequirementsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ResolveGcpCloudConnectRequirementsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResolveGcpCloudConnectRequirementsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ResolveGcpCloudConnectRequirementsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateGcpBillingAccountWithBodyWithResponse Connect a GCP billing account
+//
+// Checks that DoiT's service account can read the billing account and
+// the detailed usage cost export table, records the connection as
+// `pending`, and activates it in the background. Poll the item until
+// `status` is `active` or `failed`; a connection reads `failed` at the
+// latest about 40 minutes after connect (up to 15 minutes before the
+// activation starts and up to 25 minutes while it runs). The billing
+// export's table layout is checked during the activation, so a wrong
+// table ends `failed` rather than refusing the connect.
+//
+// Connect is idempotent on the billing account and export: it returns
+// the existing `pending` or `active` connection, including one made in
+// the Console, with `201`. A different
+// export returns `409 onboarding.billing_connection_activating`
+// (retryable) while the connection is `pending`, and
+// `409 onboarding.billing_connection_export_mismatch` once it is
+// `active`, until it is disconnected. A `failed` connection can be
+// connected again with any export. The billing account and export cannot
+// be changed in place: disconnect and connect again.
+//
+// With `dryRun=true` the call answers `200` with what it would return,
+// after the same checks, without recording the connection or queuing its
+// activation. Like requirements, it reserves the customer's DoiT service
+// account when none is reserved yet.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /onboarding/v2/billing/gcp/accounts (the `CreateGcpBillingAccount` operationId).
+func (c *ClientWithResponses) CreateGcpBillingAccountWithBodyWithResponse(ctx context.Context, params *CreateGcpBillingAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGcpBillingAccountResp, error) {
+	rsp, err := c.CreateGcpBillingAccountWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateGcpBillingAccountResp(rsp)
+}
+
+// CreateGcpBillingAccountWithResponse Connect a GCP billing account
+//
+// Checks that DoiT's service account can read the billing account and
+// the detailed usage cost export table, records the connection as
+// `pending`, and activates it in the background. Poll the item until
+// `status` is `active` or `failed`; a connection reads `failed` at the
+// latest about 40 minutes after connect (up to 15 minutes before the
+// activation starts and up to 25 minutes while it runs). The billing
+// export's table layout is checked during the activation, so a wrong
+// table ends `failed` rather than refusing the connect.
+//
+// Connect is idempotent on the billing account and export: it returns
+// the existing `pending` or `active` connection, including one made in
+// the Console, with `201`. A different
+// export returns `409 onboarding.billing_connection_activating`
+// (retryable) while the connection is `pending`, and
+// `409 onboarding.billing_connection_export_mismatch` once it is
+// `active`, until it is disconnected. A `failed` connection can be
+// connected again with any export. The billing account and export cannot
+// be changed in place: disconnect and connect again.
+//
+// With `dryRun=true` the call answers `200` with what it would return,
+// after the same checks, without recording the connection or queuing its
+// activation. Like requirements, it reserves the customer's DoiT service
+// account when none is reserved yet.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /onboarding/v2/billing/gcp/accounts (the `CreateGcpBillingAccount` operationId).
+func (c *ClientWithResponses) CreateGcpBillingAccountWithResponse(ctx context.Context, params *CreateGcpBillingAccountParams, body CreateGcpBillingAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGcpBillingAccountResp, error) {
+	rsp, err := c.CreateGcpBillingAccount(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateGcpBillingAccountResp(rsp)
+}
+
+// DeleteGcpBillingAccountWithResponse Disconnect a GCP billing account
+//
+// Disconnects the billing account with the same effect as the Console
+// offboarding. Returns `409 onboarding.billing_connection_activating`
+// (retryable) while the activation is still running. After a partial
+// failure the connection reads `failed` and the disconnect can be
+// repeated. Customer IAM grants and the export dataset remain untouched.
+//
+// With `dryRun=true` the connection that would be disconnected comes back
+// with `200`, refused the same way, without removing anything. A
+// leftover DoiT asset of the billing account that a disconnect would
+// remove previews as a `failed` connection without `exportProjectId` and
+// `exportDatasetId`.
+//
+// `422 idempotency_key_reused` means the `Idempotency-Key` was already
+// used with a different request; retry with a new key.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /onboarding/v2/billing/gcp/accounts/{id} (the `DeleteGcpBillingAccount` operationId).
+func (c *ClientWithResponses) DeleteGcpBillingAccountWithResponse(ctx context.Context, id GcpBillingAccountId, params *DeleteGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*DeleteGcpBillingAccountResp, error) {
+	rsp, err := c.DeleteGcpBillingAccount(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteGcpBillingAccountResp(rsp)
+}
+
+// GetGcpBillingAccountWithResponse Get a GCP billing account connection
+//
+// Returns the billing account connection and its activation `status`
+// (`pending`, `active` or `failed`, with `failureReason` when failed).
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /onboarding/v2/billing/gcp/accounts/{id} (the `GetGcpBillingAccount` operationId).
+func (c *ClientWithResponses) GetGcpBillingAccountWithResponse(ctx context.Context, id GcpBillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*GetGcpBillingAccountResp, error) {
+	rsp, err := c.GetGcpBillingAccount(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetGcpBillingAccountResp(rsp)
+}
+
+// ResolveGcpBillingRequirementsWithResponse Resolve GCP billing onboarding requirements
+//
+// Returns the DoiT service account the customer grants read access to,
+// the two IAM roles to grant and where, and the export prerequisite.
+// The first call for a customer reserves its DoiT service account, as
+// the Console does when onboarding starts; every later call, dry run or
+// not, returns the same account and changes nothing.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /onboarding/v2/billing/gcp/requirements (the `ResolveGcpBillingRequirements` operationId).
+func (c *ClientWithResponses) ResolveGcpBillingRequirementsWithResponse(ctx context.Context, params *ResolveGcpBillingRequirementsParams, reqEditors ...RequestEditorFn) (*ResolveGcpBillingRequirementsResp, error) {
+	rsp, err := c.ResolveGcpBillingRequirements(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResolveGcpBillingRequirementsResp(rsp)
+}
+
+// CreateGcpCloudConnectConnectionWithBodyWithResponse Register a GCP Cloud Connect connection
+//
+// Registers a keyless Google Cloud service account for organization,
+// project, or BigQuery dataset Cloud Connect access. Each Google Cloud
+// service account (`serviceAccount.uniqueId`) holds at most one GCP
+// connection; registering a second scope with the same service account
+// returns `409 onboarding.connection_exists`. `scopeKind`,
+// `organizationId`, `projectId`, `datasetId`, and `serviceAccount` are
+// immutable after creation. With `dryRun=true`, runs the live
+// authentication and permission checks without persisting and returns
+// `200` with `GcpCloudConnectConnectionPreview` and `X-Dry-Run: true`, or
+// `422 onboarding.registration_gate_failed` if a gate fails.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /onboarding/v2/cloud-connect/gcp/connections (the `CreateGcpCloudConnectConnection` operationId).
+func (c *ClientWithResponses) CreateGcpCloudConnectConnectionWithBodyWithResponse(ctx context.Context, params *CreateGcpCloudConnectConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateGcpCloudConnectConnectionResp, error) {
+	rsp, err := c.CreateGcpCloudConnectConnectionWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateGcpCloudConnectConnectionResp(rsp)
+}
+
+// CreateGcpCloudConnectConnectionWithResponse Register a GCP Cloud Connect connection
+//
+// Registers a keyless Google Cloud service account for organization,
+// project, or BigQuery dataset Cloud Connect access. Each Google Cloud
+// service account (`serviceAccount.uniqueId`) holds at most one GCP
+// connection; registering a second scope with the same service account
+// returns `409 onboarding.connection_exists`. `scopeKind`,
+// `organizationId`, `projectId`, `datasetId`, and `serviceAccount` are
+// immutable after creation. With `dryRun=true`, runs the live
+// authentication and permission checks without persisting and returns
+// `200` with `GcpCloudConnectConnectionPreview` and `X-Dry-Run: true`, or
+// `422 onboarding.registration_gate_failed` if a gate fails.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /onboarding/v2/cloud-connect/gcp/connections (the `CreateGcpCloudConnectConnection` operationId).
+func (c *ClientWithResponses) CreateGcpCloudConnectConnectionWithResponse(ctx context.Context, params *CreateGcpCloudConnectConnectionParams, body CreateGcpCloudConnectConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateGcpCloudConnectConnectionResp, error) {
+	rsp, err := c.CreateGcpCloudConnectConnection(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateGcpCloudConnectConnectionResp(rsp)
+}
+
+// DeleteGcpCloudConnectConnectionWithResponse Disconnect a GCP Cloud Connect connection
+//
+// Removes DoiT's GCP Cloud Connect record using `cleanupScope=doit_only`.
+// Does not delete customer GCP service accounts or IAM bindings. Requires
+// `If-Match`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /onboarding/v2/cloud-connect/gcp/connections/{id} (the `DeleteGcpCloudConnectConnection` operationId).
+func (c *ClientWithResponses) DeleteGcpCloudConnectConnectionWithResponse(ctx context.Context, id ResourceId, params *DeleteGcpCloudConnectConnectionParams, reqEditors ...RequestEditorFn) (*DeleteGcpCloudConnectConnectionResp, error) {
+	rsp, err := c.DeleteGcpCloudConnectConnection(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteGcpCloudConnectConnectionResp(rsp)
+}
+
+// GetGcpCloudConnectConnectionWithResponse Get a GCP Cloud Connect connection
+//
+// Returns the stored state, desired features, and latest verification summary for a GCP Cloud Connect connection.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /onboarding/v2/cloud-connect/gcp/connections/{id} (the `GetGcpCloudConnectConnection` operationId).
+func (c *ClientWithResponses) GetGcpCloudConnectConnectionWithResponse(ctx context.Context, id ResourceId, params *GetGcpCloudConnectConnectionParams, reqEditors ...RequestEditorFn) (*GetGcpCloudConnectConnectionResp, error) {
+	rsp, err := c.GetGcpCloudConnectConnection(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetGcpCloudConnectConnectionResp(rsp)
+}
+
+// UpdateGcpCloudConnectConnectionWithBodyWithResponse Update a GCP Cloud Connect connection
+//
+// Updates desired features for a GCP Cloud Connect connection using RFC
+// 7396 JSON Merge Patch. Requires `If-Match`. When `dryRun=true`, returns
+// the projected resource with `X-Dry-Run: true` without mutating state.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /onboarding/v2/cloud-connect/gcp/connections/{id} (the `UpdateGcpCloudConnectConnection` operationId).
+func (c *ClientWithResponses) UpdateGcpCloudConnectConnectionWithBodyWithResponse(ctx context.Context, id ResourceId, params *UpdateGcpCloudConnectConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateGcpCloudConnectConnectionResp, error) {
+	rsp, err := c.UpdateGcpCloudConnectConnectionWithBody(ctx, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateGcpCloudConnectConnectionResp(rsp)
+}
+
+// UpdateGcpCloudConnectConnectionWithApplicationMergePatchPlusJSONBodyWithResponse Update a GCP Cloud Connect connection
+//
+// Updates desired features for a GCP Cloud Connect connection using RFC
+// 7396 JSON Merge Patch. Requires `If-Match`. When `dryRun=true`, returns
+// the projected resource with `X-Dry-Run: true` without mutating state.
+//
+// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /onboarding/v2/cloud-connect/gcp/connections/{id} (the `UpdateGcpCloudConnectConnection` operationId).
+func (c *ClientWithResponses) UpdateGcpCloudConnectConnectionWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id ResourceId, params *UpdateGcpCloudConnectConnectionParams, body UpdateGcpCloudConnectConnectionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateGcpCloudConnectConnectionResp, error) {
+	rsp, err := c.UpdateGcpCloudConnectConnectionWithApplicationMergePatchPlusJSONBody(ctx, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateGcpCloudConnectConnectionResp(rsp)
+}
+
+// ResolveGcpCloudConnectRequirementsWithBodyWithResponse Resolve GCP Cloud Connect requirements
+//
+// Resolves customer-specific Google Cloud prerequisites, keyless service
+// account delegation, scoped IAM permissions, and setup artifacts for a
+// GCP organization, project, or BigQuery dataset. Read-only.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /onboarding/v2/cloud-connect/gcp/requirements (the `ResolveGcpCloudConnectRequirements` operationId).
+func (c *ClientWithResponses) ResolveGcpCloudConnectRequirementsWithBodyWithResponse(ctx context.Context, params *ResolveGcpCloudConnectRequirementsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResolveGcpCloudConnectRequirementsResp, error) {
+	rsp, err := c.ResolveGcpCloudConnectRequirementsWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResolveGcpCloudConnectRequirementsResp(rsp)
+}
+
+// ResolveGcpCloudConnectRequirementsWithResponse Resolve GCP Cloud Connect requirements
+//
+// Resolves customer-specific Google Cloud prerequisites, keyless service
+// account delegation, scoped IAM permissions, and setup artifacts for a
+// GCP organization, project, or BigQuery dataset. Read-only.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /onboarding/v2/cloud-connect/gcp/requirements (the `ResolveGcpCloudConnectRequirements` operationId).
+func (c *ClientWithResponses) ResolveGcpCloudConnectRequirementsWithResponse(ctx context.Context, params *ResolveGcpCloudConnectRequirementsParams, body ResolveGcpCloudConnectRequirementsJSONRequestBody, reqEditors ...RequestEditorFn) (*ResolveGcpCloudConnectRequirementsResp, error) {
+	rsp, err := c.ResolveGcpCloudConnectRequirements(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResolveGcpCloudConnectRequirementsResp(rsp)
+}
+
+// ParseCreateGcpBillingAccountResp parses an HTTP response from a CreateGcpBillingAccountWithResponse call
+func ParseCreateGcpBillingAccountResp(rsp *http.Response) (*CreateGcpBillingAccountResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateGcpBillingAccountResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GcpBillingAccount
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest GcpBillingAccount
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest RequestTooLarge
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableContent
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers CreateGcpBillingAccountResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value bool
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 201:
+		var headers CreateGcpBillingAccountResp201Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "uri-reference"}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateGcpBillingAccountResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreateGcpBillingAccountResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateGcpBillingAccountResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateGcpBillingAccountResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreateGcpBillingAccountResp413Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers CreateGcpBillingAccountResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreateGcpBillingAccountResp429Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateGcpBillingAccountResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers CreateGcpBillingAccountResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteGcpBillingAccountResp parses an HTTP response from a DeleteGcpBillingAccountWithResponse call
+func ParseDeleteGcpBillingAccountResp(rsp *http.Response) (*DeleteGcpBillingAccountResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteGcpBillingAccountResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GcpBillingAccount
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableContent
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers DeleteGcpBillingAccountResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value bool
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 204:
+		var headers DeleteGcpBillingAccountResp204Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 400:
+		var headers DeleteGcpBillingAccountResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers DeleteGcpBillingAccountResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers DeleteGcpBillingAccountResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteGcpBillingAccountResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers DeleteGcpBillingAccountResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 422:
+		var headers DeleteGcpBillingAccountResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers DeleteGcpBillingAccountResp429Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers DeleteGcpBillingAccountResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers DeleteGcpBillingAccountResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetGcpBillingAccountResp parses an HTTP response from a GetGcpBillingAccountWithResponse call
+func ParseGetGcpBillingAccountResp(rsp *http.Response) (*GetGcpBillingAccountResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetGcpBillingAccountResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GcpBillingAccount
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetGcpBillingAccountResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetGcpBillingAccountResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetGcpBillingAccountResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetGcpBillingAccountResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetGcpBillingAccountResp429Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetGcpBillingAccountResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetGcpBillingAccountResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseResolveGcpBillingRequirementsResp parses an HTTP response from a ResolveGcpBillingRequirementsWithResponse call
+func ParseResolveGcpBillingRequirementsResp(rsp *http.Response) (*ResolveGcpBillingRequirementsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResolveGcpBillingRequirementsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GcpBillingRequirementsResponse
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ResolveGcpBillingRequirementsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value bool
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ResolveGcpBillingRequirementsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ResolveGcpBillingRequirementsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ResolveGcpBillingRequirementsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ResolveGcpBillingRequirementsResp429Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ResolveGcpBillingRequirementsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ResolveGcpBillingRequirementsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateGcpCloudConnectConnectionResp parses an HTTP response from a CreateGcpCloudConnectConnectionWithResponse call
+func ParseCreateGcpCloudConnectConnectionResp(rsp *http.Response) (*CreateGcpCloudConnectConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateGcpCloudConnectConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GcpCloudConnectConnectionPreview
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest GcpCloudConnectConnection
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest RequestTooLarge
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableContent
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers CreateGcpCloudConnectConnectionResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value bool
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 201:
+		var headers CreateGcpCloudConnectConnectionResp201Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "uri-reference"}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateGcpCloudConnectConnectionResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreateGcpCloudConnectConnectionResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateGcpCloudConnectConnectionResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateGcpCloudConnectConnectionResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreateGcpCloudConnectConnectionResp413Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers CreateGcpCloudConnectConnectionResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreateGcpCloudConnectConnectionResp429Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateGcpCloudConnectConnectionResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers CreateGcpCloudConnectConnectionResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteGcpCloudConnectConnectionResp parses an HTTP response from a DeleteGcpCloudConnectConnectionWithResponse call
+func ParseDeleteGcpCloudConnectConnectionResp(rsp *http.Response) (*DeleteGcpCloudConnectConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteGcpCloudConnectConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest MutationPreview
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableContent
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers DeleteGcpCloudConnectConnectionResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value bool
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 204:
+		var headers DeleteGcpCloudConnectConnectionResp204Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 400:
+		var headers DeleteGcpCloudConnectConnectionResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers DeleteGcpCloudConnectConnectionResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers DeleteGcpCloudConnectConnectionResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteGcpCloudConnectConnectionResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers DeleteGcpCloudConnectConnectionResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 412:
+		var headers DeleteGcpCloudConnectConnectionResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 422:
+		var headers DeleteGcpCloudConnectConnectionResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 428:
+		var headers DeleteGcpCloudConnectConnectionResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers428 = &headers
+	case rsp.StatusCode == 429:
+		var headers DeleteGcpCloudConnectConnectionResp429Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers DeleteGcpCloudConnectConnectionResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers DeleteGcpCloudConnectConnectionResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetGcpCloudConnectConnectionResp parses an HTTP response from a GetGcpCloudConnectConnectionWithResponse call
+func ParseGetGcpCloudConnectConnectionResp(rsp *http.Response) (*GetGcpCloudConnectConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetGcpCloudConnectConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GcpCloudConnectConnection
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetGcpCloudConnectConnectionResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetGcpCloudConnectConnectionResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetGcpCloudConnectConnectionResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetGcpCloudConnectConnectionResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetGcpCloudConnectConnectionResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetGcpCloudConnectConnectionResp429Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetGcpCloudConnectConnectionResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetGcpCloudConnectConnectionResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateGcpCloudConnectConnectionResp parses an HTTP response from a UpdateGcpCloudConnectConnectionWithResponse call
+func ParseUpdateGcpCloudConnectConnectionResp(rsp *http.Response) (*UpdateGcpCloudConnectConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateGcpCloudConnectConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GcpCloudConnectConnection
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest RequestTooLarge
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 415:
+		var dest UnsupportedMediaType
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON415 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableContent
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateGcpCloudConnectConnectionResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value bool
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateGcpCloudConnectConnectionResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers UpdateGcpCloudConnectConnectionResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers UpdateGcpCloudConnectConnectionResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateGcpCloudConnectConnectionResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers UpdateGcpCloudConnectConnectionResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 412:
+		var headers UpdateGcpCloudConnectConnectionResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 413:
+		var headers UpdateGcpCloudConnectConnectionResp413Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 415:
+		var headers UpdateGcpCloudConnectConnectionResp415Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers415 = &headers
+	case rsp.StatusCode == 422:
+		var headers UpdateGcpCloudConnectConnectionResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 428:
+		var headers UpdateGcpCloudConnectConnectionResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers428 = &headers
+	case rsp.StatusCode == 429:
+		var headers UpdateGcpCloudConnectConnectionResp429Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers UpdateGcpCloudConnectConnectionResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers UpdateGcpCloudConnectConnectionResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseResolveGcpCloudConnectRequirementsResp parses an HTTP response from a ResolveGcpCloudConnectRequirementsWithResponse call
+func ParseResolveGcpCloudConnectRequirementsResp(rsp *http.Response) (*ResolveGcpCloudConnectRequirementsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResolveGcpCloudConnectRequirementsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GcpRequirementsResponse
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest RequestTooLarge
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ResolveGcpCloudConnectRequirementsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value bool
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ResolveGcpCloudConnectRequirementsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ResolveGcpCloudConnectRequirementsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ResolveGcpCloudConnectRequirementsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers ResolveGcpCloudConnectRequirementsResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 413:
+		var headers ResolveGcpCloudConnectRequirementsResp413Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 429:
+		var headers ResolveGcpCloudConnectRequirementsResp429Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ResolveGcpCloudConnectRequirementsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ResolveGcpCloudConnectRequirementsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Limit"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Limit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitLimit = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Remaining"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Remaining", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitRemaining = &value
+		}
+		if values := rsp.Header.Values("X-RateLimit-Reset"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-RateLimit-Reset", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRateLimitReset = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
 }

@@ -34,6 +34,13 @@ export TEST_CUSTOMER_ID="your-customer-id"
 # export TEST_AWS_ROLE_ARN="arn:aws:iam::your-account-id:role/your-role-name"
 # export TEST_AWS_S3_BUCKET="your-s3-bucket-name"
 # export TEST_AWS_S3_BUCKET_REGION="us-east-1"
+# export TEST_GCP_PROJECT_ID="your-gcp-project-id"
+# export TEST_GCP_SERVICE_ACCOUNT_EMAIL="your-sa@your-gcp-project-id.iam.gserviceaccount.com"  # holds the roles from doit_cloudconnect_gcp_requirements; one connection per service account
+# export TEST_GCP_SERVICE_ACCOUNT_UNIQUE_ID="your-service-account-unique-id"
+# export TEST_GCP_BIGQUERY_FINOPS="1"  # set when the service account can enable BigQuery FinOps on the project
+# export TEST_GCP_BILLING_ACCOUNT_ID="your-billing-account-id"  # not connected to DoiT; roles from doit_billing_gcp_requirements granted
+# export TEST_GCP_BILLING_EXPORT_PROJECT="your-billing-export-project-id"
+# export TEST_GCP_BILLING_EXPORT_DATASET="your-billing-export-dataset"
 
 # DoiT employees only - uncomment the following line:
 # export DOIT_CUSTOMER_CONTEXT="$TEST_CUSTOMER_ID"

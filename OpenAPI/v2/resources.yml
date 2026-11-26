@@ -4,4 +4,27 @@
 # while this file has no entries.
 provider:
   name: doit
-resources: {}
+resources:
+  cloudconnect_gcp_connection:
+    create:
+      path: /onboarding/v2/cloud-connect/gcp/connections
+      method: POST
+    read:
+      path: /onboarding/v2/cloud-connect/gcp/connections/{id}
+      method: GET
+    update:
+      path: /onboarding/v2/cloud-connect/gcp/connections/{id}
+      method: PATCH
+    delete:
+      path: /onboarding/v2/cloud-connect/gcp/connections/{id}
+      method: DELETE
+  billing_gcp_account:
+    create:
+      path: /onboarding/v2/billing/gcp/accounts
+      method: POST
+    read:
+      path: /onboarding/v2/billing/gcp/accounts/{id}
+      method: GET
+    delete:
+      path: /onboarding/v2/billing/gcp/accounts/{id}
+      method: DELETE

@@ -1,0 +1,559 @@
+{
+	"provider": {
+		"name": "doit"
+	},
+	"resources": [
+		{
+			"name": "billing_gcp_account",
+			"schema": {
+				"attributes": [
+					{
+						"name": "billing_account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Google Cloud billing account ID. Cannot be changed in place; disconnect and connect again.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[0-9A-F]{6}-[0-9A-F]{6}-[0-9A-F]{6}$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "export_dataset_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "BigQuery dataset the detailed usage cost export writes to. Cannot be changed in place; disconnect and connect again.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 1024)"
+									}
+								},
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Za-z0-9_]+$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "export_project_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Google Cloud project holding the detailed usage cost export dataset. Cannot be changed in place; disconnect and connect again.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^([a-z][a-z0-9.-]{0,61}:)?[a-z][a-z0-9-]{4,28}[a-z0-9]$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "failure_reason",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Why the connection is `failed` and what to do next. Present only when `status` is `failed`."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Stable resource identifier, equal to `billingAccountId`."
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Activation state. `pending` while DoiT activates the connection in\nthe background, `active` once billing import is set up, `failed`\nwith `failureReason` when activation or a disconnect did not\nfinish. A `failed` connection can be connected again.\n"
+						}
+					}
+				],
+				"description": "Resolve prerequisites and manage Google Cloud billing account connections.",
+				"markdown_description": "Resolve prerequisites and manage Google Cloud billing account connections."
+			}
+		},
+		{
+			"name": "cloudconnect_gcp_connection",
+			"schema": {
+				"attributes": [
+					{
+						"name": "catalog_version",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Optional catalog version from `resolveGcpCloudConnectRequirements` for an optimistic freshness check (`409 onboarding.catalog_version_stale` if stale). Whether supplied or omitted, the server persists the current active catalog version on the GCP connection; IaC providers should treat this as a write-only or computed precondition rather than a drift-tracked configured attribute."
+						}
+					},
+					{
+						"name": "dataset_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "BigQuery dataset ID when `scopeKind` is `gcp_dataset`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtMost(1024)"
+									}
+								},
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Za-z0-9_]+$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "feature_ids",
+						"set": {
+							"computed_optional_required": "required",
+							"element_type": {
+								"string": {}
+							},
+							"description": "GCP Cloud Connect feature IDs to enable (set semantics; duplicates return `400 validation_failed`, stored and returned sorted ascending). Valid IDs are dynamic per customer and scope; discover them by calling `resolveGcpCloudConnectRequirements` without `featureIds`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+											}
+										],
+										"schema_definition": "setvalidator.SizeAtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "feature_inputs",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "bigquery_finops",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "location",
+												"string": {
+													"computed_optional_required": "computed_optional",
+													"description": "BigQuery location where the FinOps log-sink dataset is created (defaults to `US`). Validated server-side against the active catalog's supported BigQuery locations; pass `null` on `PATCH` to clear the override.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.LengthAtLeast(1)"
+															}
+														}
+													]
+												}
+											}
+										],
+										"description": "BigQuery dataset inputs for the `bigquery-finops` feature, or `null` on `PATCH` to remove them."
+									}
+								}
+							],
+							"description": "Optional typed per-feature inputs (for example `bigqueryFinops.location`)."
+						}
+					},
+					{
+						"name": "organization_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Numeric GCP organization ID when `scopeKind` is `gcp_organization`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[1-9][0-9]{0,24}$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "project_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "GCP project ID when `scopeKind` is `gcp_project` or `gcp_dataset`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-z][a-z0-9-]{4,28}[a-z0-9]$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "role_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Optional custom GCP IAM role ID created for this connection (create-only; immutable on PATCH). Defaults to `doit_cmp_role` for organization/project scopes or a dataset-scoped default for `gcp_dataset`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Za-z0-9_.]{3,64}$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "scope_kind",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Google Cloud resource scope kind. Immutable after creation.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"gcp_organization\",\n\"gcp_project\",\n\"gcp_dataset\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "service_account",
+						"single_nested": {
+							"computed_optional_required": "required",
+							"attributes": [
+								{
+									"name": "email",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "Customer service account email.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "regexp"
+														},
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z][a-z0-9-]{4,28}[a-z0-9]\\\\.iam\\\\.gserviceaccount\\\\.com$\"), \"\")"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "project_id",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "Google Cloud project hosting the service account.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "regexp"
+														},
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[a-z][a-z0-9-]{4,28}[a-z0-9]$\"), \"\")"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "unique_id",
+									"string": {
+										"computed_optional_required": "required",
+										"description": "Immutable numeric Google service account unique ID.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "regexp"
+														},
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[0-9]{1,32}$\"), \"\")"
+												}
+											}
+										]
+									}
+								}
+							],
+							"description": "Keyless Google Cloud service account descriptor authenticated through DoiT workload delegation."
+						}
+					},
+					{
+						"name": "baseline_checks",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "check_time",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "status",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								}
+							],
+							"description": "Latest background health check status."
+						}
+					},
+					{
+						"name": "binding_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Deterministic GCP scope binding key for this connection."
+						}
+					},
+					{
+						"name": "client_user_agent",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Bounded User-Agent of the calling client."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Always `null` on a create dry-run preview."
+						}
+					},
+					{
+						"name": "feature_verification",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "catalog_version",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "checked_revision",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "observation_time",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "status",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								}
+							],
+							"description": "Summary of the last synchronous verification check recorded on the connection."
+						}
+					},
+					{
+						"name": "follow_ups",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "binding_id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "feature_id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "kind",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "last_error",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "code",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "message",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "operation",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												}
+											],
+											"description": "Sanitized error reported by a follow-up or verification step."
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Always `null` on a create dry-run preview."
+						}
+					},
+					{
+						"name": "registered_via",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Writer that would create the record."
+						}
+					},
+					{
+						"name": "registration",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "registration_time",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "status",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								}
+							],
+							"description": "Registration status of the connection record."
+						}
+					},
+					{
+						"name": "revision",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Always `null` on a create dry-run preview."
+						}
+					}
+				],
+				"description": "Resolve prerequisites and manage Google Cloud organization, project, and dataset Cloud Connect access.",
+				"markdown_description": "Resolve prerequisites and manage Google Cloud organization, project, and dataset Cloud Connect access."
+			}
+		}
+	],
+	"version": "0.1"
+}
