@@ -79,6 +79,14 @@ type asyncTestServer struct {
 	cancelOpState  string        // operation status reported in the cancel response body
 	pollNotFound   bool          // poll returns 404
 
+	// opScripts switches the fake to one operation per submission: the Nth new
+	// Idempotency-Key creates "op-N", whose polls consume opScripts[N-1] (the
+	// last status repeats). Polling an operation that does not exist is a 404,
+	// and the results of an operation not last seen succeeded are refused, so a
+	// run that follows or fetches the wrong operation fails. pollStatuses is not
+	// used in this mode.
+	opScripts [][]string
+
 	// observations
 	submitKeys    []string
 	cancelKeys    []string
@@ -87,6 +95,14 @@ type asyncTestServer struct {
 	resultQueries []string
 	pollDelays    []time.Duration
 	lastPollAt    time.Time
+
+	// per-operation observations: the operation each call named, in call order
+	pollOps   []string
+	resultOps []string
+	cancelOps []string
+	opByKey   map[string]string // Idempotency-Key -> operation, in opScripts mode
+	opPolls   map[string]int    // polls so far, per operation
+	opStatus  map[string]string // last status polled, per operation
 }
 
 func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
@@ -166,18 +182,32 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 			return
 		}
 
+		opID := "op-1"
+		if s.opScripts != nil {
+			if s.opByKey == nil {
+				s.opByKey = map[string]string{}
+			}
+			if _, ok := s.opByKey[key]; !ok {
+				s.opByKey[key] = fmt.Sprintf("op-%d", len(s.opByKey)+1)
+			}
+			opID = s.opByKey[key]
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Location", "/analytics/v1/reports/operations/op-1")
+		w.Header().Set("Location", "/analytics/v1/reports/operations/"+opID)
 		w.WriteHeader(http.StatusAccepted)
-		_, _ = w.Write([]byte(`{"operationId":"op-1","status":"pending","createTime":"2000-01-01T00:00:00Z"}`))
+		_, _ = fmt.Fprintf(w, `{"operationId":%q,"status":"pending","createTime":"2000-01-01T00:00:00Z"}`, opID)
 	}
 
 	mux.HandleFunc("POST /analytics/v1/reports/actions/run", submit)
 	mux.HandleFunc("POST /analytics/v1/reports/{id}/actions/run", submit)
 
-	mux.HandleFunc("GET /analytics/v1/reports/operations/{operationId}", func(w http.ResponseWriter, _ *http.Request) {
+	mux.HandleFunc("GET /analytics/v1/reports/operations/{operationId}", func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
+
+		opID := r.PathValue("operationId")
+		s.pollOps = append(s.pollOps, opID)
 
 		now := time.Now()
 		if !s.lastPollAt.IsZero() {
@@ -193,9 +223,26 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 			return
 		}
 
-		status := s.pollStatuses[min(s.pollCount-1, len(s.pollStatuses)-1)]
+		status := ""
+		if s.opScripts != nil {
+			var n int
+			if _, err := fmt.Sscanf(opID, "op-%d", &n); err != nil || n < 1 || n > len(s.opByKey) {
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"error":"operation not found"}`))
+				return
+			}
+			if s.opPolls == nil {
+				s.opPolls, s.opStatus = map[string]int{}, map[string]string{}
+			}
+			s.opPolls[opID]++
+			script := s.opScripts[min(n-1, len(s.opScripts)-1)]
+			status = script[min(s.opPolls[opID]-1, len(script)-1)]
+			s.opStatus[opID] = status
+		} else {
+			status = s.pollStatuses[min(s.pollCount-1, len(s.pollStatuses)-1)]
+		}
 		body := map[string]any{
-			"operationId": "op-1",
+			"operationId": opID,
 			"status":      status,
 			"createTime":  "2000-01-01T00:00:00Z",
 			"expireBy":    "2000-01-08T00:00:00Z",
@@ -214,6 +261,14 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 	mux.HandleFunc("GET /analytics/v1/reports/operations/{operationId}/results", func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
+
+		s.resultOps = append(s.resultOps, r.PathValue("operationId"))
+		if s.opScripts != nil && s.opStatus[r.PathValue("operationId")] != "succeeded" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"error":"no result: the operation did not succeed"}`))
+			return
+		}
 
 		s.resultCount++
 		s.resultQueries = append(s.resultQueries, r.URL.RawQuery)
@@ -247,9 +302,10 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 		defer s.mu.Unlock()
 
 		s.cancelKeys = append(s.cancelKeys, r.Header.Get("Idempotency-Key"))
+		s.cancelOps = append(s.cancelOps, r.PathValue("operationId"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(s.cancelStatus)
-		_, _ = fmt.Fprintf(w, `{"operationId":"op-1","status":%q}`, s.cancelOpState)
+		_, _ = fmt.Fprintf(w, `{"operationId":%q,"status":%q}`, r.PathValue("operationId"), s.cancelOpState)
 	})
 
 	s.Server = httptest.NewTestServer(t, mux)
@@ -263,6 +319,14 @@ func (s *asyncTestServer) snapshot() (submits, cancels []string, polls, results 
 		append([]string(nil), s.cancelKeys...),
 		s.pollCount, s.resultCount,
 		append([]time.Duration(nil), s.pollDelays...)
+}
+
+// operations returns the operation each poll, results fetch and cancel named,
+// in call order.
+func (s *asyncTestServer) operations() (polled, fetched, cancelled []string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return slices.Clone(s.pollOps), slices.Clone(s.resultOps), slices.Clone(s.cancelOps)
 }
 
 // newAsyncTestClient builds a generated client that routes to the test server
@@ -1101,70 +1165,83 @@ func TestAwaitAsyncReport_OperationInterrupted(t *testing.T) {
 
 // TestRunAsyncReport_RetriesAnInterruptedOperation covers the whole run: only an
 // operation the API failed as interrupted is submitted again, once, and the
-// second interruption is reported rather than retried.
+// second interruption is reported rather than retried again.
+//
+// The fake creates one operation per submission (op-1, op-2) with a script of
+// its own, so the rows also pin which operation each later call targets: after
+// a retry the run must poll, fetch from and cancel op-2, never the interrupted
+// op-1.
 func TestRunAsyncReport_RetriesAnInterruptedOperation(t *testing.T) {
 	notRetried := func(code string) *models.AsyncOperationError {
 		return &models.AsyncOperationError{Title: "Failed", Code: code, Status: 413}
 	}
 	for _, tc := range []struct {
-		name         string
-		statuses     []string
-		failure      *models.AsyncOperationError
-		wantSubmits  int
-		wantCancels  int
-		wantErr      []string // all must be in the error detail; none expected when empty
-		wantNotInErr []string
+		name        string
+		scripts     [][]string // poll statuses of op-1, op-2
+		failure     *models.AsyncOperationError
+		wantSubmits int
+		wantPolled  []string // operation of each poll, in order, once collapsed to runs
+		wantFetched []string
+		wantCancels []string
+		wantErr     []string // all must be in the error detail; none expected when empty
+		wantNotErr  []string
 	}{
 		{
 			name:        "interrupted once then succeeds",
-			statuses:    []string{"failed", "succeeded"},
+			scripts:     [][]string{{"failed"}, {"succeeded"}},
 			failure:     interruptedError(),
 			wantSubmits: 2,
+			wantPolled:  []string{"op-1", "op-2"},
+			wantFetched: []string{"op-2"},
 		},
 		{
-			name:         "interrupted twice is reported, not retried again",
-			statuses:     []string{"failed", "failed"},
-			failure:      interruptedError(),
-			wantSubmits:  2,
-			wantErr:      []string{"operation_interrupted", "Run the report again.", "ran it again once"},
-			wantNotInErr: nil,
+			name:        "interrupted twice is reported, not retried again",
+			scripts:     [][]string{{"failed"}, {"failed"}},
+			failure:     interruptedError(),
+			wantSubmits: 2,
+			wantPolled:  []string{"op-1", "op-2"},
+			wantErr:     []string{"op-2", "operation_interrupted", "Run the report again.", "ran it again once"},
 		},
 		{
-			name:         "another failure is not retried",
-			statuses:     []string{"failed", "succeeded"},
-			failure:      notRetried("result_too_large"),
-			wantSubmits:  1,
-			wantErr:      []string{"result_too_large"},
-			wantNotInErr: []string{"ran it again"},
+			name:        "another failure is not retried",
+			scripts:     [][]string{{"failed"}, {"succeeded"}},
+			failure:     notRetried("result_too_large"),
+			wantSubmits: 1,
+			wantPolled:  []string{"op-1"},
+			wantErr:     []string{"op-1", "result_too_large"},
+			wantNotErr:  []string{"ran it again"},
 		},
 		{
-			name:         "failure without detail is not retried",
-			statuses:     []string{"failed", "succeeded"},
-			failure:      nil,
-			wantSubmits:  1,
-			wantErr:      []string{"no error detail"},
-			wantNotInErr: []string{"ran it again"},
+			name:        "failure without detail is not retried",
+			scripts:     [][]string{{"failed"}, {"succeeded"}},
+			failure:     nil,
+			wantSubmits: 1,
+			wantPolled:  []string{"op-1"},
+			wantErr:     []string{"no error detail"},
+			wantNotErr:  []string{"ran it again"},
 		},
 		{
-			name:         "canceled is not retried",
-			statuses:     []string{"canceled", "succeeded"},
-			wantSubmits:  1,
-			wantErr:      []string{"was canceled"},
-			wantNotInErr: []string{"ran it again"},
+			name:        "canceled is not retried",
+			scripts:     [][]string{{"canceled"}, {"succeeded"}},
+			wantSubmits: 1,
+			wantPolled:  []string{"op-1"},
+			wantErr:     []string{"was canceled"},
+			wantNotErr:  []string{"ran it again"},
 		},
 		{
-			name:         "the retry is cancelled when the read timeout ends it",
-			statuses:     []string{"failed", "running"},
-			failure:      interruptedError(),
-			wantSubmits:  2,
-			wantCancels:  1,
-			wantErr:      []string{"did not finish within the read timeout"},
-			wantNotInErr: []string{"ran it again"},
+			name:        "the retry is cancelled when the read timeout ends it",
+			scripts:     [][]string{{"failed"}, {"running"}},
+			failure:     interruptedError(),
+			wantSubmits: 2,
+			wantPolled:  []string{"op-1", "op-2"},
+			wantCancels: []string{"op-2"},
+			wantErr:     []string{"did not finish within the read timeout"},
+			wantNotErr:  []string{"ran it again"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
-				srv := newAsyncTestServer(t, &asyncTestServer{pollStatuses: tc.statuses, failureError: tc.failure})
+				srv := newAsyncTestServer(t, &asyncTestServer{opScripts: tc.scripts, failureError: tc.failure})
 				client := newAsyncTestClient(t, srv.Server)
 
 				// Half a second past a whole number of seconds, so the deadline
@@ -1172,15 +1249,24 @@ func TestRunAsyncReport_RetriesAnInterruptedOperation(t *testing.T) {
 				result, diags := runAsyncReportWith(t.Context(), newReportRunLimiter(1), client, "query",
 					10*time.Minute+500*time.Millisecond, inlineSubmit(client), nil)
 
-				submits, cancels, _, _, _ := srv.snapshot()
+				submits, _, _, _, _ := srv.snapshot()
 				if len(submits) != tc.wantSubmits {
 					t.Errorf("submits = %d, want %d", len(submits), tc.wantSubmits)
 				}
-				if len(cancels) != tc.wantCancels {
-					t.Errorf("cancel calls = %d, want %d", len(cancels), tc.wantCancels)
-				}
 				if len(submits) == 2 && submits[0] == submits[1] {
 					t.Errorf("the retry reused Idempotency-Key %q; a replay would hand back the failed operation", submits[0])
+				}
+				polled, fetched, cancelled := srv.operations()
+				// An operation is polled until it ends: compare the order the
+				// operations were followed in, not how often each was polled.
+				if got := slices.Compact(polled); !slices.Equal(got, tc.wantPolled) {
+					t.Errorf("operations polled = %v, want %v", got, tc.wantPolled)
+				}
+				if !slices.Equal(fetched, tc.wantFetched) {
+					t.Errorf("results fetched from %v, want %v", fetched, tc.wantFetched)
+				}
+				if !slices.Equal(cancelled, tc.wantCancels) {
+					t.Errorf("operations cancelled = %v, want %v", cancelled, tc.wantCancels)
 				}
 
 				if len(tc.wantErr) == 0 {
@@ -1204,7 +1290,7 @@ func TestRunAsyncReport_RetriesAnInterruptedOperation(t *testing.T) {
 						t.Errorf("detail missing %q:\n%s", want, got)
 					}
 				}
-				for _, notWant := range tc.wantNotInErr {
+				for _, notWant := range tc.wantNotErr {
 					if strings.Contains(got, notWant) {
 						t.Errorf("detail should not contain %q:\n%s", notWant, got)
 					}
@@ -1225,11 +1311,13 @@ func TestRunAsyncReport_RetryDoesNotRenewTheReadTimeout(t *testing.T) {
 		// on the same virtual instant as a poll wait ends.
 		const readTimeout = 10*time.Minute + 500*time.Millisecond
 
-		// Polls 1-8 find the operation running and each waits 30s, so poll 9 at
-		// 4 minutes is the interruption. The retry's operation then stays running.
-		statuses := append(slices.Repeat([]string{"running"}, 8), "failed", "running")
+		// Polls 1-8 of op-1 find it running and each waits 30s, so poll 9 at
+		// 4 minutes is the interruption. op-2 then stays running.
 		srv := newAsyncTestServer(t, &asyncTestServer{
-			pollStatuses: statuses,
+			opScripts: [][]string{
+				append(slices.Repeat([]string{"running"}, 8), "failed"),
+				{"running"},
+			},
 			pollRetryHdr: "30",
 			failureError: interruptedError(),
 		})
@@ -1246,12 +1334,12 @@ func TestRunAsyncReport_RetryDoesNotRenewTheReadTimeout(t *testing.T) {
 		if got := diags.Errors()[0].Detail(); !strings.Contains(got, "did not finish within the read timeout") {
 			t.Errorf("detail = %q, want the read timeout error", got)
 		}
-		submits, cancels, _, _, _ := srv.snapshot()
+		submits, _, _, _, _ := srv.snapshot()
 		if len(submits) != 2 {
 			t.Errorf("submits = %d, want 2: the interruption came before the deadline", len(submits))
 		}
-		if len(cancels) != 1 {
-			t.Errorf("cancel calls = %d, want 1: the retry's operation", len(cancels))
+		if _, _, cancelled := srv.operations(); !slices.Equal(cancelled, []string{"op-2"}) {
+			t.Errorf("operations cancelled = %v, want [op-2]: the retry's operation", cancelled)
 		}
 		if elapsed != readTimeout {
 			t.Errorf("elapsed = %v, want %v: both attempts share one read timeout", elapsed, readTimeout)
