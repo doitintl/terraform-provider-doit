@@ -170,7 +170,7 @@ func TestAccReportQuery_AttributionValidation(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps:                    testSteps,
 	})
@@ -183,7 +183,7 @@ func TestAccReportQuery_AttributionValidation(t *testing.T) {
 func TestAccReportQuery_AttributionReachesAPI(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
+		PreCheck:                 testAccReportPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{{
 			Config: fmt.Sprintf(attributionTestQueryConfig,

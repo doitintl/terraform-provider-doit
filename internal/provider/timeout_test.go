@@ -2,6 +2,10 @@ package provider
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -374,6 +378,384 @@ func TestDCIRetryClient_429NoRetryAfter_Retries(t *testing.T) {
 		// One policy interval between each pair of attempts.
 		if want := failures * retryInitialInterval; elapsed != want {
 			t.Errorf("elapsed = %v, want %v", elapsed, want)
+		}
+	})
+}
+
+// TestDCIRetryClient_DeadlineReportsLastRetryableResponse pins what the caller
+// is told when the deadline ends a retry loop that never got a usable answer.
+// The loop's own error is only the context error, which hides why every attempt
+// was refused; the status and body of the last refusal (for a 429, the API's
+// explanation, such as the cap on active report operations) ride along, and the
+// context error stays matchable.
+func TestDCIRetryClient_DeadlineReportsLastRetryableResponse(t *testing.T) {
+	tests := []struct {
+		name       string
+		status     int
+		retryAfter string
+		body       string
+	}{
+		{"429 with Retry-After", http.StatusTooManyRequests, "30", `{"code":"too_many_active_operations_for_user","limit":3}`},
+		{"429 without Retry-After", http.StatusTooManyRequests, "", `{"code":"rate_limited"}`},
+		{"503 with Retry-After", http.StatusServiceUnavailable, "30", `{"detail":"overloaded"}`},
+		{"503 without Retry-After", http.StatusServiceUnavailable, "", `{"detail":"overloaded"}`},
+		{"502", http.StatusBadGateway, "", "bad gateway"},
+		{"504", http.StatusGatewayTimeout, "", "gateway timeout"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				var requestCount atomic.Int64
+				server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
+					if tt.retryAfter != "" {
+						w.Header().Set("Retry-After", tt.retryAfter)
+					}
+					w.WriteHeader(tt.status)
+					_, _ = w.Write([]byte(tt.body))
+				})
+
+				client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+				// One second past the 300s deadline's multiples of the retry waits
+				// (30s, 2s): a deadline that falls on the same virtual instant as a
+				// retry timer makes the two race, and whether an attempt starts
+				// before the deadline then varies between runs. With a real clock a
+				// wait always ends a little after the deadline, as here.
+				ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout+time.Second)
+				defer cancel()
+
+				_, err := doGet(ctx, t, client, server.URL)
+				if err == nil {
+					t.Fatal("expected the deadline to end the retries with an error")
+				}
+				if !errors.Is(err, context.DeadlineExceeded) {
+					t.Errorf("error should still match context.DeadlineExceeded: %v", err)
+				}
+				want := fmt.Sprintf("status: %d, body: %s", tt.status, tt.body)
+				if !strings.Contains(err.Error(), want) {
+					t.Errorf("error missing the last response %q: %v", want, err)
+				}
+			})
+		})
+	}
+}
+
+// TestDCIRetryClient_DeadlineWithoutRetryableResponseAddsNothing guards the
+// other side: a deadline that hits while no refusal was ever received (a slow
+// server) keeps its plain error rather than naming a response that never came.
+func TestDCIRetryClient_DeadlineWithoutRetryableResponseAddsNothing(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount atomic.Int64
+		server := countingServer(t, &requestCount, func(_ http.ResponseWriter, r *http.Request) {
+			<-r.Context().Done()
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
+		defer cancel()
+
+		_, err := doGet(ctx, t, client, server.URL)
+		if err == nil {
+			t.Fatal("expected an error once the deadline elapsed")
+		}
+		if strings.Contains(err.Error(), "last response") {
+			t.Errorf("no response was received, yet the error names one: %v", err)
+		}
+	})
+}
+
+// TestDCIRetryClient_StalledRetryableBodyDoesNotDelayTheRetry covers a 429 or
+// 503 whose headers arrive and whose body then stalls. The body is only read to
+// quote it in an error, so waiting on it must not hold the retry back: the
+// request timeout (150s by default) is far longer than any wait the retry
+// policy would otherwise make.
+func TestDCIRetryClient_StalledRetryableBodyDoesNotDelayTheRetry(t *testing.T) {
+	for _, status := range []int{http.StatusTooManyRequests, http.StatusServiceUnavailable} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				var requestCount atomic.Int64
+				server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
+					if requestCount.Load() == 1 {
+						w.WriteHeader(status)
+						_, _ = w.Write([]byte(`{"detail":"`)) // a body that never ends
+						w.(http.Flusher).Flush()
+						<-r.Context().Done()
+						return
+					}
+					w.WriteHeader(http.StatusOK)
+				})
+
+				client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+				ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+				defer cancel()
+
+				start := time.Now()
+				resp, err := doGet(ctx, t, client, server.URL)
+				elapsed := time.Since(start)
+
+				if err != nil {
+					t.Fatalf("expected success on the retry, got: %v", err)
+				}
+				if resp.StatusCode != http.StatusOK {
+					t.Errorf("StatusCode = %d, want %d", resp.StatusCode, http.StatusOK)
+				}
+				// The policy waits 2s; capturing the body may add a few seconds at
+				// most, never the 150s request timeout.
+				if elapsed > 10*time.Second {
+					t.Errorf("elapsed = %v: the stalled body held the retry back, want well under the request timeout (%v)",
+						elapsed, DefaultRequestTimeout)
+				}
+			})
+		})
+	}
+}
+
+// TestDCIRetryClient_DeadlineAndAnEarlierResponse covers a 429 followed by
+// attempts that fail differently: the server stops answering. The error is there
+// to say why the retries ended, so it names the 429 only when that is still the
+// latest word. Once a later attempt got no response, whether its own request
+// timeout or the operation deadline cut it off, the old 429 is stale.
+func TestDCIRetryClient_DeadlineAndAnEarlierResponse(t *testing.T) {
+	tests := []struct {
+		name        string
+		readTimeout time.Duration
+		wantBlamed  bool // the error still quotes the 429
+	}{
+		{
+			// The retry at 30s is cut off by its own 150s request timeout, then
+			// again, until the deadline.
+			name:        "request timeout elapses first",
+			readTimeout: DefaultReadTimeout + time.Second,
+		},
+		{
+			// The retry at 30s is still waiting when the 60s deadline cuts it
+			// off, before its request timeout.
+			name:        "deadline cuts off the unanswered retry",
+			readTimeout: time.Minute,
+		},
+		{
+			// The deadline falls in the 30s wait for the retry, so no later
+			// attempt exists and the 429 is still the latest response.
+			name:        "deadline falls during the wait",
+			readTimeout: 20 * time.Second,
+			wantBlamed:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				var requestCount atomic.Int64
+				server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
+					if requestCount.Load() == 1 {
+						w.Header().Set("Retry-After", "30")
+						w.WriteHeader(http.StatusTooManyRequests)
+						_, _ = w.Write([]byte(`{"code":"too_many_active_operations_for_user"}`))
+						return
+					}
+					<-r.Context().Done() // never answers again
+				})
+
+				client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+				ctx, cancel := context.WithTimeout(t.Context(), tt.readTimeout)
+				defer cancel()
+
+				_, err := doGet(ctx, t, client, server.URL)
+				if err == nil {
+					t.Fatal("expected the deadline to end the retries with an error")
+				}
+				if blamed := strings.Contains(err.Error(), "too_many_active_operations"); blamed != tt.wantBlamed {
+					t.Errorf("error quotes the 429 = %v, want %v: %v", blamed, tt.wantBlamed, err)
+				}
+			})
+		})
+	}
+}
+
+// TestDCIRetryClient_DeadlineDuringALaterErrorBody covers a 429 followed by an
+// attempt that gets a non-retryable response (a 500) whose body then stalls
+// until the deadline. The latest response is the 500, so the error must not
+// quote the earlier 429 or add the active-operation advice.
+func TestDCIRetryClient_DeadlineDuringALaterErrorBody(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
+			if requestCount.Load() == 1 {
+				w.Header().Set("Retry-After", "30")
+				w.WriteHeader(http.StatusTooManyRequests)
+				_, _ = w.Write([]byte(`{"code":"too_many_active_operations_for_user"}`))
+				return
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"detail":"`)) // a body that never ends
+			w.(http.Flusher).Flush()
+			<-r.Context().Done()
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		// The 500 arrives at 30s and its body is still open at the 60s deadline.
+		ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
+		defer cancel()
+
+		_, err := doGet(ctx, t, client, server.URL)
+		if err == nil {
+			t.Fatal("expected the deadline to end the read of the error body")
+		}
+		if strings.Contains(err.Error(), "too_many_active_operations") {
+			t.Errorf("the error quotes the 429, but the latest response was a 500: %v", err)
+		}
+	})
+}
+
+// TestDCIRetryClient_StalledRetryableBodiesDoNotAccumulate covers a server that
+// answers every attempt with a 429 whose body never ends. Capturing each body is
+// abandoned after a couple of seconds, and the abandoned attempt must then be
+// torn down: left open, one reader and one connection per attempt pile up until
+// the request timeout (150s) ends them.
+func TestDCIRetryClient_StalledRetryableBodiesDoNotAccumulate(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount, open atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
+			open.Add(1)
+			defer open.Add(-1)
+			w.WriteHeader(http.StatusTooManyRequests)
+			_, _ = w.Write([]byte(`{"detail":"`)) // a body that never ends
+			w.(http.Flusher).Flush()
+			<-r.Context().Done()
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		ctx, cancel := context.WithTimeout(t.Context(), 2*time.Minute)
+		defer cancel()
+
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			_, _ = doGet(ctx, t, client, server.URL)
+		}()
+
+		// Long enough for many attempts, well inside the 150s request timeout.
+		time.Sleep(time.Minute)
+		synctest.Wait()
+
+		attempts, stillOpen := requestCount.Load(), open.Load()
+		if attempts < 5 {
+			t.Fatalf("attempts = %d, want several in a minute for the test to mean anything", attempts)
+		}
+		if stillOpen > 2 {
+			t.Errorf("%d of %d stalled responses are still open after a minute: abandoned attempts pile up", stillOpen, attempts)
+		}
+
+		cancel()
+		<-done
+	})
+}
+
+// TestDCIRetryClient_ConnectionIsReusedAcrossRetriesAndCalls checks that tearing
+// down each attempt's context does not cost the keep-alive connection. Three 429s
+// with small bodies are retried and the 200 that follows is read and closed the
+// way the generated client does; a second call on the same client then follows.
+// All of it must ride one connection: a body read to its end returns the
+// connection to the pool, and cancelling the attempt afterwards must not close
+// it.
+func TestDCIRetryClient_ConnectionIsReusedAcrossRetriesAndCalls(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount, connections atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
+			if requestCount.Load() <= 3 {
+				w.WriteHeader(http.StatusTooManyRequests)
+				_, _ = w.Write([]byte(`{"detail":"slow down"}`))
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"ok":true}`))
+		})
+		server.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+			if state == http.StateNew {
+				connections.Add(1)
+			}
+		}
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+		defer cancel()
+
+		for call := 1; call <= 2; call++ {
+			resp, err := doGet(ctx, t, client, server.URL)
+			if err != nil {
+				t.Fatalf("call %d: %v", call, err)
+			}
+			body, err := io.ReadAll(resp.Body)
+			if err != nil || string(body) != `{"ok":true}` {
+				t.Fatalf("call %d: body = %q, err = %v", call, body, err)
+			}
+			if err := resp.Body.Close(); err != nil {
+				t.Fatalf("call %d: close: %v", call, err)
+			}
+			// Let a connection that was just released settle in the pool.
+			synctest.Wait()
+		}
+
+		if got := connections.Load(); got != 1 {
+			t.Errorf("connections = %d, want 1: an attempt's teardown closed a connection that could be reused", got)
+		}
+	})
+}
+
+// TestDCIRetryClient_HandedBackBodyIsReadAfterDoReturns checks the property the
+// per-attempt context must not break: a response handed back to the caller is
+// still readable after Do returns, however slowly its body arrives. The attempt
+// is cancelled when the caller closes the body, not before. The body here comes
+// in two parts a minute apart, longer than any retry wait, and is read only
+// after Do has returned.
+func TestDCIRetryClient_HandedBackBodyIsReadAfterDoReturns(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
+			if requestCount.Load() == 1 {
+				w.WriteHeader(http.StatusTooManyRequests) // so an attempt was torn down before this one
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"first":`))
+			w.(http.Flusher).Flush()
+			select {
+			case <-time.After(time.Minute):
+			case <-r.Context().Done():
+				return
+			}
+			_, _ = w.Write([]byte(`"second"}`))
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+		defer cancel()
+
+		resp, err := doGet(ctx, t, client, server.URL)
+		if err != nil {
+			t.Fatalf("Do: %v", err)
+		}
+
+		// Well past the retry wait, with the second half of the body outstanding.
+		time.Sleep(30 * time.Second)
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("reading a handed-back body failed: %v", err)
+		}
+		if string(body) != `{"first":"second"}` {
+			t.Errorf("body = %q, want the whole body", body)
+		}
+		if err := resp.Body.Close(); err != nil {
+			t.Errorf("Close: %v", err)
 		}
 	})
 }

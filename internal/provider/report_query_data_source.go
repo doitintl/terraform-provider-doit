@@ -207,6 +207,11 @@ func (d *reportQueryDataSource) ValidateConfig(ctx context.Context, req datasour
 	validateReportCustomTimeRangeMode(ctx, req.Config, nil, &resp.Diagnostics)
 }
 
+// Read reads the Timeouts value but applies it inside runAsyncReport, once the
+// run holds a report run slot, so that waiting for other reports does not use
+// up the timeout of this one.
+//
+//nolint:timeoutcheck // the read timeout starts after the report run slot is acquired; see runAsyncReport
 func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data reportQueryDataSourceModel
 
@@ -221,8 +226,6 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	ctx, cancel := context.WithTimeout(ctx, readTimeout)
-	defer cancel()
 
 	// If the config contains any unknown values (e.g., during a plan where
 	// inputs depend on unresolved resources), we cannot make a complete API query.
@@ -244,9 +247,9 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	// Submit the query, then poll to completion. The Idempotency-Key is supplied
-	// by submitAsyncReport.
-	operationID, submitDiags := submitAsyncReport(ctx, d.client, "query",
+	// Wait for a free report run slot, then submit the query and poll to
+	// completion. The Idempotency-Key is supplied by submitAsyncReport.
+	result, runDiags := runAsyncReport(ctx, d.client, "query", readTimeout,
 		func(ctx context.Context, idempotencyKey string) (asyncSubmission, error) {
 			runResp, err := d.client.AsyncRunInlineWithResponse(ctx,
 				&models.AsyncRunInlineParams{IdempotencyKey: idempotencyKey},
@@ -260,16 +263,9 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 				OperationID: asyncOperationID(runResp.JSON202, runResp.JSON200),
 				Body:        runResp.Body,
 			}, nil
-		})
-	resp.Diagnostics.Append(submitDiags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// An inline run has no saved report behind it, so the results envelope
-	// carries only the result — no report metadata.
-	result, awaitDiags := awaitAsyncReport(ctx, d.client, "query", operationID, fileOutputFormat(data.FileOutput))
-	resp.Diagnostics.Append(awaitDiags...)
+		},
+		fileOutputFormat(data.FileOutput))
+	resp.Diagnostics.Append(runDiags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

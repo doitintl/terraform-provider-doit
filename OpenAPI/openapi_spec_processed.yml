@@ -2649,7 +2649,7 @@ paths:
         - Reports
       summary: Run a report asynchronously
       description: >-
-        Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
+        Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
       operationId: asyncRunInline
       parameters:
         - name: Idempotency-Key
@@ -2714,6 +2714,8 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "429":
+          $ref: "#/components/responses/TooManyActiveOperations"
         "500":
           $ref: "#/components/responses/500"
       x-codegen-request-body-name: Body
@@ -2762,7 +2764,7 @@ paths:
         - Reports
       summary: Run a saved report asynchronously
       description: >-
-        Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation.
+        Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation. A caller can have at most 3 pending or running operations, and a customer at most 5 across all callers; further runs return 429 until one finishes or is canceled.
       operationId: asyncRunReportById
       parameters:
         - name: id
@@ -2841,6 +2843,8 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "429":
+          $ref: "#/components/responses/TooManyActiveOperations"
         "500":
           $ref: "#/components/responses/500"
   "/analytics/v1/reports/operations/{operationId}/actions/cancel":
@@ -2849,7 +2853,7 @@ paths:
         - Reports
       summary: Cancel an async report run operation
       description: >-
-        Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist or belongs to a different tenant. Use ?dryRun=true to validate the request without modifying any state.
+        Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist, belongs to a different tenant, or was started by another caller. Any caller that can run reports can cancel its own operations. Use ?dryRun=true to validate the request without modifying any state.
       operationId: cancelAsyncOperation
       parameters:
         - name: operationId
@@ -20894,6 +20898,63 @@ components:
         monetaryMetric:
           $ref: "#/components/schemas/WidgetMonetaryMetric"
   responses:
+    TooManyActiveOperations:
+      description: >-
+        Too many pending or running async report operations. Retry after the Retry-After header, once an operation finishes or is canceled.
+      headers:
+        Retry-After:
+          description: Suggested number of seconds to wait before retrying.
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            properties:
+              type:
+                type: string
+              title:
+                type: string
+              status:
+                type: integer
+              detail:
+                type: string
+              code:
+                type: string
+                enum:
+                  - too_many_active_operations_for_user
+                  - too_many_active_operations_for_tenant
+                description: >-
+                  too_many_active_operations_for_user when the caller's own limit was reached, too_many_active_operations_for_tenant when the customer-wide limit was reached.
+              scope:
+                type: string
+                enum:
+                  - actor
+                  - customer
+                description: >-
+                  Which limit was reached: the caller's own (actor) or the customer-wide one.
+              limit:
+                type: integer
+                description: The limit that was reached.
+              operationIds:
+                type: array
+                items:
+                  type: string
+                description: >-
+                  The caller's own active operations, which it can poll or cancel. Present only when scope is "actor".
+          example:
+            type: https://developer.doit.com/errors/too_many_active_operations_for_user
+            title: Too Many Active Operations
+            status: 429
+            detail: >-
+              You have reached the limit of 3 active report operations. Wait for one of the listed operations to finish, or cancel it, then retry.
+            code: too_many_active_operations_for_user
+            scope: actor
+            limit: 3
+            operationIds:
+              - 0b6f3c1e-5a9d-4a52-9c0e-2f6d1c7e8a11
+              - 7d2a9f40-1c3b-4e6f-8a55-3b9e0d4c2f77
+              - c1e8b7a2-6f4d-4b90-a3d1-9e5f2a7b6c33
     "400":
       description: >-
         Bad Request - The server cannot process the request, often due to a malformed request.

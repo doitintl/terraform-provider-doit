@@ -17,7 +17,7 @@ description: |-
 
 Reports are executed asynchronously: the provider submits the run and polls until it completes. Because no single HTTP request stays open for the duration of the report, the API's 120-second edge timeout does not limit how long a report may take, and the provider's `request_timeout` setting has no practical bearing on it.
 
-The `read` timeout bounds the whole run and defaults to 5 minutes. Raise it for reports that need longer:
+The `read` timeout bounds the whole run, from the moment it starts running, and defaults to 5 minutes. Raise it for reports that need longer:
 
 ```hcl
 timeouts = {
@@ -26,6 +26,8 @@ timeouts = {
 ```
 
 If the `read` timeout is reached — or you interrupt Terraform — the provider cancels the running report before returning the error. See the [Timeouts guide](../guides/timeouts) for details.
+
+The API allows each user at most 3 pending or running report operations and each customer at most 5. The provider runs at most 3 reports of one Terraform run at a time and queues the rest, so a configuration with many report data sources runs them in batches. The `read` timeout starts when a report starts running, not while it waits for its turn. See [Concurrent Reports](../guides/timeouts#concurrent-reports).
 
 ## Example Usage
 

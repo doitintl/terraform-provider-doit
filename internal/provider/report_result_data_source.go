@@ -235,6 +235,11 @@ func (d *reportResultDataSource) timeOverrides(
 	return timeRange, startDate, endDate, true
 }
 
+// Read reads the Timeouts value but applies it inside runAsyncReport, once the
+// run holds a report run slot, so that waiting for other reports does not use
+// up the timeout of this one.
+//
+//nolint:timeoutcheck // the read timeout starts after the report run slot is acquired; see runAsyncReport
 func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data reportResultDataSourceModel
 
@@ -249,8 +254,6 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	ctx, cancel := context.WithTimeout(ctx, readTimeout)
-	defer cancel()
 
 	// If ID or any query parameter is unknown, return early
 	// with all computed attributes set to unknown.
@@ -270,10 +273,10 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	// Submit the run, then poll to completion. The Idempotency-Key is supplied
-	// by submitAsyncReport.
+	// Wait for a free report run slot, then submit the run and poll to
+	// completion. The Idempotency-Key is supplied by submitAsyncReport.
 	reportID := data.Id.ValueString()
-	operationID, submitDiags := submitAsyncReport(ctx, d.client, "report results",
+	report, runDiags := runAsyncReport(ctx, d.client, "report results", readTimeout,
 		func(ctx context.Context, idempotencyKey string) (asyncSubmission, error) {
 			runResp, err := d.client.AsyncRunReportByIdWithResponse(ctx, reportID,
 				&models.AsyncRunReportByIdParams{
@@ -290,14 +293,9 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 				OperationID: asyncOperationID(runResp.JSON202, runResp.JSON200),
 				Body:        runResp.Body,
 			}, nil
-		})
-	resp.Diagnostics.Append(submitDiags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	report, awaitDiags := awaitAsyncReport(ctx, d.client, "report results", operationID, fileOutputFormat(data.FileOutput))
-	resp.Diagnostics.Append(awaitDiags...)
+		},
+		fileOutputFormat(data.FileOutput))
+	resp.Diagnostics.Append(runDiags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

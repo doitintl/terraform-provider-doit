@@ -11,6 +11,11 @@
 // does the provider's request_timeout. The only limit is the caller's Read
 // timeout, which covers the whole submit-poll-fetch cycle; when it expires the
 // operation is cancelled rather than left running.
+//
+// The API also caps how many reports a user can have running at once (see
+// maxConcurrentReportRuns). The runs of one client queue behind that cap before
+// they submit, and the Read timeout starts only once a run holds a slot, so a
+// report is never timed out for waiting its turn.
 package provider
 
 import (
@@ -67,6 +72,25 @@ func newIdempotencyKey() string {
 	return uuid.NewV7().String()
 }
 
+// activeOperationsLimitMarker is the start of the error code the API puts on the
+// 429 it answers when a caller or customer already has the maximum number of
+// pending or running report operations: too_many_active_operations_for_user or
+// too_many_active_operations_for_tenant. The retry client waits such a 429 out
+// until the Read timeout, so the code only reaches submitAsyncReport inside the
+// error that reports the timeout.
+const activeOperationsLimitMarker = "too_many_active_operations"
+
+// activeOperationsLimitAdvice explains what to do about a limit that outlasted
+// the Read timeout. The limits are the API's, so they are stated as current.
+// One Terraform run queues its own reports (see reportRunLimiter), so a run that
+// still meets the limit shares it with something else.
+const activeOperationsLimitAdvice = "The API currently allows each user at most 3 pending or running report " +
+	"operations and each customer at most 5, counting every caller. The provider waited for a slot " +
+	"until the read timeout elapsed, and it already keeps one Terraform run within the limit, so " +
+	"other Terraform runs, other users or operations left over from an earlier interrupted run " +
+	"are probably holding the slots. Wait for them to finish, cancel the leftover operations, " +
+	"or raise the read timeout."
+
 // submitAsyncReport submits a report run and returns the operation ID.
 //
 // Every submission carries a fresh Idempotency-Key. The key only guards against
@@ -86,6 +110,11 @@ func submitAsyncReport(
 	sub, err := submit(ctx, idempotencyKey)
 	if err != nil {
 		detail := fmt.Sprintf("Could not submit the %s run: %s", what, err.Error())
+		// A run the user stopped (Ctrl-C) did not time out, so the advice about
+		// the timeout does not apply to it.
+		if errors.Is(err, context.DeadlineExceeded) && strings.Contains(err.Error(), activeOperationsLimitMarker) {
+			detail += "\n\n" + activeOperationsLimitAdvice
+		}
 		if ctx.Err() != nil {
 			// The server may have accepted the submission before we stopped
 			// waiting for its response, leaving a run we never learned the ID
@@ -247,66 +276,144 @@ func asyncSubmitErrorDetail(what string, sub asyncSubmission) string {
 	return detail
 }
 
-// awaitAsyncReport polls operationID to a terminal state and returns its result.
+// runAsyncReport runs one report to its result: it waits for a free report run
+// slot, submits, polls to a terminal state and fetches the result. what names
+// the run in diagnostics ("query", "report results").
+//
+// The slot is held until the operation reaches a terminal state, which is when
+// the API stops counting it, and not through the results fetch. readTimeout
+// bounds the run from the moment it holds a slot, so time spent queued behind
+// other runs does not count against it. Waiting for a slot ends on ctx, which
+// is how Ctrl-C reaches a queued run.
+func runAsyncReport(
+	ctx context.Context,
+	client *models.ClientWithResponses,
+	what string,
+	readTimeout time.Duration,
+	submit asyncSubmitFunc,
+	fileOutput *models.GetAsyncOperationResultsParamsFileOutput,
+) (*models.GetAsyncOperationResults200Response, diag.Diagnostics) {
+	return runAsyncReportWith(ctx, reportRunLimiterFor(client), client, what, readTimeout, submit, fileOutput)
+}
+
+// runAsyncReportWith is runAsyncReport with an explicit limiter, so tests can
+// run it against a limiter of their own size.
+func runAsyncReportWith(
+	ctx context.Context,
+	limiter *reportRunLimiter,
+	client *models.ClientWithResponses,
+	what string,
+	readTimeout time.Duration,
+	submit asyncSubmitFunc,
+	fileOutput *models.GetAsyncOperationResultsParamsFileOutput,
+) (*models.GetAsyncOperationResults200Response, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	release, err := limiter.acquire(ctx)
+	if err != nil {
+		// Nothing was submitted, so there is nothing to cancel.
+		summary := "Timed Out Running "
+		if errors.Is(err, context.Canceled) {
+			summary = "Canceled Running "
+		}
+		diags.AddError(
+			summary+what,
+			fmt.Sprintf("The %s did not start: it was still waiting for a free report run slot "+
+				"(at most %d reports run at once) when it stopped: %s. Nothing was submitted.",
+				what, maxConcurrentReportRuns, err.Error()),
+		)
+		return nil, diags
+	}
+	defer release()
+
+	runCtx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
+	operationID, submitDiags := submitAsyncReport(runCtx, client, what, submit)
+	diags.Append(submitDiags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	pollDiags := pollAsyncOperation(runCtx, client, what, operationID)
+	diags.Append(pollDiags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	// The operation is terminal, so the API no longer counts it. Fetching a
+	// large result can take a while and must not hold the next run back.
+	release()
+
+	result, fetchDiags := fetchAsyncReportResults(runCtx, client, what, operationID, fileOutput)
+	diags.Append(fetchDiags...)
+	if diags.HasError() {
+		return nil, diags
+	}
+	return result, diags
+}
+
+// pollAsyncOperation polls operationID until it reaches a terminal state. It
+// returns no error diagnostics only when the operation succeeded, so the result
+// is ready to fetch.
 //
 // If ctx expires or is cancelled while the operation is still running, the
 // operation is cancelled server-side before returning, so an abandoned run does
 // not keep burning query capacity. This covers both the Read timeout elapsing
 // and the user interrupting Terraform.
-func awaitAsyncReport(
+func pollAsyncOperation(
 	ctx context.Context,
 	client *models.ClientWithResponses,
 	what, operationID string,
-	fileOutput *models.GetAsyncOperationResultsParamsFileOutput,
-) (*models.GetAsyncOperationResults200Response, diag.Diagnostics) {
+) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	for {
 		pollResp, err := client.GetAsyncOperationWithResponse(ctx, operationID)
 		if err != nil {
 			if ctx.Err() != nil {
-				return nil, asyncRunAborted(ctx, client, what, operationID)
+				return asyncRunAborted(ctx, client, what, operationID)
 			}
-			diags.AddError(
-				"Error Running "+what,
-				fmt.Sprintf("Could not poll operation %s: %s", operationID, err.Error()),
-			)
-			return nil, diags
+			return abandonedOperationDiags(ctx, client, what, operationID,
+				fmt.Sprintf("Could not poll operation %s: %s", operationID, err.Error()))
 		}
 
 		if pollResp.StatusCode() != http.StatusOK || pollResp.JSON200 == nil {
 			// A 404 is the one status here with a non-obvious cause, so it gets
 			// an explanation appended to the raw status and body.
-			var hint string
 			if pollResp.StatusCode() == http.StatusNotFound {
-				hint = "\n\nThe operation no longer exists — it may have expired, " +
-					"or it belongs to a different user or tenant."
+				// Gone, so there is nothing left to cancel.
+				diags.AddError(
+					"Error Running "+what,
+					fmt.Sprintf("Could not poll operation %s, status: %d, body: %s\n\n"+
+						"The operation no longer exists — it may have expired, "+
+						"or it belongs to a different user or tenant.",
+						operationID, pollResp.StatusCode(), string(pollResp.Body)),
+				)
+				return diags
 			}
-			diags.AddError(
-				"Error Running "+what,
-				fmt.Sprintf("Could not poll operation %s, status: %d, body: %s%s",
-					operationID, pollResp.StatusCode(), string(pollResp.Body), hint),
-			)
-			return nil, diags
+			return abandonedOperationDiags(ctx, client, what, operationID,
+				fmt.Sprintf("Could not poll operation %s, status: %d, body: %s",
+					operationID, pollResp.StatusCode(), string(pollResp.Body)))
 		}
 
 		switch pollResp.JSON200.Status {
 		case models.AsyncOperationPollResponseStatusSucceeded:
-			return fetchAsyncReportResults(ctx, client, what, operationID, fileOutput)
+			return diags
 
 		case models.AsyncOperationPollResponseStatusFailed:
 			diags.AddError(
 				"Error Running "+what,
 				asyncFailureDetail(operationID, pollResp.JSON200.Error),
 			)
-			return nil, diags
+			return diags
 
 		case models.AsyncOperationPollResponseStatusCanceled:
 			diags.AddError(
 				"Error Running "+what,
 				fmt.Sprintf("Operation %s was canceled before it produced a result.", operationID),
 			)
-			return nil, diags
+			return diags
 
 		case models.AsyncOperationPollResponseStatusPending,
 			models.AsyncOperationPollResponseStatusRunning:
@@ -317,12 +424,9 @@ func awaitAsyncReport(
 			// an unexpected value lands here rather than being rejected earlier.
 			// Treating it as non-terminal would poll until the read timeout and
 			// then cancel, turning a contract violation into a silent stall.
-			diags.AddError(
-				"Error Running "+what,
+			return abandonedOperationDiags(ctx, client, what, operationID,
 				fmt.Sprintf("Operation %s reported an unrecognized status %q, status: %d, body: %s",
-					operationID, pollResp.JSON200.Status, pollResp.StatusCode(), string(pollResp.Body)),
-			)
-			return nil, diags
+					operationID, pollResp.JSON200.Status, pollResp.StatusCode(), string(pollResp.Body)))
 		}
 
 		// Still pending or running — wait, honoring the API's own guidance.
@@ -340,7 +444,7 @@ func awaitAsyncReport(
 		select {
 		case <-ctx.Done():
 			timer.Stop()
-			return nil, asyncRunAborted(ctx, client, what, operationID)
+			return asyncRunAborted(ctx, client, what, operationID)
 		case <-timer.C:
 		}
 	}
@@ -481,6 +585,25 @@ func asyncRunAborted(
 			"  timeouts = {\n    read = \"30m\"\n  }",
 			what, ctx.Err(), outcome),
 	)
+	return diags
+}
+
+// abandonedOperationDiags reports a run that gives up on an operation it cannot
+// follow to a terminal state (a poll that fails, or a status it does not know).
+// The operation keeps running and keeps counting against the API's cap on
+// active operations, so the run's own abandoned operations could fill that cap
+// and make the reports after it wait. Cancel it, as asyncRunAborted does, and
+// say what became of it.
+func abandonedOperationDiags(
+	ctx context.Context,
+	client *models.ClientWithResponses,
+	what, operationID, detail string,
+) diag.Diagnostics {
+	outcome, diags := cancelAsyncOperation(ctx, client, operationID)
+	if outcome != "" {
+		detail += "\n\n" + outcome
+	}
+	diags.AddError("Error Running "+what, detail)
 	return diags
 }
 
