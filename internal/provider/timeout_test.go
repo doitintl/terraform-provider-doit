@@ -574,6 +574,87 @@ func TestDCIRetryClient_DeadlineAndAnEarlierResponse(t *testing.T) {
 	}
 }
 
+// TestDCIRetryClient_DeadlineDuringALaterErrorBody covers a 429 followed by an
+// attempt that gets a non-retryable response (a 500) whose body then stalls
+// until the deadline. The latest response is the 500, so the error must not
+// quote the earlier 429 or add the active-operation advice.
+func TestDCIRetryClient_DeadlineDuringALaterErrorBody(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
+			if requestCount.Load() == 1 {
+				w.Header().Set("Retry-After", "30")
+				w.WriteHeader(http.StatusTooManyRequests)
+				_, _ = w.Write([]byte(`{"code":"too_many_active_operations_for_user"}`))
+				return
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"detail":"`)) // a body that never ends
+			w.(http.Flusher).Flush()
+			<-r.Context().Done()
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		// The 500 arrives at 30s and its body is still open at the 60s deadline.
+		ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
+		defer cancel()
+
+		_, err := doGet(ctx, t, client, server.URL)
+		if err == nil {
+			t.Fatal("expected the deadline to end the read of the error body")
+		}
+		if strings.Contains(err.Error(), "too_many_active_operations") {
+			t.Errorf("the error quotes the 429, but the latest response was a 500: %v", err)
+		}
+	})
+}
+
+// TestDCIRetryClient_StalledRetryableBodiesDoNotAccumulate covers a server that
+// answers every attempt with a 429 whose body never ends. Capturing each body is
+// abandoned after a couple of seconds, and the abandoned attempt must then be
+// torn down: left open, one reader and one connection per attempt pile up until
+// the request timeout (150s) ends them.
+func TestDCIRetryClient_StalledRetryableBodiesDoNotAccumulate(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount, open atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
+			open.Add(1)
+			defer open.Add(-1)
+			w.WriteHeader(http.StatusTooManyRequests)
+			_, _ = w.Write([]byte(`{"detail":"`)) // a body that never ends
+			w.(http.Flusher).Flush()
+			<-r.Context().Done()
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		ctx, cancel := context.WithTimeout(t.Context(), 2*time.Minute)
+		defer cancel()
+
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			_, _ = doGet(ctx, t, client, server.URL)
+		}()
+
+		// Long enough for many attempts, well inside the 150s request timeout.
+		time.Sleep(time.Minute)
+		synctest.Wait()
+
+		attempts, stillOpen := requestCount.Load(), open.Load()
+		if attempts < 5 {
+			t.Fatalf("attempts = %d, want several in a minute for the test to mean anything", attempts)
+		}
+		if stillOpen > 2 {
+			t.Errorf("%d of %d stalled responses are still open after a minute: abandoned attempts pile up", stillOpen, attempts)
+		}
+
+		cancel()
+		<-done
+	})
+}
+
 // TestDCIRetryClient_429WithRetryAfter_Honored verifies a server-supplied
 // Retry-After takes precedence over the exponential policy. The injected policy
 // would wait the entire operation budget, so completing in exactly the header's
