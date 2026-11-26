@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -652,6 +654,109 @@ func TestDCIRetryClient_StalledRetryableBodiesDoNotAccumulate(t *testing.T) {
 
 		cancel()
 		<-done
+	})
+}
+
+// TestDCIRetryClient_ConnectionIsReusedAcrossRetriesAndCalls checks that tearing
+// down each attempt's context does not cost the keep-alive connection. Three 429s
+// with small bodies are retried and the 200 that follows is read and closed the
+// way the generated client does; a second call on the same client then follows.
+// All of it must ride one connection: a body read to its end returns the
+// connection to the pool, and cancelling the attempt afterwards must not close
+// it.
+func TestDCIRetryClient_ConnectionIsReusedAcrossRetriesAndCalls(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount, connections atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
+			if requestCount.Load() <= 3 {
+				w.WriteHeader(http.StatusTooManyRequests)
+				_, _ = w.Write([]byte(`{"detail":"slow down"}`))
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"ok":true}`))
+		})
+		server.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+			if state == http.StateNew {
+				connections.Add(1)
+			}
+		}
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+		defer cancel()
+
+		for call := 1; call <= 2; call++ {
+			resp, err := doGet(ctx, t, client, server.URL)
+			if err != nil {
+				t.Fatalf("call %d: %v", call, err)
+			}
+			body, err := io.ReadAll(resp.Body)
+			if err != nil || string(body) != `{"ok":true}` {
+				t.Fatalf("call %d: body = %q, err = %v", call, body, err)
+			}
+			if err := resp.Body.Close(); err != nil {
+				t.Fatalf("call %d: close: %v", call, err)
+			}
+			// Let a connection that was just released settle in the pool.
+			synctest.Wait()
+		}
+
+		if got := connections.Load(); got != 1 {
+			t.Errorf("connections = %d, want 1: an attempt's teardown closed a connection that could be reused", got)
+		}
+	})
+}
+
+// TestDCIRetryClient_HandedBackBodyIsReadAfterDoReturns checks the property the
+// per-attempt context must not break: a response handed back to the caller is
+// still readable after Do returns, however slowly its body arrives. The attempt
+// is cancelled when the caller closes the body, not before. The body here comes
+// in two parts a minute apart, longer than any retry wait, and is read only
+// after Do has returned.
+func TestDCIRetryClient_HandedBackBodyIsReadAfterDoReturns(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, r *http.Request) {
+			if requestCount.Load() == 1 {
+				w.WriteHeader(http.StatusTooManyRequests) // so an attempt was torn down before this one
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"first":`))
+			w.(http.Flusher).Flush()
+			select {
+			case <-time.After(time.Minute):
+			case <-r.Context().Done():
+				return
+			}
+			_, _ = w.Write([]byte(`"second"}`))
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+		defer cancel()
+
+		resp, err := doGet(ctx, t, client, server.URL)
+		if err != nil {
+			t.Fatalf("Do: %v", err)
+		}
+
+		// Well past the retry wait, with the second half of the body outstanding.
+		time.Sleep(30 * time.Second)
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("reading a handed-back body failed: %v", err)
+		}
+		if string(body) != `{"first":"second"}` {
+			t.Errorf("body = %q, want the whole body", body)
+		}
+		if err := resp.Body.Close(); err != nil {
+			t.Errorf("Close: %v", err)
+		}
 	})
 }
 
